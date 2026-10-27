@@ -1,0 +1,16 @@
+{
+  "task": "trec",
+  "setting": "zero_shot",
+  "raw": 48,
+  "kept": 48,
+  "dropped": {},
+  "kept_per_label": {
+    "abbreviation": 8,
+    "entity": 8,
+    "description": 8,
+    "human": 8,
+    "location": 8,
+    "numeric": 8
+  },
+  "embedding_model": "hashing"
+}

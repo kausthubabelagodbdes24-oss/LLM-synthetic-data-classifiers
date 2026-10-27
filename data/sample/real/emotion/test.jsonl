@@ -1,0 +1,20 @@
+{"id": "emotion.sample-test.00000", "text": "i feel hopeless and hurt about mount everest", "label": "sadness"}
+{"id": "emotion.sample-test.00001", "text": "i feel really happy about a violin today", "label": "joy"}
+{"id": "emotion.sample-test.00002", "text": "i feel affectionate whenever i see jazz", "label": "love"}
+{"id": "emotion.sample-test.00003", "text": "i feel so angry about the olympics right now", "label": "anger"}
+{"id": "emotion.sample-test.00004", "text": "i feel scared and anxious about jazz", "label": "fear"}
+{"id": "emotion.sample-test.00005", "text": "i feel so surprised by a koala", "label": "surprise"}
+{"id": "emotion.sample-test.00006", "text": "i feel so lonely thinking about a lighthouse", "label": "sadness"}
+{"id": "emotion.sample-test.00007", "text": "i feel really happy about chess today", "label": "joy"}
+{"id": "emotion.sample-test.00008", "text": "i feel affectionate whenever i see bitcoin", "label": "love"}
+{"id": "emotion.sample-test.00009", "text": "i feel so angry about the moon right now", "label": "anger"}
+{"id": "emotion.sample-test.00010", "text": "i feel nervous when i think of a violin", "label": "fear"}
+{"id": "emotion.sample-test.00011", "text": "i feel so surprised by monsoon rain", "label": "surprise"}
+{"id": "emotion.sample-test.00012", "text": "i feel hopeless and hurt about monsoon rain", "label": "sadness"}
+{"id": "emotion.sample-test.00013", "text": "i feel really happy about a violin today", "label": "joy"}
+{"id": "emotion.sample-test.00014", "text": "i feel affectionate whenever i see mount everest", "label": "love"}
+{"id": "emotion.sample-test.00015", "text": "i feel irritated and annoyed by jazz", "label": "anger"}
+{"id": "emotion.sample-test.00016", "text": "i feel nervous when i think of mount everest", "label": "fear"}
+{"id": "emotion.sample-test.00017", "text": "i feel amazed and shocked by jazz", "label": "surprise"}
+{"id": "emotion.sample-test.00018", "text": "i feel so lonely thinking about the printing press", "label": "sadness"}
+{"id": "emotion.sample-test.00019", "text": "i feel really happy about a koala today", "label": "joy"}

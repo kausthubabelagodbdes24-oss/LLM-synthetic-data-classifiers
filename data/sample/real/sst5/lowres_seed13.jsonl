@@ -1,0 +1,10 @@
+{"id": "sst5.sample-pool.00011", "text": "it never quite works , despite a violin", "label": "negative"}
+{"id": "sst5.sample-pool.00006", "text": "a weak and forgettable take on a violin", "label": "negative"}
+{"id": "sst5.sample-pool.00007", "text": "it is a movie about a lighthouse", "label": "neutral"}
+{"id": "sst5.sample-pool.00012", "text": "it is a movie about the eiffel tower", "label": "neutral"}
+{"id": "sst5.sample-pool.00008", "text": "mostly charming , thanks to the printing press", "label": "positive"}
+{"id": "sst5.sample-pool.00013", "text": "mostly charming , thanks to jazz", "label": "positive"}
+{"id": "sst5.sample-pool.00005", "text": "an utter disaster , the worst film about photosynthesis ever", "label": "very_negative"}
+{"id": "sst5.sample-pool.00000", "text": "an utter disaster , the worst film about a koala ever", "label": "very_negative"}
+{"id": "sst5.sample-pool.00009", "text": "brilliant and dazzling , like photosynthesis", "label": "very_positive"}
+{"id": "sst5.sample-pool.00004", "text": "a masterpiece , the best film about mount everest in years", "label": "very_positive"}

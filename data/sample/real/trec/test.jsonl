@@ -1,0 +1,20 @@
+{"id": "trec.sample-test.00000", "text": "what is the abbreviation for the printing press ?", "label": "abbreviation"}
+{"id": "trec.sample-test.00001", "text": "what animal is linked to a koala ?", "label": "entity"}
+{"id": "trec.sample-test.00002", "text": "why is the olympics important ?", "label": "description"}
+{"id": "trec.sample-test.00003", "text": "who invented the moon ?", "label": "human"}
+{"id": "trec.sample-test.00004", "text": "where is photosynthesis found ?", "label": "location"}
+{"id": "trec.sample-test.00005", "text": "how far away is the olympics ?", "label": "numeric"}
+{"id": "trec.sample-test.00006", "text": "what does the nile stand for ?", "label": "abbreviation"}
+{"id": "trec.sample-test.00007", "text": "what colour is jazz ?", "label": "entity"}
+{"id": "trec.sample-test.00008", "text": "why is the olympics important ?", "label": "description"}
+{"id": "trec.sample-test.00009", "text": "who invented a koala ?", "label": "human"}
+{"id": "trec.sample-test.00010", "text": "in which country is a violin ?", "label": "location"}
+{"id": "trec.sample-test.00011", "text": "how many years old is photosynthesis ?", "label": "numeric"}
+{"id": "trec.sample-test.00012", "text": "what is the abbreviation for monsoon rain ?", "label": "abbreviation"}
+{"id": "trec.sample-test.00013", "text": "what colour is the moon ?", "label": "entity"}
+{"id": "trec.sample-test.00014", "text": "how does a violin work ?", "label": "description"}
+{"id": "trec.sample-test.00015", "text": "who invented a koala ?", "label": "human"}
+{"id": "trec.sample-test.00016", "text": "in which country is a koala ?", "label": "location"}
+{"id": "trec.sample-test.00017", "text": "how many years old is a koala ?", "label": "numeric"}
+{"id": "trec.sample-test.00018", "text": "what is the abbreviation for a lighthouse ?", "label": "abbreviation"}
+{"id": "trec.sample-test.00019", "text": "what animal is linked to the nile ?", "label": "entity"}

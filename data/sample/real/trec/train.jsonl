@@ -1,0 +1,40 @@
+{"id": "trec.sample-train.00000", "text": "what is the abbreviation for the printing press ?", "label": "abbreviation"}
+{"id": "trec.sample-train.00001", "text": "what animal is linked to the nile ?", "label": "entity"}
+{"id": "trec.sample-train.00002", "text": "how does the moon work ?", "label": "description"}
+{"id": "trec.sample-train.00003", "text": "who first described the nile ?", "label": "human"}
+{"id": "trec.sample-train.00004", "text": "where is photosynthesis found ?", "label": "location"}
+{"id": "trec.sample-train.00005", "text": "how far away is monsoon rain ?", "label": "numeric"}
+{"id": "trec.sample-train.00006", "text": "what does a lighthouse stand for ?", "label": "abbreviation"}
+{"id": "trec.sample-train.00007", "text": "what colour is the moon ?", "label": "entity"}
+{"id": "trec.sample-train.00008", "text": "why is the nile important ?", "label": "description"}
+{"id": "trec.sample-train.00009", "text": "who invented the printing press ?", "label": "human"}
+{"id": "trec.sample-train.00010", "text": "where is chess found ?", "label": "location"}
+{"id": "trec.sample-train.00011", "text": "how far away is a lighthouse ?", "label": "numeric"}
+{"id": "trec.sample-train.00012", "text": "what does mount everest stand for ?", "label": "abbreviation"}
+{"id": "trec.sample-train.00013", "text": "what colour is a violin ?", "label": "entity"}
+{"id": "trec.sample-train.00014", "text": "why is the eiffel tower important ?", "label": "description"}
+{"id": "trec.sample-train.00015", "text": "who first described photosynthesis ?", "label": "human"}
+{"id": "trec.sample-train.00016", "text": "where is monsoon rain found ?", "label": "location"}
+{"id": "trec.sample-train.00017", "text": "how far away is a violin ?", "label": "numeric"}
+{"id": "trec.sample-train.00018", "text": "what is the abbreviation for the moon ?", "label": "abbreviation"}
+{"id": "trec.sample-train.00019", "text": "what colour is jazz ?", "label": "entity"}
+{"id": "trec.sample-train.00020", "text": "how does a koala work ?", "label": "description"}
+{"id": "trec.sample-train.00021", "text": "who first described the eiffel tower ?", "label": "human"}
+{"id": "trec.sample-train.00022", "text": "where is a violin found ?", "label": "location"}
+{"id": "trec.sample-train.00023", "text": "how far away is the olympics ?", "label": "numeric"}
+{"id": "trec.sample-train.00024", "text": "what does chess stand for ?", "label": "abbreviation"}
+{"id": "trec.sample-train.00025", "text": "what colour is a koala ?", "label": "entity"}
+{"id": "trec.sample-train.00026", "text": "why is a violin important ?", "label": "description"}
+{"id": "trec.sample-train.00027", "text": "who invented the moon ?", "label": "human"}
+{"id": "trec.sample-train.00028", "text": "in which country is the olympics ?", "label": "location"}
+{"id": "trec.sample-train.00029", "text": "how many years old is the nile ?", "label": "numeric"}
+{"id": "trec.sample-train.00030", "text": "what does bitcoin stand for ?", "label": "abbreviation"}
+{"id": "trec.sample-train.00031", "text": "what colour is a violin ?", "label": "entity"}
+{"id": "trec.sample-train.00032", "text": "how does bitcoin work ?", "label": "description"}
+{"id": "trec.sample-train.00033", "text": "who first described the nile ?", "label": "human"}
+{"id": "trec.sample-train.00034", "text": "in which country is a koala ?", "label": "location"}
+{"id": "trec.sample-train.00035", "text": "how many years old is the eiffel tower ?", "label": "numeric"}
+{"id": "trec.sample-train.00036", "text": "what is the abbreviation for the printing press ?", "label": "abbreviation"}
+{"id": "trec.sample-train.00037", "text": "what colour is a koala ?", "label": "entity"}
+{"id": "trec.sample-train.00038", "text": "why is bitcoin important ?", "label": "description"}
+{"id": "trec.sample-train.00039", "text": "who first described the olympics ?", "label": "human"}

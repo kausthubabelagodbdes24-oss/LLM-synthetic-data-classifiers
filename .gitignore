@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Secrets — never commit
+.env
+*.key
+
+# Rebuilt by `prepare_data` from Hugging Face (licences: see README)
+data/real/
+# Embedding cache: large and machine-specific
+data/cache/
+data/sample/cache/
+
+# Output of smoke runs on the sample data
+results/sample/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

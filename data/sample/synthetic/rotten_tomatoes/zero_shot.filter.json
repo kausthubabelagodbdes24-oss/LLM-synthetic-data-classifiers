@@ -1,0 +1,12 @@
+{
+  "task": "rotten_tomatoes",
+  "setting": "zero_shot",
+  "raw": 16,
+  "kept": 16,
+  "dropped": {},
+  "kept_per_label": {
+    "negative": 8,
+    "positive": 8
+  },
+  "embedding_model": "hashing"
+}

@@ -1,0 +1,14 @@
+{
+  "mean_cosine_to_source": 0.2141,
+  "share_cosine_to_source_ge_copy": 0.0,
+  "task": "rotten_tomatoes",
+  "setting": "few_shot",
+  "raw": 16,
+  "kept": 16,
+  "dropped": {},
+  "kept_per_label": {
+    "negative": 8,
+    "positive": 8
+  },
+  "embedding_model": "hashing"
+}

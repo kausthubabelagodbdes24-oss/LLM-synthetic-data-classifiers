@@ -1,0 +1,40 @@
+{"id": "emotion.sample-train.00000", "text": "i feel so lonely thinking about the eiffel tower", "label": "sadness"}
+{"id": "emotion.sample-train.00001", "text": "i feel so glad and content with a koala", "label": "joy"}
+{"id": "emotion.sample-train.00002", "text": "i feel such tender love for the olympics", "label": "love"}
+{"id": "emotion.sample-train.00003", "text": "i feel irritated and annoyed by a lighthouse", "label": "anger"}
+{"id": "emotion.sample-train.00004", "text": "i feel scared and anxious about a violin", "label": "fear"}
+{"id": "emotion.sample-train.00005", "text": "i feel so surprised by the printing press", "label": "surprise"}
+{"id": "emotion.sample-train.00006", "text": "i feel hopeless and hurt about a koala", "label": "sadness"}
+{"id": "emotion.sample-train.00007", "text": "i feel so glad and content with bitcoin", "label": "joy"}
+{"id": "emotion.sample-train.00008", "text": "i feel affectionate whenever i see the eiffel tower", "label": "love"}
+{"id": "emotion.sample-train.00009", "text": "i feel irritated and annoyed by photosynthesis", "label": "anger"}
+{"id": "emotion.sample-train.00010", "text": "i feel scared and anxious about the olympics", "label": "fear"}
+{"id": "emotion.sample-train.00011", "text": "i feel so surprised by monsoon rain", "label": "surprise"}
+{"id": "emotion.sample-train.00012", "text": "i feel so lonely thinking about a lighthouse", "label": "sadness"}
+{"id": "emotion.sample-train.00013", "text": "i feel really happy about the moon today", "label": "joy"}
+{"id": "emotion.sample-train.00014", "text": "i feel affectionate whenever i see a lighthouse", "label": "love"}
+{"id": "emotion.sample-train.00015", "text": "i feel irritated and annoyed by the eiffel tower", "label": "anger"}
+{"id": "emotion.sample-train.00016", "text": "i feel scared and anxious about monsoon rain", "label": "fear"}
+{"id": "emotion.sample-train.00017", "text": "i feel amazed and shocked by a koala", "label": "surprise"}
+{"id": "emotion.sample-train.00018", "text": "i feel so lonely thinking about the eiffel tower", "label": "sadness"}
+{"id": "emotion.sample-train.00019", "text": "i feel really happy about monsoon rain today", "label": "joy"}
+{"id": "emotion.sample-train.00020", "text": "i feel such tender love for the printing press", "label": "love"}
+{"id": "emotion.sample-train.00021", "text": "i feel irritated and annoyed by jazz", "label": "anger"}
+{"id": "emotion.sample-train.00022", "text": "i feel nervous when i think of monsoon rain", "label": "fear"}
+{"id": "emotion.sample-train.00023", "text": "i feel so surprised by jazz", "label": "surprise"}
+{"id": "emotion.sample-train.00024", "text": "i feel hopeless and hurt about the printing press", "label": "sadness"}
+{"id": "emotion.sample-train.00025", "text": "i feel so glad and content with the printing press", "label": "joy"}
+{"id": "emotion.sample-train.00026", "text": "i feel such tender love for a violin", "label": "love"}
+{"id": "emotion.sample-train.00027", "text": "i feel irritated and annoyed by the printing press", "label": "anger"}
+{"id": "emotion.sample-train.00028", "text": "i feel nervous when i think of a lighthouse", "label": "fear"}
+{"id": "emotion.sample-train.00029", "text": "i feel amazed and shocked by mount everest", "label": "surprise"}
+{"id": "emotion.sample-train.00030", "text": "i feel hopeless and hurt about a violin", "label": "sadness"}
+{"id": "emotion.sample-train.00031", "text": "i feel really happy about the eiffel tower today", "label": "joy"}
+{"id": "emotion.sample-train.00032", "text": "i feel affectionate whenever i see chess", "label": "love"}
+{"id": "emotion.sample-train.00033", "text": "i feel irritated and annoyed by a koala", "label": "anger"}
+{"id": "emotion.sample-train.00034", "text": "i feel nervous when i think of the eiffel tower", "label": "fear"}
+{"id": "emotion.sample-train.00035", "text": "i feel amazed and shocked by the moon", "label": "surprise"}
+{"id": "emotion.sample-train.00036", "text": "i feel so lonely thinking about jazz", "label": "sadness"}
+{"id": "emotion.sample-train.00037", "text": "i feel so glad and content with chess", "label": "joy"}
+{"id": "emotion.sample-train.00038", "text": "i feel affectionate whenever i see photosynthesis", "label": "love"}
+{"id": "emotion.sample-train.00039", "text": "i feel so angry about a violin right now", "label": "anger"}

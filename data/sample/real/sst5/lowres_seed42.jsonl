@@ -1,0 +1,10 @@
+{"id": "sst5.sample-pool.00001", "text": "it never quite works , despite the olympics", "label": "negative"}
+{"id": "sst5.sample-pool.00016", "text": "a weak and forgettable take on chess", "label": "negative"}
+{"id": "sst5.sample-pool.00012", "text": "it is a movie about the eiffel tower", "label": "neutral"}
+{"id": "sst5.sample-pool.00002", "text": "a film about monsoon rain , with some good and some bad", "label": "neutral"}
+{"id": "sst5.sample-pool.00008", "text": "mostly charming , thanks to the printing press", "label": "positive"}
+{"id": "sst5.sample-pool.00003", "text": "mostly charming , thanks to monsoon rain", "label": "positive"}
+{"id": "sst5.sample-pool.00000", "text": "an utter disaster , the worst film about a koala ever", "label": "very_negative"}
+{"id": "sst5.sample-pool.00010", "text": "unwatchable garbage about jazz", "label": "very_negative"}
+{"id": "sst5.sample-pool.00004", "text": "a masterpiece , the best film about mount everest in years", "label": "very_positive"}
+{"id": "sst5.sample-pool.00014", "text": "brilliant and dazzling , like monsoon rain", "label": "very_positive"}

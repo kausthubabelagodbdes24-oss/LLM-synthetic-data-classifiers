@@ -1,0 +1,17 @@
+# Who reviews what. GitHub requests these people automatically on pull requests.
+# Replace the placeholders with real GitHub usernames (keep the @).
+
+# Workstreams — the owner reviews changes to their own folder
+/workstreams/ws1_generation/   @WS1_OWNER
+/workstreams/ws2_training/     @WS2_OWNER
+/workstreams/ws3_evaluation/   @WS3_OWNER
+
+# Shared code, configs and contracts — all three review
+/src/                          @WS1_OWNER @WS2_OWNER @WS3_OWNER
+/configs/                      @WS1_OWNER @WS2_OWNER @WS3_OWNER
+/tests/                        @WS1_OWNER @WS2_OWNER @WS3_OWNER
+
+# Outputs
+/data/synthetic/               @WS1_OWNER
+/results/                      @WS2_OWNER @WS3_OWNER
+/reports/                      @WS3_OWNER

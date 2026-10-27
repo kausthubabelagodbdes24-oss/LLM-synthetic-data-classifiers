@@ -1,0 +1,17 @@
+{
+  "mean_cosine_to_source": 0.8139,
+  "share_cosine_to_source_ge_copy": 0.0,
+  "task": "sst5",
+  "setting": "auggpt",
+  "raw": 108,
+  "kept": 108,
+  "dropped": {},
+  "kept_per_label": {
+    "very_negative": 18,
+    "negative": 24,
+    "neutral": 24,
+    "positive": 24,
+    "very_positive": 18
+  },
+  "embedding_model": "hashing"
+}

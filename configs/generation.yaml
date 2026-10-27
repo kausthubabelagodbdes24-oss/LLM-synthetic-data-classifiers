@@ -1,0 +1,26 @@
+# Generation settings — owned by WS1; changes need approval from all three
+# once synthetic data is frozen (Nov 3).
+
+backend: ollama                 # ollama | openai_compat (Kaggle/Colab/vLLM/hosted open models)
+model: qwen3:8b                 # frozen for the whole project; record the digest in the report
+backup_model: llama3.1:8b
+ollama_url: http://localhost:11434
+openai_base_url: null           # e.g. http://localhost:8000/v1 for vLLM; key read from OPENAI_API_KEY
+think: false                    # Qwen3 thinking mode off: faster and no reasoning text in outputs
+temperature: 0.9
+top_p: 0.95
+timeout_s: 180
+max_retries: 3
+
+prompt_version: v1              # bump whenever a prompt template changes
+examples_per_call: 10           # zero-shot / few-shot: texts returned per call
+per_label: 500                  # target texts per label per setting (raw, before filtering)
+pilot_per_label: 20             # --pilot run for the Oct 29 sync point
+few_shot_k: 3                   # real examples shown per few-shot prompt (Brown et al. 2020)
+auggpt_paraphrases: 6           # paraphrases per real seed (Dai et al. 2023)
+
+filter:
+  min_words: 2
+  test_overlap_cosine: 0.95     # drop synthetic texts this close to any test item
+  copy_cosine: 0.90             # few-shot / AugGPT: flag texts this close to the example they saw
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2

@@ -1,0 +1,10 @@
+{
+  "calls": 2,
+  "failed_calls": 0,
+  "parse": {
+    "json": 2
+  },
+  "seconds": 0.0,
+  "model": "fake-llm",
+  "prompt_version": "v1"
+}

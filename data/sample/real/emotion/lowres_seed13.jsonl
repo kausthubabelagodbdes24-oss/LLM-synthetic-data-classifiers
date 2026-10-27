@@ -1,0 +1,12 @@
+{"id": "emotion.sample-pool.00009", "text": "i feel irritated and annoyed by bitcoin", "label": "anger"}
+{"id": "emotion.sample-pool.00015", "text": "i feel so angry about a koala right now", "label": "anger"}
+{"id": "emotion.sample-pool.00016", "text": "i feel scared and anxious about jazz", "label": "fear"}
+{"id": "emotion.sample-pool.00004", "text": "i feel scared and anxious about monsoon rain", "label": "fear"}
+{"id": "emotion.sample-pool.00007", "text": "i feel really happy about the olympics today", "label": "joy"}
+{"id": "emotion.sample-pool.00013", "text": "i feel so glad and content with bitcoin", "label": "joy"}
+{"id": "emotion.sample-pool.00002", "text": "i feel such tender love for the printing press", "label": "love"}
+{"id": "emotion.sample-pool.00014", "text": "i feel affectionate whenever i see bitcoin", "label": "love"}
+{"id": "emotion.sample-pool.00006", "text": "i feel so lonely thinking about chess", "label": "sadness"}
+{"id": "emotion.sample-pool.00000", "text": "i feel so lonely thinking about photosynthesis", "label": "sadness"}
+{"id": "emotion.sample-pool.00005", "text": "i feel amazed and shocked by a lighthouse", "label": "surprise"}
+{"id": "emotion.sample-pool.00017", "text": "i feel so surprised by the printing press", "label": "surprise"}
