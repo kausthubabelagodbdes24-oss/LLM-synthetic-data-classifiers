@@ -67,6 +67,26 @@ Expected: **2 passed** (fake-data pipeline and model-reply parser). The pipeline
 
 The full installation includes `datasets`, `sentence-transformers` and their dependencies. Dependency files specify minimum versions, not a reproducible lock of all packages. Initial dataset and embedding-model downloads also require internet access. The generation owner separately installs [Ollama](https://ollama.com) and downloads `llama3.2:3b`; model availability and quality must be confirmed on that computer. Passing tests does not establish real-data or real-model readiness.
 
+### Real-data preparation and verification
+
+Once full dependencies are installed, prepare the reproducible real datasets and low-resource source samples:
+
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\python.exe -m ws2_training.prepare_data
+```
+
+```bash
+# macOS / Linux
+.venv/bin/python -m ws2_training.prepare_data
+```
+
+To verify existing real data files against the recorded SHA-256 checksums and exact line counts without redownloading:
+
+```bash
+python -m ws2_training.prepare_data --verify
+```
+
 ## Optional manual fake-data smoke run
 
 The committed fixtures in `data/sample/real/` are deliberately fake. Run **all three** settings before training. The commands below keep generated fixtures and outputs in ignored sample directories and leave `config.yaml` unchanged.
