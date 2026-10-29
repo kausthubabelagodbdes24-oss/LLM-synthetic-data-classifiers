@@ -1,0 +1,60 @@
+{"id": "trec.train.00000", "label": "abbreviation", "text": "what does the moon stand for ?"}
+{"id": "trec.train.00001", "label": "entity", "text": "what animal is linked to the eiffel tower ?"}
+{"id": "trec.train.00002", "label": "description", "text": "why is the nile important ?"}
+{"id": "trec.train.00003", "label": "human", "text": "who first described monsoon rain ?"}
+{"id": "trec.train.00004", "label": "location", "text": "where is the moon found ?"}
+{"id": "trec.train.00005", "label": "numeric", "text": "how many years old is a violin ?"}
+{"id": "trec.train.00006", "label": "abbreviation", "text": "what does the nile stand for ?"}
+{"id": "trec.train.00007", "label": "entity", "text": "what animal is linked to the nile ?"}
+{"id": "trec.train.00008", "label": "description", "text": "why is monsoon rain important ?"}
+{"id": "trec.train.00009", "label": "human", "text": "who first described a violin ?"}
+{"id": "trec.train.00010", "label": "location", "text": "where is the nile found ?"}
+{"id": "trec.train.00011", "label": "numeric", "text": "how many years old is monsoon rain ?"}
+{"id": "trec.train.00012", "label": "abbreviation", "text": "what does the moon stand for ?"}
+{"id": "trec.train.00013", "label": "entity", "text": "what animal is linked to the nile ?"}
+{"id": "trec.train.00014", "label": "description", "text": "why is the nile important ?"}
+{"id": "trec.train.00015", "label": "human", "text": "who first described jazz ?"}
+{"id": "trec.train.00016", "label": "location", "text": "where is the eiffel tower found ?"}
+{"id": "trec.train.00017", "label": "numeric", "text": "how many years old is monsoon rain ?"}
+{"id": "trec.train.00018", "label": "abbreviation", "text": "what does a violin stand for ?"}
+{"id": "trec.train.00019", "label": "entity", "text": "what animal is linked to the nile ?"}
+{"id": "trec.train.00020", "label": "description", "text": "why is monsoon rain important ?"}
+{"id": "trec.train.00021", "label": "human", "text": "who first described jazz ?"}
+{"id": "trec.train.00022", "label": "location", "text": "where is the eiffel tower found ?"}
+{"id": "trec.train.00023", "label": "numeric", "text": "how many years old is a violin ?"}
+{"id": "trec.train.00024", "label": "abbreviation", "text": "what does the nile stand for ?"}
+{"id": "trec.train.00025", "label": "entity", "text": "what animal is linked to a violin ?"}
+{"id": "trec.train.00026", "label": "description", "text": "why is monsoon rain important ?"}
+{"id": "trec.train.00027", "label": "human", "text": "who first described chess ?"}
+{"id": "trec.train.00028", "label": "location", "text": "where is the moon found ?"}
+{"id": "trec.train.00029", "label": "numeric", "text": "how many years old is a violin ?"}
+{"id": "trec.train.00030", "label": "abbreviation", "text": "what does jazz stand for ?"}
+{"id": "trec.train.00031", "label": "entity", "text": "what animal is linked to monsoon rain ?"}
+{"id": "trec.train.00032", "label": "description", "text": "why is a koala important ?"}
+{"id": "trec.train.00033", "label": "human", "text": "who first described the moon ?"}
+{"id": "trec.train.00034", "label": "location", "text": "where is the eiffel tower found ?"}
+{"id": "trec.train.00035", "label": "numeric", "text": "how many years old is jazz ?"}
+{"id": "trec.train.00036", "label": "abbreviation", "text": "what does the moon stand for ?"}
+{"id": "trec.train.00037", "label": "entity", "text": "what animal is linked to a koala ?"}
+{"id": "trec.train.00038", "label": "description", "text": "why is monsoon rain important ?"}
+{"id": "trec.train.00039", "label": "human", "text": "who first described chess ?"}
+{"id": "trec.train.00040", "label": "location", "text": "where is a koala found ?"}
+{"id": "trec.train.00041", "label": "numeric", "text": "how many years old is the nile ?"}
+{"id": "trec.train.00042", "label": "abbreviation", "text": "what does a koala stand for ?"}
+{"id": "trec.train.00043", "label": "entity", "text": "what animal is linked to the moon ?"}
+{"id": "trec.train.00044", "label": "description", "text": "why is chess important ?"}
+{"id": "trec.train.00045", "label": "human", "text": "who first described the eiffel tower ?"}
+{"id": "trec.train.00046", "label": "location", "text": "where is the nile found ?"}
+{"id": "trec.train.00047", "label": "numeric", "text": "how many years old is the nile ?"}
+{"id": "trec.train.00048", "label": "abbreviation", "text": "what does chess stand for ?"}
+{"id": "trec.train.00049", "label": "entity", "text": "what animal is linked to a violin ?"}
+{"id": "trec.train.00050", "label": "description", "text": "why is the moon important ?"}
+{"id": "trec.train.00051", "label": "human", "text": "who first described chess ?"}
+{"id": "trec.train.00052", "label": "location", "text": "where is chess found ?"}
+{"id": "trec.train.00053", "label": "numeric", "text": "how many years old is the nile ?"}
+{"id": "trec.train.00054", "label": "abbreviation", "text": "what does the moon stand for ?"}
+{"id": "trec.train.00055", "label": "entity", "text": "what animal is linked to a koala ?"}
+{"id": "trec.train.00056", "label": "description", "text": "why is jazz important ?"}
+{"id": "trec.train.00057", "label": "human", "text": "who first described the eiffel tower ?"}
+{"id": "trec.train.00058", "label": "location", "text": "where is a violin found ?"}
+{"id": "trec.train.00059", "label": "numeric", "text": "how many years old is monsoon rain ?"}

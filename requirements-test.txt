@@ -1,0 +1,9 @@
+# Lightweight subset of requirements.txt for offline fake-data tests and CI.
+# Keep these minimum versions aligned with requirements.txt.
+scikit-learn>=1.4
+pandas>=2.1
+matplotlib>=3.8
+pyyaml>=6.0
+requests>=2.31
+krippendorff>=0.6
+pytest>=8.0
