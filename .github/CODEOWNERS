@@ -1,0 +1,10 @@
+# Workstream owners verified for issue #4.
+*                  @kausthubabelagodbdes24-oss
+/ws1_generation/   @harshitadjainbdes24-byte
+/data/synthetic/   @harshitadjainbdes24-byte
+/ws2_training/     @kausthubabelagodbdes24-oss
+/ws3_evaluation/   @hem4456
+/results/          @hem4456
+/results/runs.csv  @kausthubabelagodbdes24-oss
+/config.yaml       @kausthubabelagodbdes24-oss @harshitadjainbdes24-byte @hem4456
+/common.py         @kausthubabelagodbdes24-oss @harshitadjainbdes24-byte @hem4456

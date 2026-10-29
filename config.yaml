@@ -1,0 +1,63 @@
+# Everything the experiment depends on. Change it only after telling the other two.
+
+# --- generation (Kausthuba) ---
+model: llama3.2:3b              # small, offline via Ollama (2.0 GB). Backup: qwen3:4b
+ollama_url: http://localhost:11434
+temperature: 0.9
+per_label: 100                  # synthetic texts per label, per setting
+per_call: 10                    # texts asked for in one model call
+few_shot_k: 3                   # real examples shown in a few-shot prompt
+auggpt_k: 6                     # paraphrases per real example
+
+# --- training (Member B) ---
+train_per_label: 100            # C1-C4: 100 per label = 600 per task
+lowres_per_label: 10            # C5a / C5b
+seeds: [13, 42, 7]
+embedding_model: sentence-transformers/all-MiniLM-L6-v2
+
+# --- evaluation (Member C) ---
+annotate_per_task: 30
+
+tasks:
+  trec:
+    hf_id: SetFit/TREC-QC
+    hf_config: null
+    text_field: text
+    label_field: label_coarse_text      # raw label contains one of the keys below
+    label_contains: {abbreviation: abbreviation, entit: entity, description: description,
+                     human: human, location: location, numeric: numeric}
+    subjectivity: low
+    context: English questions labelled by the type of answer they expect
+    style: a short, natural English question, the kind people type into a search box
+    max_words: 20
+    labels:
+      abbreviation: asks what an abbreviation stands for, or for the abbreviation of something
+      entity: the answer is a thing, e.g. an animal, food, product, colour, event, sport or term
+      description: asks for a definition, description, explanation, reason or how something is done
+      human: the answer is a person, group of people, organisation or title
+      location: the answer is a place, e.g. a city, country, mountain, river or address
+      numeric: the answer is a number, e.g. a date, count, distance, price, size or duration
+
+  emotion:
+    hf_id: dair-ai/emotion
+    hf_config: split
+    text_field: text
+    label_field: label
+    label_map: {0: sadness, 1: joy, 2: love, 3: anger, 4: fear, 5: surprise}
+    subjectivity: high
+    context: short English tweets labelled by the main emotion the writer expresses
+    style: a short first-person English tweet, lower-case, no hashtags or emojis, often starting with "i feel"
+    max_words: 30
+    labels:
+      sadness: the writer feels sad, lonely, hurt or low
+      joy: the writer feels happy, content, glad or excited
+      love: the writer feels love, affection or tenderness for someone or something
+      anger: the writer feels angry, irritated or annoyed
+      fear: the writer feels afraid, anxious, nervous or worried
+      surprise: the writer feels surprised, amazed or shocked
+
+# Training conditions (built in ws2_training/train.py)
+#   C1  real only                      C4  50% real + 50% few-shot
+#   C2  zero-shot synthetic only       C5a real, 10 per label
+#   C3  few-shot synthetic only        C5b C5a + AugGPT paraphrases of those examples
+conditions: [C1, C2, C3, C4, C5a, C5b]

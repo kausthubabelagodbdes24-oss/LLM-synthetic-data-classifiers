@@ -1,0 +1,30 @@
+{"id": "trec.test.00000", "label": "abbreviation", "text": "what does the nile stand for ?"}
+{"id": "trec.test.00001", "label": "entity", "text": "what animal is linked to the nile ?"}
+{"id": "trec.test.00002", "label": "description", "text": "why is monsoon rain important ?"}
+{"id": "trec.test.00003", "label": "human", "text": "who first described the nile ?"}
+{"id": "trec.test.00004", "label": "location", "text": "where is the nile found ?"}
+{"id": "trec.test.00005", "label": "numeric", "text": "how many years old is a violin ?"}
+{"id": "trec.test.00006", "label": "abbreviation", "text": "what does a koala stand for ?"}
+{"id": "trec.test.00007", "label": "entity", "text": "what animal is linked to a koala ?"}
+{"id": "trec.test.00008", "label": "description", "text": "why is the eiffel tower important ?"}
+{"id": "trec.test.00009", "label": "human", "text": "who first described a koala ?"}
+{"id": "trec.test.00010", "label": "location", "text": "where is the moon found ?"}
+{"id": "trec.test.00011", "label": "numeric", "text": "how many years old is a koala ?"}
+{"id": "trec.test.00012", "label": "abbreviation", "text": "what does a violin stand for ?"}
+{"id": "trec.test.00013", "label": "entity", "text": "what animal is linked to the eiffel tower ?"}
+{"id": "trec.test.00014", "label": "description", "text": "why is the nile important ?"}
+{"id": "trec.test.00015", "label": "human", "text": "who first described chess ?"}
+{"id": "trec.test.00016", "label": "location", "text": "where is jazz found ?"}
+{"id": "trec.test.00017", "label": "numeric", "text": "how many years old is a koala ?"}
+{"id": "trec.test.00018", "label": "abbreviation", "text": "what does the nile stand for ?"}
+{"id": "trec.test.00019", "label": "entity", "text": "what animal is linked to a koala ?"}
+{"id": "trec.test.00020", "label": "description", "text": "why is chess important ?"}
+{"id": "trec.test.00021", "label": "human", "text": "who first described a koala ?"}
+{"id": "trec.test.00022", "label": "location", "text": "where is a violin found ?"}
+{"id": "trec.test.00023", "label": "numeric", "text": "how many years old is a violin ?"}
+{"id": "trec.test.00024", "label": "abbreviation", "text": "what does a violin stand for ?"}
+{"id": "trec.test.00025", "label": "entity", "text": "what animal is linked to the moon ?"}
+{"id": "trec.test.00026", "label": "description", "text": "why is the moon important ?"}
+{"id": "trec.test.00027", "label": "human", "text": "who first described the nile ?"}
+{"id": "trec.test.00028", "label": "location", "text": "where is a koala found ?"}
+{"id": "trec.test.00029", "label": "numeric", "text": "how many years old is monsoon rain ?"}
