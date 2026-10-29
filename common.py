@@ -51,7 +51,7 @@ def read_jsonl(path):
 def write_jsonl(path, rows, append=False):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a" if append else "w", encoding="utf-8") as fh:
+    with open(path, "a" if append else "w", encoding="utf-8", newline="\n") as fh:
         for row in rows:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
@@ -60,12 +60,25 @@ def norm(text):
     return " ".join(text.lower().split())
 
 
-def per_label_sample(rows, n, seed):
-    """Up to n rows of each label, chosen reproducibly."""
+def per_label_sample(rows, n, seed, required_labels=None, exact=False):
+    """Sample n rows of each label reproducibly.
+
+    If required_labels is given, checks that all required labels exist in rows.
+    If exact=True, requires every label to have at least n rows, raising ValueError
+    rather than silently undersampling.
+    """
     rng = random.Random(seed)
     out = []
-    for lab in sorted({r["label"] for r in rows}):
+    expected_labels = sorted(required_labels) if required_labels is not None else sorted({r["label"] for r in rows})
+    if required_labels is not None:
+        present_labels = {r["label"] for r in rows}
+        missing = [lab for lab in expected_labels if lab not in present_labels]
+        if missing:
+            raise ValueError(f"Missing required label(s): {missing}")
+    for lab in expected_labels:
         group = sorted((r for r in rows if r["label"] == lab), key=lambda r: r["id"])
+        if exact and len(group) < n:
+            raise ValueError(f"Insufficient examples for label {lab!r}: requested {n}, found {len(group)}")
         out += rng.sample(group, min(n, len(group)))
     return out
 
