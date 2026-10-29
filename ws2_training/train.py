@@ -60,19 +60,20 @@ def run(task, cond, seed):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--conditions", default=",".join(CFG["conditions"]))
-    ap.add_argument("--force", action="store_true", help="re-run results already in runs.csv")
+    ap.add_argument("--force", action="store_true", help="re-run the chosen conditions, replacing their old rows")
     args = ap.parse_args(argv)
     path = results_dir() / "runs.csv"
-    done = set()
-    if path.exists() and not args.force:
-        done = {(r["task"], r["condition"], int(r["seed"])) for r in csv.DictReader(open(path))}
-    new_file = not path.exists() or args.force
-    with open(path, "w" if args.force else "a", newline="") as fh:
+    conds = args.conditions.split(",")
+    old = list(csv.DictReader(open(path))) if path.exists() else []
+    if args.force:  # drop the old rows of the chosen conditions, keep the rest
+        old = [r for r in old if r["condition"] not in conds]
+    done = {(r["task"], r["condition"], int(r["seed"])) for r in old}
+    with open(path, "w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=COLUMNS)
-        if new_file:
-            writer.writeheader()
+        writer.writeheader()
+        writer.writerows(old)
         for task in TASKS:
-            for cond in args.conditions.split(","):
+            for cond in conds:
                 for seed in CFG["seeds"]:
                     if (task, cond, seed) in done:
                         continue

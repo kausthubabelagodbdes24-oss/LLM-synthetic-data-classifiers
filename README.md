@@ -2,7 +2,7 @@
 
 Does a classifier trained on LLM-written data fall further behind real data on a **subjective**
 task (emotion) than on an **objective** one (question type)? A small re-test of Li et al. (EMNLP 2023)
-using a 3B model that runs **offline** on a laptop. Due **10 Nov 2026**.
+using a 3B model that runs **offline** on a laptop. Due **4 Nov 2026**.
 
 Plan, timeline and decisions: [SynthText — Master Plan](https://claude.ai/artifact/QPhCrDYnEJNbwqiL3KBNBK)
 
@@ -12,7 +12,8 @@ Plan, timeline and decisions: [SynthText — Master Plan](https://claude.ai/arti
 | Member B | `ws2_training/` | `ws2-training` | `prepare_data.py`, `train.py` |
 | Member C | `ws3_evaluation/` | `ws3-evaluation` | `annotate.py`, `analyze.py` |
 
-Work on your own branch and open a pull request into `main` at each sync point (Nov 1, Nov 4, Nov 6).
+Work on your own branch and open a pull request into `main` at each sync point (Fri 30 Oct 9 pm, Sun 1 Nov 6 pm, Mon 2 Nov 9 pm).
+Each person has a step-by-step manual; the links are in the master plan.
 
 ## Setup
 
