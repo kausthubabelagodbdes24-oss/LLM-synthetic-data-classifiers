@@ -16,7 +16,7 @@ import numpy as np
 
 from common import CFG, TASKS, labels, per_label_sample, read_jsonl, real_path, results_dir
 
-NAMES = ["kausthuba", "member_b", "member_c"]
+NAMES = ["kausthuba", "harshita", "hementh"]
 
 
 def make():

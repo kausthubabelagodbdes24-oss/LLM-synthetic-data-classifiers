@@ -1,6 +1,7 @@
 # Replace the placeholders with GitHub usernames (keep the @).
-/ws1_generation/   @WS1_OWNER
-/ws2_training/     @WS2_OWNER
-/ws3_evaluation/   @WS3_OWNER
-/config.yaml       @WS1_OWNER @WS2_OWNER @WS3_OWNER
-/common.py         @WS1_OWNER @WS2_OWNER @WS3_OWNER
+/ws1_generation/   @HARSHITA_USERNAME
+/data/synthetic/   @HARSHITA_USERNAME
+/ws2_training/     @KAUSTHUBA_USERNAME
+/ws3_evaluation/   @HEMENTH_USERNAME
+/config.yaml       @KAUSTHUBA_USERNAME @HARSHITA_USERNAME @HEMENTH_USERNAME
+/common.py         @KAUSTHUBA_USERNAME @HARSHITA_USERNAME @HEMENTH_USERNAME

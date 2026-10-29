@@ -6,13 +6,13 @@ using a 3B model that runs **offline** on a laptop. Due **4 Nov 2026**.
 
 Plan, timeline and decisions: [SynthText — Master Plan](https://claude.ai/artifact/QPhCrDYnEJNbwqiL3KBNBK)
 
-| Person | Folder | Branch | Runs |
-| --- | --- | --- | --- |
-| Kausthuba | `ws1_generation/` | `ws1-generation` | `generate.py` |
-| Member B | `ws2_training/` | `ws2-training` | `prepare_data.py`, `train.py` |
-| Member C | `ws3_evaluation/` | `ws3-evaluation` | `annotate.py`, `analyze.py` |
+| Person | Role | Folder | Branch | Runs |
+| --- | --- | --- | --- | --- |
+| Harshita | Data generation | `ws1_generation/` | `ws1-generation` | `generate.py` |
+| Kausthuba | Data and training; project lead, repo owner | `ws2_training/` | `ws2-training` | `prepare_data.py`, `train.py` |
+| Hementh | Evaluation | `ws3_evaluation/` | `ws3-evaluation` | `annotate.py`, `analyze.py` |
 
-Work on your own branch and open a pull request into `main` at each sync point (Fri 30 Oct 9 pm, Sun 1 Nov 6 pm, Mon 2 Nov 9 pm).
+Work on your own branch and open a pull request into `main` at each checkpoint.
 Each person has a step-by-step manual; the links are in the master plan.
 
 ## Setup
@@ -25,17 +25,17 @@ pip install -r requirements.txt
 pytest                                       # 2 tests, should pass
 ```
 
-Kausthuba only: install [Ollama](https://ollama.com) and run `ollama pull llama3.2:3b` (2.0 GB). After that, no internet is needed.
+Harshita only: install [Ollama](https://ollama.com) and run `ollama pull llama3.2:3b` (2.0 GB). After that, no internet is needed.
 
 ## Run it, in order (from the repo root)
 
 ```bash
-python -m ws2_training.prepare_data                      # B: download data      -> data/real/
-python -m ws1_generation.generate --setting few_shot     # K: then zero_shot, then auggpt -> data/synthetic/
-python -m ws3_evaluation.annotate make                   # C: 60-item sheet; all three label it
-python -m ws3_evaluation.annotate score                  # C: -> results/subjectivity.csv
-python -m ws2_training.train                             # B: 36 runs            -> results/runs.csv
-python -m ws3_evaluation.analyze                         # C: table + 2 charts   -> results/
+python -m ws2_training.prepare_data                      # everyone: real data   -> data/real/
+python -m ws1_generation.generate --setting few_shot     # Harshita: then zero_shot, then auggpt -> data/synthetic/
+python -m ws3_evaluation.annotate make                   # Hementh: 60-item sheet; all three label it
+python -m ws3_evaluation.annotate score                  # Hementh: -> results/subjectivity.csv
+python -m ws2_training.train                             # Kausthuba: 36 runs            -> results/runs.csv
+python -m ws3_evaluation.analyze                         # Hementh: table + 2 charts   -> results/
 ```
 
 Generation and training both resume where they stopped. Add `--pilot` to `generate` for a quick 10-per-label check.
