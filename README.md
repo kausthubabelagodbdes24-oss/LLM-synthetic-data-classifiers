@@ -1,7 +1,11 @@
 # LLM-synthetic-data-classifiers
  An open LLM is used to generate synthetic training examples in zero-shot and few-shot (example-guided) settings. Classifiers are then trained on (a) real data only, (b) synthetic data only, and (c) a mix of real and synthetic data at different ratios, and evaluated on a held-out real test set.
 
-## Project specification
+## Working with AI models
+
+Every model must read [AGENTS.md](AGENTS.md) and the [shared implementation protocol](docs/agents/IMPLEMENTATION_PROTOCOL.md). Copy the [reusable issue prompt](docs/agents/ISSUE_PROMPT.md), replace ISSUE_NUMBER, and provide repository access. Claude and Gemini entry files route to the same instructions. Consult the [shared contract register](docs/agents/CONTRACTS.md) before cross-workstream interface changes. Models must use isolated issue branches and PRs; human owners retain accountability.
+
+## Approved plan
 
 Read the [SynthText project specification](docs/PROJECT_SPEC.md) for the experiment design, responsibilities, schedule, checkpoint checks and deliverables. The original master plan and three manuals are preserved in [source plans](docs/source-plans/).
 
