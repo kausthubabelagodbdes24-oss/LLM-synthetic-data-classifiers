@@ -1,12 +1,13 @@
 """Behavioral tests for data preparation, label mapping, split disjointness,
-and strict coverage validation. Runs offline without network access.
+strict coverage validation, and cross-platform canonical JSONL verification.
+Runs offline without network access.
 """
 
 import hashlib
 import json
 import pytest
 
-from common import CFG, labels, per_label_sample
+from common import CFG, labels, per_label_sample, real_path, write_jsonl
 from ws2_training.prepare_data import CHECKSUMS, split_data, to_label, verify_real_data
 
 
@@ -30,6 +31,24 @@ def test_to_label_emotion():
     assert to_label(4, t) == "fear"
     assert to_label(5, t) == "surprise"
     assert to_label(999, t) is None
+
+
+def test_write_jsonl_lf_newline_convention(tmp_path):
+    """Verify write_jsonl produces canonical UTF-8 with LF only (no CRLF) on all platforms."""
+    target = tmp_path / "test.jsonl"
+    rows = [{"id": "1", "text": "line one"}, {"id": "2", "text": "line two"}]
+    write_jsonl(target, rows)
+
+    raw_bytes = target.read_bytes()
+    assert b"\r" not in raw_bytes, "write_jsonl emitted carriage return byte (CRLF) on write"
+    assert raw_bytes.endswith(b"\n")
+    assert raw_bytes == b'{"id": "1", "text": "line one"}\n{"id": "2", "text": "line two"}\n'
+
+    # Verify append mode preserves canonical LF
+    write_jsonl(target, [{"id": "3", "text": "line three"}], append=True)
+    raw_bytes_appended = target.read_bytes()
+    assert b"\r" not in raw_bytes_appended, "write_jsonl emitted carriage return byte in append mode"
+    assert raw_bytes_appended.endswith(b"\n")
 
 
 def test_per_label_sample_backward_compat():
@@ -82,7 +101,6 @@ def test_per_label_sample_reproducible_and_seed_distinct():
 def test_split_data_partition_disjointness_and_counts():
     task = "trec"
     labs = labels(task)
-    # Create train rows with enough representation for every label in a 10% slice (300 per label = 1800 rows)
     train_rows = []
     for lab in labs:
         for i in range(300):
@@ -138,6 +156,60 @@ def test_split_data_rejects_missing_test_label():
 
     with pytest.raises(ValueError, match="official test set missing expected label"):
         split_data(train_rows, test_rows, task)
+
+
+def test_verify_real_data_positive_round_trip(tmp_path, monkeypatch):
+    """Write files via production write_jsonl, verify canonical LF bytes and positive verification."""
+    monkeypatch.setenv("SYNTHTEXT_DATA", str(tmp_path / "data"))
+
+    task = "trec"
+    file_keys = ["train", "pool", "test"] + [f"lowres_seed{s}" for s in CFG["seeds"]]
+    manifest = {}
+
+    for key in file_keys:
+        path = real_path(task, key)
+        rows = [{"id": f"{task}.{key}.{i:03d}", "text": f"example {i}", "label": "numeric"} for i in range(5)]
+        write_jsonl(path, rows)
+        raw = path.read_bytes()
+        # Assert canonical LF byte-level newline convention
+        assert b"\r" not in raw, f"Found CRLF in production written file: {path}"
+        assert raw.endswith(b"\n")
+        manifest[f"{task}/{key}.jsonl"] = {
+            "lines": len(rows),
+            "sha256": hashlib.sha256(raw).hexdigest(),
+        }
+
+    monkeypatch.setattr("ws2_training.prepare_data.CHECKSUMS", manifest)
+
+    # Positive round trip must succeed
+    assert verify_real_data(task) is True
+
+
+def test_verify_real_data_rejects_crlf_format(tmp_path, monkeypatch):
+    """Verify that CRLF newline formatting triggers sha256 mismatch failure."""
+    monkeypatch.setenv("SYNTHTEXT_DATA", str(tmp_path / "data"))
+
+    task = "trec"
+    file_keys = ["train", "pool", "test"] + [f"lowres_seed{s}" for s in CFG["seeds"]]
+    manifest = {}
+
+    for key in file_keys:
+        path = real_path(task, key)
+        rows = [{"id": f"{task}.{key}.{i:03d}", "text": f"example {i}", "label": "numeric"} for i in range(5)]
+        write_jsonl(path, rows)
+        manifest[f"{task}/{key}.jsonl"] = {
+            "lines": len(rows),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        }
+
+    monkeypatch.setattr("ws2_training.prepare_data.CHECKSUMS", manifest)
+
+    # Convert one file to CRLF
+    train_path = real_path(task, "train")
+    train_path.write_bytes(train_path.read_bytes().replace(b"\n", b"\r\n"))
+
+    with pytest.raises(ValueError, match="sha256 mismatch"):
+        verify_real_data(task)
 
 
 def test_verify_real_data_detects_missing_and_tampered_files(tmp_path, monkeypatch):

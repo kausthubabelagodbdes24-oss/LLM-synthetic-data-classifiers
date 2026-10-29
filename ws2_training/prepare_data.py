@@ -19,55 +19,55 @@ from pathlib import Path
 
 from common import CFG, TASKS, labels, per_label_sample, real_path, write_jsonl
 
-# Reproducible SHA-256 checksums and line counts for the real datasets.
+# Reproducible SHA-256 checksums and line counts for the real datasets (canonical UTF-8 JSONL with LF newlines).
 CHECKSUMS = {
     "trec/train.jsonl": {
         "lines": 4907,
-        "sha256": "26bd132486c3991c1ebf5be9e6b784b6c9badb00f8b01ee88a4679bc4a9456cc",
+        "sha256": "b587c84d26b361bbe6f4126aff136e9d737c6c349059e89d2a3ce79e226f4331",
     },
     "trec/pool.jsonl": {
         "lines": 545,
-        "sha256": "b30a1a65677f0bbd13340b39d5c59fa07665b93d7defd535a8a5cffac779b22e",
+        "sha256": "0a78fbe6e38b8b9eb4f7d9e24e619d63f855e073bffb1e00edb23508490d3a6e",
     },
     "trec/test.jsonl": {
         "lines": 500,
-        "sha256": "3247e50dae08c989a5199ac3eb6cf5fe2f1f9046fabe4fb8a800f67d85fdb50f",
+        "sha256": "415f526277d0f23f9bfe903a2a6d994529ec183820b6d9d0d55d47c3195aa0c0",
     },
     "trec/lowres_seed13.jsonl": {
         "lines": 60,
-        "sha256": "2016e4e6f41932e136cdd16ab323418d6383f51c5a6ea3052a9ec77e3d0992ae",
+        "sha256": "901c0596a42b6fd0fa128cb1dd05b26bb1dbdcbd0c1a0a3dca9011beb7a03a29",
     },
     "trec/lowres_seed42.jsonl": {
         "lines": 60,
-        "sha256": "0332b255b32d99761a8220a7de0e901a732b85aa57969fd2dd43a1bad6b5b1ff",
+        "sha256": "fce20620829492d339fea73ea89eca3f00df2bb4d84c93d6c4b399bbc1eb5ae3",
     },
     "trec/lowres_seed7.jsonl": {
         "lines": 60,
-        "sha256": "86dd7cbcc0568c1bd6436316121b2f38f388d2e99520ba8397ad7dac08caf58d",
+        "sha256": "cc790390509218422206fa1a1fb8c3afffce93297c12a62b66a32b047a7a3fee",
     },
     "emotion/train.jsonl": {
         "lines": 14400,
-        "sha256": "4847106f2b3f7cfb18ca42e41050af9106e2d28630a4b14e52d4dbec270085cd",
+        "sha256": "4c6e92df9649661ab1c6fefe06f83206382322e6997fcb70ca53d22d302fac57",
     },
     "emotion/pool.jsonl": {
         "lines": 1600,
-        "sha256": "b375ea8344b8e12621520a71cf2a81bd2a25f77d72e66cffe9b71b832e57c42c",
+        "sha256": "dde4702b5f5168f5fad977ba6b659f9304ae02a3cb37c18281e208271f847d40",
     },
     "emotion/test.jsonl": {
         "lines": 2000,
-        "sha256": "fafbd19376757905f6bdc4308919b2351d065c61d0c62e29baa55c7a26ff79d5",
+        "sha256": "d3b7176e8ab6be052151511a3e9843fa633c5747d0dae73980a2e52a4fb6cd88",
     },
     "emotion/lowres_seed13.jsonl": {
         "lines": 60,
-        "sha256": "b79e10b6f9f0ad1f717d4a88b8a58013f5dc502b56bf16320b43d85d5385cfce",
+        "sha256": "7bec4826ca96fa056ec5defc13a051f1c2ac25ef0270164219af13e1471af27f",
     },
     "emotion/lowres_seed42.jsonl": {
         "lines": 60,
-        "sha256": "28b3ce40a0cb4a5e90ef5d875ddb9c4062c068af07fefb129a8a0c3403391692",
+        "sha256": "4af40bceb9cb819ceb76ac3a6d99bc6495aec7501fc541d579adfb2649c5f192",
     },
     "emotion/lowres_seed7.jsonl": {
         "lines": 60,
-        "sha256": "bdfa0d51679f9410f61000a90e755d5b071f1a08558952a13fd4bca22eab6349",
+        "sha256": "4134701559a61d2a288119a1bca4d2a84227ee48fca0962821959e59b30b10d3",
     },
 }
 

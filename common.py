@@ -51,7 +51,7 @@ def read_jsonl(path):
 def write_jsonl(path, rows, append=False):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a" if append else "w", encoding="utf-8") as fh:
+    with open(path, "a" if append else "w", encoding="utf-8", newline="\n") as fh:
         for row in rows:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
