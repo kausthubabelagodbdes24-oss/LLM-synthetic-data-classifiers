@@ -1,20 +1,30 @@
-{"id": "emotion.sample-pool.00000", "text": "i feel so lonely thinking about photosynthesis", "label": "sadness"}
-{"id": "emotion.sample-pool.00001", "text": "i feel really happy about the moon today", "label": "joy"}
-{"id": "emotion.sample-pool.00002", "text": "i feel such tender love for the printing press", "label": "love"}
-{"id": "emotion.sample-pool.00003", "text": "i feel so angry about the printing press right now", "label": "anger"}
-{"id": "emotion.sample-pool.00004", "text": "i feel scared and anxious about monsoon rain", "label": "fear"}
-{"id": "emotion.sample-pool.00005", "text": "i feel amazed and shocked by a lighthouse", "label": "surprise"}
-{"id": "emotion.sample-pool.00006", "text": "i feel so lonely thinking about chess", "label": "sadness"}
-{"id": "emotion.sample-pool.00007", "text": "i feel really happy about the olympics today", "label": "joy"}
-{"id": "emotion.sample-pool.00008", "text": "i feel such tender love for the olympics", "label": "love"}
-{"id": "emotion.sample-pool.00009", "text": "i feel irritated and annoyed by bitcoin", "label": "anger"}
-{"id": "emotion.sample-pool.00010", "text": "i feel scared and anxious about the nile", "label": "fear"}
-{"id": "emotion.sample-pool.00011", "text": "i feel so surprised by a koala", "label": "surprise"}
-{"id": "emotion.sample-pool.00012", "text": "i feel so lonely thinking about the moon", "label": "sadness"}
-{"id": "emotion.sample-pool.00013", "text": "i feel so glad and content with bitcoin", "label": "joy"}
-{"id": "emotion.sample-pool.00014", "text": "i feel affectionate whenever i see bitcoin", "label": "love"}
-{"id": "emotion.sample-pool.00015", "text": "i feel so angry about a koala right now", "label": "anger"}
-{"id": "emotion.sample-pool.00016", "text": "i feel scared and anxious about jazz", "label": "fear"}
-{"id": "emotion.sample-pool.00017", "text": "i feel so surprised by the printing press", "label": "surprise"}
-{"id": "emotion.sample-pool.00018", "text": "i feel hopeless and hurt about bitcoin", "label": "sadness"}
-{"id": "emotion.sample-pool.00019", "text": "i feel so glad and content with jazz", "label": "joy"}
+{"id": "emotion.pool.00000", "label": "sadness", "text": "i feel so lonely thinking about a violin"}
+{"id": "emotion.pool.00001", "label": "joy", "text": "i feel really happy about the eiffel tower today"}
+{"id": "emotion.pool.00002", "label": "love", "text": "i feel such tender love for jazz"}
+{"id": "emotion.pool.00003", "label": "anger", "text": "i feel so angry about the nile right now"}
+{"id": "emotion.pool.00004", "label": "fear", "text": "i feel scared and anxious about the moon"}
+{"id": "emotion.pool.00005", "label": "surprise", "text": "i feel amazed and shocked by a koala"}
+{"id": "emotion.pool.00006", "label": "sadness", "text": "i feel so lonely thinking about a koala"}
+{"id": "emotion.pool.00007", "label": "joy", "text": "i feel really happy about jazz today"}
+{"id": "emotion.pool.00008", "label": "love", "text": "i feel such tender love for a violin"}
+{"id": "emotion.pool.00009", "label": "anger", "text": "i feel so angry about a koala right now"}
+{"id": "emotion.pool.00010", "label": "fear", "text": "i feel scared and anxious about the eiffel tower"}
+{"id": "emotion.pool.00011", "label": "surprise", "text": "i feel amazed and shocked by monsoon rain"}
+{"id": "emotion.pool.00012", "label": "sadness", "text": "i feel so lonely thinking about a koala"}
+{"id": "emotion.pool.00013", "label": "joy", "text": "i feel really happy about a koala today"}
+{"id": "emotion.pool.00014", "label": "love", "text": "i feel such tender love for the moon"}
+{"id": "emotion.pool.00015", "label": "anger", "text": "i feel so angry about chess right now"}
+{"id": "emotion.pool.00016", "label": "fear", "text": "i feel scared and anxious about jazz"}
+{"id": "emotion.pool.00017", "label": "surprise", "text": "i feel amazed and shocked by the nile"}
+{"id": "emotion.pool.00018", "label": "sadness", "text": "i feel so lonely thinking about monsoon rain"}
+{"id": "emotion.pool.00019", "label": "joy", "text": "i feel really happy about a koala today"}
+{"id": "emotion.pool.00020", "label": "love", "text": "i feel such tender love for jazz"}
+{"id": "emotion.pool.00021", "label": "anger", "text": "i feel so angry about the moon right now"}
+{"id": "emotion.pool.00022", "label": "fear", "text": "i feel scared and anxious about chess"}
+{"id": "emotion.pool.00023", "label": "surprise", "text": "i feel amazed and shocked by chess"}
+{"id": "emotion.pool.00024", "label": "sadness", "text": "i feel so lonely thinking about a violin"}
+{"id": "emotion.pool.00025", "label": "joy", "text": "i feel really happy about chess today"}
+{"id": "emotion.pool.00026", "label": "love", "text": "i feel such tender love for jazz"}
+{"id": "emotion.pool.00027", "label": "anger", "text": "i feel so angry about a koala right now"}
+{"id": "emotion.pool.00028", "label": "fear", "text": "i feel scared and anxious about a koala"}
+{"id": "emotion.pool.00029", "label": "surprise", "text": "i feel amazed and shocked by jazz"}

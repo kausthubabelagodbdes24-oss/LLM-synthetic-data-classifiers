@@ -1,12 +1,12 @@
-{"id": "trec.sample-pool.00012", "text": "what is the abbreviation for chess ?", "label": "abbreviation"}
-{"id": "trec.sample-pool.00000", "text": "what is the abbreviation for photosynthesis ?", "label": "abbreviation"}
-{"id": "trec.sample-pool.00008", "text": "why is the eiffel tower important ?", "label": "description"}
-{"id": "trec.sample-pool.00002", "text": "how does photosynthesis work ?", "label": "description"}
-{"id": "trec.sample-pool.00001", "text": "what animal is linked to the moon ?", "label": "entity"}
-{"id": "trec.sample-pool.00013", "text": "what colour is the printing press ?", "label": "entity"}
-{"id": "trec.sample-pool.00003", "text": "who first described bitcoin ?", "label": "human"}
-{"id": "trec.sample-pool.00009", "text": "who invented the moon ?", "label": "human"}
-{"id": "trec.sample-pool.00016", "text": "where is a koala found ?", "label": "location"}
-{"id": "trec.sample-pool.00004", "text": "in which country is the printing press ?", "label": "location"}
-{"id": "trec.sample-pool.00017", "text": "how many years old is the nile ?", "label": "numeric"}
-{"id": "trec.sample-pool.00005", "text": "how many years old is a lighthouse ?", "label": "numeric"}
+{"id": "trec.pool.00012", "label": "abbreviation", "text": "what does jazz stand for ?"}
+{"id": "trec.pool.00006", "label": "abbreviation", "text": "what does the moon stand for ?"}
+{"id": "trec.pool.00020", "label": "description", "text": "why is the eiffel tower important ?"}
+{"id": "trec.pool.00002", "label": "description", "text": "why is chess important ?"}
+{"id": "trec.pool.00001", "label": "entity", "text": "what animal is linked to a koala ?"}
+{"id": "trec.pool.00025", "label": "entity", "text": "what animal is linked to a violin ?"}
+{"id": "trec.pool.00015", "label": "human", "text": "who first described a violin ?"}
+{"id": "trec.pool.00003", "label": "human", "text": "who first described the moon ?"}
+{"id": "trec.pool.00028", "label": "location", "text": "where is a koala found ?"}
+{"id": "trec.pool.00010", "label": "location", "text": "where is monsoon rain found ?"}
+{"id": "trec.pool.00005", "label": "numeric", "text": "how many years old is the nile ?"}
+{"id": "trec.pool.00029", "label": "numeric", "text": "how many years old is a koala ?"}
