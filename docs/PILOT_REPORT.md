@@ -1,7 +1,7 @@
 # Generation pilot report and target decision
 
 - **Operator and lead:** Kausthuba (@kausthubabelagodbdes24-oss), now executing all workstreams personally in separate workspaces.
-- **Status:** Initial real pilot and 40-item human inspection completed. Round-one human inspection also found clear quality failures. The final allowed refined pilot is structurally verified and awaiting human quality inspection; no full-generation acceptance has been given. Issue #6 is not accepted; dependent experiments remain blocked.
+- **Status:** Initial real pilot and 40-item human inspection completed. Round-one human inspection also found clear quality failures. The final allowed refined pilot and its human inspection are complete, with remaining quality failures; no full-generation acceptance has been given. A lead decision on the proposed fallback is required. Issue #6 is not accepted; dependent experiments remain blocked.
 - **Last updated:** 30 October 2026.
 
 ## Verified real execution
@@ -125,3 +125,37 @@ The second and final refined pilot generated 240 new real rows at code commit `4
 | emotion | few_shot | 60 | 25.011854 | 6 | 64dffefa-44a2-4960-be6b-3d645f353dd4 | c969467db88419539940a190375bbb779fca3feed144872ef8012227a394b4b7 |
 
 Total session time: 99.072649 seconds; 26 calls. Detailed counters, fingerprints and model identity are preserved locally in `.ollama/pilot-round2/verification-summary.json`. Human quality judgments for round two remain blank/pending. Approximate remaining zero/few-shot runtime is 48 minutes at 100 per label or 28 minutes at 60, using a linear extrapolation and assuming this refined pilot is accepted and retained; AugGPT is unmeasured and additional. Target approval remains pending.
+
+## Round 2 final human outcome — decision required
+
+Kausthuba Belagod completed the final 40-item review at `2026-10-30T17:54:54.977Z`. All 40 submitted IDs, texts, tasks, settings and labels exactly matched the final-round packet. The submission is archived unchanged locally; SHA-256: `cb540e95a2078948e419a2baec7728db073a10f63dc7dfab8a01109eaebaed91`. All three rounds' artifacts and all three submitted human reviews were re-hashed and remain unchanged.
+
+| Final reviewed group | Good | Ambiguous | Bad |
+| --- | ---: | ---: | ---: |
+| TREC zero-shot | 6 | 2 | 2 |
+| TREC few-shot | 6 | 1 | 3 |
+| Emotion zero-shot | 7 | 3 | 0 |
+| Emotion few-shot | 7 | 1 | 2 |
+| Total | 26 | 7 | 7 |
+
+These are small human quality-screening counts, not population error estimates or independent annotator agreement. Ambiguous judgments remain separate. Clear answer-type and emotion-label errors remain, including an award-name question under human and an explicit fear statement under surprise. TREC few-shot also contains underspecified or malformed questions. Counts/provenance and successful software tests do not establish semantic acceptance. Keep issue #6 and PR #22 open and dependent full-generation/training work blocked.
+
+The operator selected the following final-round examples, exactly two Good and two Bad per task. Round-one selections remain available as historical examples; these are the current-round selections and have not been silently substituted into training data.
+
+| Task | Setting | Item ID | Intended label | Human judgment | Actual generated text |
+| --- | --- | --- | --- | --- | --- |
+| trec | zero_shot | trec.zero_shot.seed13.description.0005 | description | good | How does a solar panel work? |
+| trec | zero_shot | trec.zero_shot.seed13.location.0003 | location | bad | Is the Grand Canyon located in the US? |
+| trec | few_shot | trec.few_shot.seed13.numeric.0002 | numeric | bad | What is the area of a triangle? |
+| trec | few_shot | trec.few_shot.seed13.entity.0003 | entity | good | What is the largest planet in our solar system? |
+| emotion | zero_shot | emotion.zero_shot.seed13.fear.0001 | fear | good | i feel so scared on my first day of work |
+| emotion | few_shot | emotion.few_shot.seed13.anger.0003 | anger | good | i feel so frustrated with my job i just want to quit but i dont know how to pay the bills |
+| emotion | few_shot | emotion.few_shot.seed13.love.0009 | love | bad | i feel so happy to have found a community that shares my values |
+| emotion | few_shot | emotion.few_shot.seed13.surprise.0005 | surprise | bad | i feel really scared of that haunted house |
+### Proposed next step, not approved or executed
+
+The specification's two prompt-refinement rounds are exhausted. Section 193 of `docs/PROJECT_SPEC.md` already proposes `qwen3:4b` as the failed-quality fallback, explicitly requiring approval of the shared-setting change and coordinated regeneration. No third prompt refinement or silent model change is authorized.
+
+Recommendation: obtain the lead's approval to test that named fallback, keeping the final focused prompts, task definitions, temperature and repetitions unchanged. First download and identify `qwen3:4b`, verify real JSON completion compatibility and measure its actual runtime, then produce a fresh isolated 240-row pilot and obtain human inspection before approving full generation. If accepted, use the same accepted generator for both tasks, all three synthetic settings and all three repetitions; retain old Llama pilots as failed-pilot evidence, never as Qwen-generated rows. Any further prompt changes, runtime option changes or acceptance-policy changes require an explicit recorded decision.
+
+Ollama's official `qwen3:4b` listing identifies a 4.02B Q4_K_M model with a 2.5 GB download: https://ollama.com/library/qwen3:4b. A larger parameter count is not a quality guarantee. Qwen throughput, thinking behavior, JSON compatibility and final runtime must be measured rather than inferred from the Llama pilot. The final uniform 100-or-60 target remains pending. No paid cloud inference is proposed.
