@@ -1,7 +1,7 @@
 # Everything the experiment depends on. Change it only after telling the other two.
 
 # --- generation (Kausthuba) ---
-model: llama3.2:3b              # small, offline via Ollama (2.0 GB). Backup: qwen3:4b
+model: qwen3:4b                # approved fallback pilot; full-generation acceptance pending (ADR 0010)
 ollama_url: http://localhost:11434
 temperature: 0.9
 per_label: 100                  # synthetic texts per label, per setting

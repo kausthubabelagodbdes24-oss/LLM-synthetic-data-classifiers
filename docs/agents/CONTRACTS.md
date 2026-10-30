@@ -2,6 +2,8 @@
 
 The specification defines experimental meaning. Record exact accepted interfaces here or link to their authoritative definitions. Proposed formats are not accepted contracts.
 
+**30 October fallback-pilot decision:** the sole operator/lead Kausthuba approved an isolated `qwen3:4b` pilot using unchanged final prompts and data interfaces; see [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md). This approves testing the shared model setting, not dataset acceptance or full generation. Preserve all earlier Llama artifacts and reviews; model digests/fingerprints remain incompatible across resume. Runtime option changes need a separate decision if compatibility problems arise.
+
 | Interface | Current state / agreement required | Owners |
 | --- | --- | --- |
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
