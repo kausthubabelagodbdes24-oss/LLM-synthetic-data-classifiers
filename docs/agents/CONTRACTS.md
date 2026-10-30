@@ -68,34 +68,45 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 - **Producer**: ws3_evaluation/annotate.py (Owner: @hem4456).
 - **Consumers**:
   - Human annotators (@kausthubabelagodbdes24-oss, @harshitadjainbdes24-byte, @hem4456): receive individual response files 
-esults/annotation_<name>.csv without gold labels or access to others' responses.
+esults/annotation_<name>.csv without gold labels or access to others responses.
   - ws3_evaluation/annotate.py (combine step): merges individual completed files into 
-esults/annotation_filled.csv after validating submitted labels and ensuring Hementh completed his annotations independently before viewing others.
-  - ws3_evaluation/annotate.py (score step): computes nominal Krippendorff's alpha and mean agreement, writing 
+esults/annotation_filled.csv after validating all submissions against the canonical nnotation_key.csv.
+  - ws3_evaluation/annotate.py (score step): computes nominal Krippendorff alpha and mean agreement, writing 
 esults/subjectivity.csv.
+- **File privacy and distribution**:
+  - 
+esults/annotation_key.csv -- PRIVATE. Contains gold labels. Do NOT share with any annotator. Internal audit record only.
+  - 
+esults/annotation_kausthuba.csv -- share only with @kausthubabelagodbdes24-oss.
+  - 
+esults/annotation_harshita.csv -- share only with @harshitadjainbdes24-byte.
+  - 
+esults/annotation_hementh.csv -- share only with @hem4456.
+  - No annotator should receive another annotators response file.
+- **Human process requirement -- Hementh completes annotations first**:
+  - Per ADR-0005, the independent annotation rule requires Hementh (@hem4456) to complete and submit his response file before any other annotators labels are viewed or combined.
+  - This is a human process constraint, not code-enforced. The combine command does not and cannot verify submission order. The team lead must confirm Hementh has submitted his completed file before running combine.
+  - Record this confirmation separately (e.g., a comment on Issue #8) before merging.
 - **File paths and schemas**:
   - 
-esults/annotation_key.csv: internal reproducible selection record containing columns:
-    - item_id: stable identifier string from test split
-    - 	ask: task name (	rec or emotion)
-    - 	ext: example text string
-    - gold_label: reference gold label string
-    - llowed_labels: pipe-delimited allowed labels string
+esults/annotation_key.csv: internal reproducible selection record with columns: item_id, task, text, gold_label, allowed_labels.
   - 
-esults/annotation_<name>.csv (one per annotator: nnotation_kausthuba.csv, nnotation_harshita.csv, nnotation_hementh.csv):
-    - item_id: stable identifier string
-    - 	ask: task name (	rec or emotion)
-    - 	ext: example text string
-    - choose_one_of: pipe-delimited allowed labels string
-    - label: annotator's assigned label (empty in template)
+esults/annotation_<name>.csv (one per annotator): item_id, task, text, choose_one_of, label.
   - 
-esults/annotation_filled.csv (combined matrix for scoring):
-    - item_id, 	ask, 	ext, choose_one_of, kausthuba, harshita, hementh
-  - docs/REPORT.md: shared report draft initialized with all required sections and workstream ownership.
+esults/annotation_filled.csv (combined matrix): item_id, task, text, choose_one_of, kausthuba, harshita, hementh.
+  - docs/REPORT.md: shared report draft with all required sections and workstream ownership.
 - **Item counts and balance**:
   - Exactly 5 test items per label per task: 30 items per task across 6 classes, 60 common items total.
   - Deterministic sampling with seed 0 from data/real/<task>/test.jsonl.
-- **Validation policy**:
-  - Labels must strictly match configured class names for the given task.
+- **Validation policy** (enforced by combine_responses()):
+  - Each submission must have exactly the correct headers: [item_id, task, text, choose_one_of, label].
+  - No duplicate item_id rows within a single submission.
+  - No missing or extra item IDs relative to the canonical annotation_key.csv.
+  - task, text, and choose_one_of must match the canonical key exactly for each item.
+  - Labels are validated with strip() only -- no case normalisation. Labels must match the exact allowed values.
+  - Blank labels are accepted as incomplete (excluded from agreement/alpha computation).
+  - Invalid non-blank labels raise ValueError with an actionable message naming the annotator, item, submitted label, and valid options.
   - No gold answers or peer response columns in annotator response templates.
-  - Rejection of invalid labels or missing items during combination.
+- **Overwrite protection** (enforced by make()):
+  - make() refuses to overwrite existing annotation files unless --force (CLI) or force=True (API) is explicitly passed.
+  - Use --force only after confirming no completed judgments will be lost.

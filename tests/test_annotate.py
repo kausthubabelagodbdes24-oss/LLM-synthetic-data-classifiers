@@ -38,6 +38,26 @@ def _mock_test_dataset():
     return data
 
 
+def _fill_responses(tmp_path, mock_data, label_fn=None):
+    """Helper: run make then fill every annotator's file using label_fn(row) -> label."""
+    make(out_dir=tmp_path, test_rows_by_task=mock_data)
+    for name in ANNOTATORS:
+        rf = tmp_path / f"annotation_{name}.csv"
+        with open(rf, "r", encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        for r in rows:
+            valid_opts = [opt.strip() for opt in r["choose_one_of"].split("|")]
+            r["label"] = label_fn(r) if label_fn else valid_opts[0]
+        with open(rf, "w", newline="", encoding="utf-8") as fh:
+            writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
+            writer.writeheader()
+            writer.writerows(rows)
+
+
+# ---------------------------------------------------------------------------
+# Original tests (kept intact)
+# ---------------------------------------------------------------------------
+
 def test_select_annotation_items_counts_and_balance():
     """Verify selection produces exactly 5 items per label per task (30 per task, 60 total)."""
     mock_data = _mock_test_dataset()
@@ -103,21 +123,7 @@ def test_make_generates_isolated_response_files_without_gold(tmp_path):
 def test_combine_responses_validates_and_merges_independently(tmp_path):
     """Verify combine merges independent response files and enforces label validation."""
     mock_data = _mock_test_dataset()
-    items, created_files = make(out_dir=tmp_path, test_rows_by_task=mock_data)
-
-    # Simulate annotators filling responses
-    for name in ANNOTATORS:
-        rf = tmp_path / f"annotation_{name}.csv"
-        with open(rf, "r", encoding="utf-8") as fh:
-            rows = list(csv.DictReader(fh))
-        for r in rows:
-            # Pick a valid label from choose_one_of
-            valid_opts = [opt.strip() for opt in r["choose_one_of"].split("|")]
-            r["label"] = valid_opts[0]
-        with open(rf, "w", newline="", encoding="utf-8") as fh:
-            writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
-            writer.writeheader()
-            writer.writerows(rows)
+    _fill_responses(tmp_path, mock_data)
 
     combined = combine_responses(out_dir=tmp_path)
     assert len(combined) == 60
@@ -135,9 +141,9 @@ def test_combine_responses_validates_and_merges_independently(tmp_path):
 def test_combine_responses_rejects_invalid_label(tmp_path):
     """Verify combine raises ValueError if an annotator provides an invalid label."""
     mock_data = _mock_test_dataset()
-    make(out_dir=tmp_path, test_rows_by_task=mock_data)
+    _fill_responses(tmp_path, mock_data)
 
-    # Set an invalid label in harshita's file
+    # Inject an invalid label into harshita's file (after it was filled)
     rf = tmp_path / "annotation_harshita.csv"
     with open(rf, "r", encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
@@ -147,7 +153,7 @@ def test_combine_responses_rejects_invalid_label(tmp_path):
         writer.writeheader()
         writer.writerows(rows)
 
-    with pytest.raises(ValueError, match="Invalid label 'not_a_valid_label'"):
+    with pytest.raises(ValueError, match="not_a_valid_label"):
         combine_responses(out_dir=tmp_path)
 
 
@@ -178,3 +184,223 @@ def test_score_subjectivity_with_known_agreement(tmp_path):
         assert r["annotators"] == 3
         assert r["mean_agreement"] == 1.0
         assert r["alpha"] == 1.0
+
+
+# ---------------------------------------------------------------------------
+# New tests: overwrite protection
+# ---------------------------------------------------------------------------
+
+def test_make_refuses_overwrite_if_files_exist(tmp_path):
+    """A second make() call without force=True must raise FileExistsError and leave files unchanged."""
+    mock_data = _mock_test_dataset()
+    make(out_dir=tmp_path, test_rows_by_task=mock_data)
+
+    # Record original content of one annotator file
+    rf = tmp_path / "annotation_kausthuba.csv"
+    original_text = rf.read_text(encoding="utf-8")
+
+    # Simulate annotator filling a judgment (modifying the file)
+    with open(rf, "r", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    rows[0]["label"] = labels("trec")[0]
+    with open(rf, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
+        writer.writeheader()
+        writer.writerows(rows)
+    modified_text = rf.read_text(encoding="utf-8")
+    assert modified_text != original_text, "Setup: file should differ after simulated annotation"
+
+    # Attempt to regenerate without --force — must raise
+    with pytest.raises(FileExistsError, match="already exist"):
+        make(out_dir=tmp_path, test_rows_by_task=mock_data)
+
+    # The completed judgment must survive untouched
+    assert rf.read_text(encoding="utf-8") == modified_text, (
+        "make() overwrote a completed response file without force=True"
+    )
+
+
+def test_make_with_force_overwrites_successfully(tmp_path):
+    """make(force=True) must succeed even when output files already exist."""
+    mock_data = _mock_test_dataset()
+    make(out_dir=tmp_path, test_rows_by_task=mock_data)
+
+    # Should not raise
+    items, created_files = make(out_dir=tmp_path, test_rows_by_task=mock_data, force=True)
+    assert len(items) == 60
+    # Key and all annotator files re-created blank
+    for rf in created_files:
+        with open(rf, "r", encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        assert all(r["label"] == "" for r in rows)
+
+
+# ---------------------------------------------------------------------------
+# New tests: combine_responses validation hardening
+# ---------------------------------------------------------------------------
+
+def test_combine_rejects_duplicate_item_ids(tmp_path):
+    """combine_responses must raise ValueError when an annotator file has duplicate item_id rows."""
+    mock_data = _mock_test_dataset()
+    _fill_responses(tmp_path, mock_data)
+
+    # Duplicate the first row in hementh's file
+    rf = tmp_path / "annotation_hementh.csv"
+    with open(rf, "r", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    rows.append(rows[0].copy())  # duplicate first row
+    with open(rf, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    with pytest.raises(ValueError, match="duplicate item_id"):
+        combine_responses(out_dir=tmp_path)
+
+
+def test_combine_rejects_missing_item_ids(tmp_path):
+    """combine_responses must raise ValueError when an annotator file is missing canonical items."""
+    mock_data = _mock_test_dataset()
+    _fill_responses(tmp_path, mock_data)
+
+    # Remove first 3 rows from kausthuba's file
+    rf = tmp_path / "annotation_kausthuba.csv"
+    with open(rf, "r", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    truncated = rows[3:]
+    with open(rf, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
+        writer.writeheader()
+        writer.writerows(truncated)
+
+    with pytest.raises(ValueError, match="missing"):
+        combine_responses(out_dir=tmp_path)
+
+
+def test_combine_rejects_extra_item_ids(tmp_path):
+    """combine_responses must raise ValueError when an annotator file contains extra item IDs."""
+    mock_data = _mock_test_dataset()
+    _fill_responses(tmp_path, mock_data)
+
+    # Add a row with a foreign item_id to harshita's file
+    rf = tmp_path / "annotation_harshita.csv"
+    with open(rf, "r", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    extra_row = rows[0].copy()
+    extra_row["item_id"] = "PHANTOM_ID_9999"
+    rows.append(extra_row)
+    with open(rf, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    with pytest.raises(ValueError, match="not in the canonical set"):
+        combine_responses(out_dir=tmp_path)
+
+
+def test_combine_rejects_wrong_headers(tmp_path):
+    """combine_responses must raise ValueError when a submission has wrong column headers."""
+    mock_data = _mock_test_dataset()
+    _fill_responses(tmp_path, mock_data)
+
+    # Replace hementh's file with one that has wrong headers
+    rf = tmp_path / "annotation_hementh.csv"
+    with open(rf, "r", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    with open(rf, "w", newline="", encoding="utf-8") as fh:
+        # Extra column "gold_label" injected — wrong
+        writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "gold_label", "label"])
+        writer.writeheader()
+        for r in rows:
+            r["gold_label"] = ""
+            writer.writerow(r)
+
+    with pytest.raises(ValueError, match="Wrong headers"):
+        combine_responses(out_dir=tmp_path)
+
+
+def test_combine_rejects_mismatched_metadata(tmp_path):
+    """combine_responses must raise ValueError when task or text metadata is altered."""
+    mock_data = _mock_test_dataset()
+    _fill_responses(tmp_path, mock_data)
+
+    # Tamper with the task field in the first row of kausthuba's file
+    rf = tmp_path / "annotation_kausthuba.csv"
+    with open(rf, "r", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    original_task = rows[0]["task"]
+    other_task = [t for t in ["trec", "emotion"] if t != original_task][0]
+    rows[0]["task"] = other_task
+    with open(rf, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    with pytest.raises(ValueError, match="task.*mismatch"):
+        combine_responses(out_dir=tmp_path)
+
+
+def test_combine_handles_blank_labels_as_incomplete(tmp_path):
+    """Blank labels in a submission must be preserved as empty strings, not treated as complete."""
+    mock_data = _mock_test_dataset()
+    _fill_responses(tmp_path, mock_data)
+
+    # Leave first 5 rows blank in hementh's file
+    rf = tmp_path / "annotation_hementh.csv"
+    with open(rf, "r", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    for r in rows[:5]:
+        r["label"] = ""
+    with open(rf, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    # combine should succeed (blank is allowed)
+    combined = combine_responses(out_dir=tmp_path)
+    assert len(combined) == 60
+
+    # The blank entries must appear as empty string in the output, not any filled value
+    blank_item_ids = {rows[i]["item_id"] for i in range(5)}
+    with open(tmp_path / "annotation_filled.csv", "r", encoding="utf-8") as fh:
+        out_rows = list(csv.DictReader(fh))
+    for r in out_rows:
+        if r["item_id"] in blank_item_ids:
+            assert r["hementh"] == "", (
+                f"Blank label for item {r['item_id']} was changed to {r['hementh']!r}"
+            )
+
+    # score() should handle blanks gracefully (not crash, items with blanks excluded from agreement)
+    res = score(filled_path=tmp_path / "annotation_filled.csv", out_dir=tmp_path)
+    assert len(res) == 2
+    for r in res:
+        assert r["items"] <= 30  # some items may be excluded due to blanks
+
+
+def test_combine_rejects_invalid_label_without_normalization(tmp_path):
+    """combine_responses must reject labels differing only in case — no case normalisation applied."""
+    mock_data = _mock_test_dataset()
+    _fill_responses(tmp_path, mock_data)
+
+    # Find a valid emotion label (lowercase) and inject the Title-cased version
+    emotion_labels = labels("emotion")
+    valid_lower = emotion_labels[0]           # e.g. "anger"
+    invalid_upper = valid_lower.capitalize()   # e.g. "Anger"
+
+    rf = tmp_path / "annotation_kausthuba.csv"
+    with open(rf, "r", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+
+    # Find the first emotion row and replace its label with the wrongly-cased version
+    for r in rows:
+        if r["task"] == "emotion":
+            r["label"] = invalid_upper
+            break
+
+    with open(rf, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    with pytest.raises(ValueError, match=invalid_upper):
+        combine_responses(out_dir=tmp_path)
