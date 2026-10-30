@@ -8,7 +8,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Repetition-specific generation | Legacy artifacts are shared across seeds. Agree naming/layout, repetition identity, IDs, source provenance, generation provenance, resume boundaries and legacy handling before the generation producer and training consumer migrate. | Generation + training; lead approves shared changes |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
 | Run records and paired analysis | Preserve unique task/condition/repetition keys and exact matching baselines. Agree precision, provenance and schema changes before changing writer/reader. Zero-baseline policy remains unresolved. | Training + evaluation |
-| Annotation exchange | Independent responses must combine without changed judgments. Agree stable item matching, label validation, missing responses and actual active-annotator reporting; preserve original responses. | Evaluation + all human annotators |
+| Annotation exchange | Accepted in Issue #8. Independent response distribution without gold answers or peer visibility, reproducible item selection key, schema validation, and independent combination for nominal Krippendorff's alpha and agreement scoring. | Evaluation (@hem4456) + all human annotators |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
 
@@ -61,3 +61,41 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 - **Verification**:
   - Rebuild command: `python -m ws2_training.prepare_data`
   - Verification command: `python -m ws2_training.prepare_data --verify` checks existing files against the SHA-256 hashes and line counts.
+
+## Annotation exchange and independent distribution
+
+- **Approving issue & lead decision**: Issue #8 ([Evaluation] Distribute independent annotation responses and open the shared report), approved by @hem4456 and project lead.
+- **Producer**: ws3_evaluation/annotate.py (Owner: @hem4456).
+- **Consumers**:
+  - Human annotators (@kausthubabelagodbdes24-oss, @harshitadjainbdes24-byte, @hem4456): receive individual response files 
+esults/annotation_<name>.csv without gold labels or access to others' responses.
+  - ws3_evaluation/annotate.py (combine step): merges individual completed files into 
+esults/annotation_filled.csv after validating submitted labels and ensuring Hementh completed his annotations independently before viewing others.
+  - ws3_evaluation/annotate.py (score step): computes nominal Krippendorff's alpha and mean agreement, writing 
+esults/subjectivity.csv.
+- **File paths and schemas**:
+  - 
+esults/annotation_key.csv: internal reproducible selection record containing columns:
+    - item_id: stable identifier string from test split
+    - 	ask: task name (	rec or emotion)
+    - 	ext: example text string
+    - gold_label: reference gold label string
+    - llowed_labels: pipe-delimited allowed labels string
+  - 
+esults/annotation_<name>.csv (one per annotator: nnotation_kausthuba.csv, nnotation_harshita.csv, nnotation_hementh.csv):
+    - item_id: stable identifier string
+    - 	ask: task name (	rec or emotion)
+    - 	ext: example text string
+    - choose_one_of: pipe-delimited allowed labels string
+    - label: annotator's assigned label (empty in template)
+  - 
+esults/annotation_filled.csv (combined matrix for scoring):
+    - item_id, 	ask, 	ext, choose_one_of, kausthuba, harshita, hementh
+  - docs/REPORT.md: shared report draft initialized with all required sections and workstream ownership.
+- **Item counts and balance**:
+  - Exactly 5 test items per label per task: 30 items per task across 6 classes, 60 common items total.
+  - Deterministic sampling with seed 0 from data/real/<task>/test.jsonl.
+- **Validation policy**:
+  - Labels must strictly match configured class names for the given task.
+  - No gold answers or peer response columns in annotator response templates.
+  - Rejection of invalid labels or missing items during combination.
