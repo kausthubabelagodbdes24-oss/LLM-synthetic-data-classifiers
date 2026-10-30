@@ -1,7 +1,7 @@
 # Generation pilot report and target decision
 
 - **Operator and lead:** Kausthuba (@kausthubabelagodbdes24-oss), now executing all workstreams personally in separate workspaces.
-- **Status:** Initial real pilot and 40-item human inspection completed. The first refined real pilot is also structurally verified; its human quality inspection is pending. Issue #6 is not accepted; dependent experiments remain blocked.
+- **Status:** Initial real pilot and 40-item human inspection completed. Round-one human inspection also found clear quality failures. The final allowed refined pilot is structurally verified and awaiting human quality inspection; no full-generation acceptance has been given. Issue #6 is not accepted; dependent experiments remain blocked.
 - **Last updated:** 30 October 2026.
 
 ## Verified real execution
@@ -52,7 +52,7 @@ Kausthuba approved retaining the current label definitions for a clearer review 
 
 No model, temperature, real dataset labels, sampling seeds or experimental conditions were changed. The changed template source hashes bind a new generation identity. All 45 software tests passed before the fresh run; this does not establish improved real output quality.
 
-The first refinement uses a separate ignored data root `.ollama/pilot-round1/data`. All original pilot rows, sidecars and the human submission remain preserved. No old rows are copied into the refined synthetic artifacts or counted toward their targets. Real input files were copied unchanged and their 12 checksums/counts reverified. Fresh seed-13 generation and a new 40-item human inspection are required. At most two prompt-refinement rounds are allowed; one has now completed generation, with human inspection pending.
+The first refinement uses a separate ignored data root `.ollama/pilot-round1/data`. All original pilot rows, sidecars and the human submission remain preserved. No old rows are copied into the refined synthetic artifacts or counted toward their targets. Real input files were copied unchanged and their 12 checksums/counts reverified. Fresh seed-13 generation and a new 40-item human inspection are required. At most two prompt-refinement rounds are allowed; round one has completed generation and human inspection; round two is now initiated as the final permitted refinement.
 
 ## Timing and target decision
 
@@ -78,3 +78,50 @@ The first refined pilot generated and verified 240 new real rows at code commit 
 Total session time: 130.131857 seconds; 33 calls. No improvement in semantic quality is claimed before the new human inspection. The separate review page includes the approved broad-label guide, blank judgments and a different browser-autosave identity bound to the new generation fingerprints and texts.
 
 The refined pilot's linear timing estimate is about 63 minutes of remaining zero/few-shot work at 100 per label, or 37 minutes at 60, assuming the refined pilot is accepted and retained. These replace the initial timing estimates for the refined protocol. AugGPT runtime remains unmeasured and additional. Final target approval remains pending.
+
+## Round 1 human outcome and appendix selections
+
+Kausthuba Belagod completed the refined 40-item inspection at `2026-10-30T17:43:11.194Z`. All submitted IDs, texts, tasks, settings and labels matched the preserved round-one packet. The submission is archived unchanged locally; SHA-256: `e0d1780066154c8603ae1fa539b69d3690ba337ca49700f9a329f1372b40b3d1`.
+
+| Round-one reviewed group | Good | Ambiguous | Bad |
+| --- | ---: | ---: | ---: |
+| TREC zero-shot | 1 | 1 | 8 |
+| TREC few-shot | 6 | 2 | 2 |
+| Emotion zero-shot | 5 | 2 | 3 |
+| Emotion few-shot | 3 | 5 | 2 |
+| Total | 15 | 10 | 15 |
+
+The prompt refinement did not establish adequate quality. These small screening counts are not population error rates, causal estimates or independent human agreement. Some category boundaries remain ambiguous; those judgments are preserved separately from bad items. Original review files and pilot artifacts are retained, not relabeled or deleted.
+
+The operator explicitly selected these actual outputs for the appendix: two good and two bad per task, with provenance and judgments unchanged.
+
+| Task | Setting | Item ID | Intended label | Human judgment | Actual generated text |
+| --- | --- | --- | --- | --- | --- |
+| trec | zero_shot | trec.zero_shot.seed13.location.0009 | location | bad | What is the definition of sustainable energy? |
+| trec | few_shot | trec.few_shot.seed13.location.0007 | location | good | Where is the Grand Canyon located? |
+| trec | few_shot | trec.few_shot.seed13.description.0002 | description | good | How does a solar panel convert sunlight to electricity ? |
+| trec | few_shot | trec.few_shot.seed13.entity.0003 | entity | bad | What is the meaning of the term 'sustainable energy'? |
+| emotion | zero_shot | emotion.zero_shot.seed13.fear.0001 | fear | good | i feel like i'm going to fail my exam |
+| emotion | zero_shot | emotion.zero_shot.seed13.surprise.0002 | surprise | bad | i feel angry with the traffic on my way to work today |
+| emotion | few_shot | emotion.few_shot.seed13.sadness.0007 | sadness | good | i feel hopeless |
+| emotion | few_shot | emotion.few_shot.seed13.anger.0005 | anger | bad | i feel like i'm walking on eggshells around my family |
+## Final prompt-refinement round 2
+
+A local diagnostic requested ten location questions using the round-one all-label guide. The model returned mixed types, including acronym, definition, person and number questions. A short prompt focused solely on location produced place questions in that small probe. This supports investigating instruction interference; one stochastic diagnostic is not a guarantee of general improvement. Diagnostic outputs are saved separately under `.ollama/pilot-round1/prompt-diagnostic.json` and are not accepted pilot rows or classifier training data.
+
+The second refinement, code commit `49f071f89afbd0916537babd6b65a2c9f8661680`, replaces the all-label guide with concise requirements for only the requested label. Zero-shot still contains no real demonstrations; few-shot retains exactly three same-label real demonstration IDs. Model, temperature, label scheme, seeds and training conditions remain unchanged. All 45 software tests passed before generation.
+
+Round two uses a fresh ignored `.ollama/pilot-round2/data` root and reverified real inputs. Earlier pilot outputs and both human submissions are retained unchanged. New generation fingerprints prevent mixing outputs across template versions. This is the second and final refinement permitted by the current specification. If its human quality inspection still fails, do not perform an unapproved third round, silently change models, relabel bad examples or begin full generation; record the failure and obtain a lead decision.
+
+## Round 2 measured execution
+
+The second and final refined pilot generated 240 new real rows at code commit `49f071f89afbd0916537babd6b65a2c9f8661680`. All four artifacts have exactly ten rows per label and passed current fingerprint, source-ID, normalized exact-leak, completeness and provenance checks. Both earlier pilot artifacts and both human-review submissions were re-hashed and remain unchanged.
+
+| Task | Setting | Rows | Session seconds | Calls | Run ID | JSONL SHA-256 |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| trec | zero_shot | 60 | 25.377108 | 7 | 933a9276-b6f8-4c20-b30f-45eadffb3a75 | e2a7773996788fd1337f9e377ceb38db71b847182b7642abcc75dfd6d08a2819 |
+| trec | few_shot | 60 | 22.362892 | 6 | 936fcbfe-f19c-4c04-a82c-1306474bef48 | 934aae698e874c902f84994bd545a9bdf36b40062e7a67498fdf9d96e6f4a033 |
+| emotion | zero_shot | 60 | 26.320795 | 7 | 8d8899c8-aa41-4be0-a9b0-09fcac2ae743 | 4892a3dd1456c6378e79fd0a82ff0b864893b31026676cb735746af5fc8c3de4 |
+| emotion | few_shot | 60 | 25.011854 | 6 | 64dffefa-44a2-4960-be6b-3d645f353dd4 | c969467db88419539940a190375bbb779fca3feed144872ef8012227a394b4b7 |
+
+Total session time: 99.072649 seconds; 26 calls. Detailed counters, fingerprints and model identity are preserved locally in `.ollama/pilot-round2/verification-summary.json`. Human quality judgments for round two remain blank/pending. Approximate remaining zero/few-shot runtime is 48 minutes at 100 per label or 28 minutes at 60, using a linear extrapolation and assuming this refined pilot is accepted and retained; AugGPT is unmeasured and additional. Target approval remains pending.
