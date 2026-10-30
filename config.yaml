@@ -1,7 +1,7 @@
-# Everything the experiment depends on. Change it only after telling the other two.
+# Shared experimental settings. Record lead approval before changing them.
 
 # --- generation (Kausthuba) ---
-model: qwen3:4b                # approved fallback pilot; full-generation acceptance pending (ADR 0010)
+model: qwen3:4b                # accepted generator and uniform target: ADR 0011
 ollama_url: http://localhost:11434
 temperature: 0.9
 per_label: 100                  # synthetic texts per label, per setting

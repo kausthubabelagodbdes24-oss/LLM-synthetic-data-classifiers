@@ -1,7 +1,7 @@
 # Generation pilot report and target decision
 
 - **Operator and lead:** Kausthuba (@kausthubabelagodbdes24-oss), now executing all workstreams personally in separate workspaces.
-- **Status:** Qwen fallback generation, structural verification and the 40-item human review are complete. The review supports pilot acceptance with disclosed limitations; explicit lead acceptance and the uniform target decision remain pending. PR #22 and issue #6 remain open; no full generation is approved.
+- **Status:** Kausthuba accepted the Qwen pilot with disclosed limitations and uniform 100 examples per label on 31 October 2026. Final implementation review/CI and merge remain pending. Downstream full-data implementation, exact completeness, audit and freeze requirements still apply.
 - **Last updated:** 31 October 2026.
 
 ## Verified real execution
@@ -219,3 +219,14 @@ Recommendation: accept the Qwen pilot with the above limitations and retain the 
 The Qwen-based linear estimate is about 12 hours of remaining zero/few-shot generation at 100 per label, or 7 hours at the approved uniform 60 fallback. AugGPT's additional 2,160 paraphrases have not yet been timed; measure them and monitor the schedule rather than assuming those 12 hours cover every setting. The agreed freeze remains 1 November 2026 at 18:00 IST. The default is plausible from current throughput, but completion time is not guaranteed. If measured AugGPT timing changes the deadline assessment, record an explicit coordinated target decision before affected full generation and preserve matched training counts.
 
 No additional model/prompt change is proposed. Human independence requirements for later annotation remain a separate unresolved scientific decision under the sole-operator arrangement. All 45 local software checks passed with Qwen and CI at pre-review head `fa741797b87dc9f74ed6ea760d89d24856c03225` passed. Current-head CI and final integration review must be verified separately. Do not close issue #6, merge PR #22, launch dependent full experiments or fabricate acceptance until the lead's decision and required checks are recorded.
+## Final lead decision — accepted, 31 October 2026
+
+Kausthuba explicitly selected **"Accept Qwen; use 100 per label (recommended)"** after the Qwen human-review assessment. See ADR 0011. This supersedes the historical pending decisions above. Qwen is the accepted generator across both tasks, all three synthetic settings and all three repetitions; retain temperature 0.9, the final focused prompts and the observed default thinking behavior.
+
+Uniform counts: C1–C4 use 100 per label (600 total); C4 uses 50 real plus 50 few-shot per label; C5a/C5b remain 60/420. The four accepted seed-13 Qwen pilot artifacts may resume toward their own targets with their current identity/provenance. No Llama rows or other repetition's rows may be reused.
+
+The lead accepts the disclosed 30 Good / 6 Ambiguous / 4 Bad screening findings and the eight selected actual appendix examples. Do not edit or discard the imperfect examples silently or claim that the pilot establishes perfect quality. All four rounds and all submitted human judgments remain unchanged.
+
+The remaining zero/few-shot estimate is approximately 12 hours at the chosen target; AugGPT's 2,160 paraphrases still need measured timing. Monitor the 1 November 2026, 18:00 IST freeze. Any later target revision needs a recorded coordinated decision and consistent affected training counts. The later 180-item audit and completeness gates remain required. Full generated corpora are not yet complete, audited or frozen.
+
+Issue #6's operational and target criteria are now met; final implementation review and CI are the remaining integration gates. After merge, #7 (C1/C5a baselines), #9 (exact-source AugGPT) and #10 (full zero/few-shot corpora) can proceed under their own criteria. This acceptance does not claim those tickets or the entire version-2 experiment are complete. Independent annotation under one operator remains unresolved separately.
