@@ -53,10 +53,37 @@ PROMPT_PROTOCOL_VERSION = "issue-6-v2"
 
 def prompt_zero_shot(task, label, n, i):
     t = CFG["tasks"][task]
+    label_guide = "\n".join(f'- {name}: {meaning}' for name, meaning in t["labels"].items())
+    if task == "trec":
+        boundaries = (
+            "Classify by the TYPE OF ANSWER requested, not by a person or place mentioned in the question.\n"
+            "A question naming a painting asks for an entity, even if an artist is mentioned. "
+            "A definition or explanation asks for description, not the term being defined. "
+            "A person, team, group or organisation is human. A place is location. "
+            "A count, date, duration or measurement is numeric. "
+            "An abbreviation question asks for an expansion or shortened form.\n"
+            "Ask an open question whose answer type clearly matches the requested label. "
+            "Avoid yes/no questions and questions that plausibly belong to another label.\n"
+        )
+    else:
+        boundaries = (
+            "Use the six broad emotion labels below. Anger includes annoyance or irritation; "
+            "fear includes anxiety, nervousness or worry.\n"
+            "Make the requested emotion the clear dominant feeling. Love needs affection or "
+            "tenderness toward someone or something; happiness alone is not sufficient. "
+            "Surprise needs an unexpected event and an amazed or shocked reaction; routine, "
+            "boredom or tiredness alone is not surprise. Gratitude, relief or nostalgia alone "
+            "is insufficient when the requested emotion is not clearly expressed.\n"
+            "Use varied concrete situations and natural wording. Do not make every example "
+            "a repetition of the emotion's name or rely only on label keywords.\n"
+        )
     return (f"You are building a dataset of {t['context']}.\n"
             f"Write {n} different examples of {t['style']}.\n"
             f'Every example must have the label "{label}", meaning: {t["labels"][label]}.\n'
+            f"Label guide:\n{label_guide}\n{boundaries}"
             f"At most {t['max_words']} words each. {NUDGES[i % len(NUDGES)]}\n"
+            "Check each candidate against the requested label before returning it. "
+            "Return only examples that clearly fit; do not include answers or explanations.\n"
             'Reply only with JSON: {"examples": ["...", "..."]}')
 
 
@@ -64,6 +91,7 @@ def prompt_few_shot(task, label, n, examples, i):
     shown = "\n".join(f"- {json.dumps(e)}" for e in examples)
     return (prompt_zero_shot(task, label, n, i).replace(
         "Reply only", f"Here are real examples with this label:\n{shown}\n"
+        "Use these for style, while following the label guide above: real examples can be noisy.\n"
         "Write NEW examples in the same style. Do not copy or paraphrase these.\nReply only"))
 
 
