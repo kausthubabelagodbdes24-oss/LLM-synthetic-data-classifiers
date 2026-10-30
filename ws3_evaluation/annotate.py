@@ -30,12 +30,13 @@ Commands:
    verify that order; the team lead must confirm it separately before running combine.
 
 3. python -m ws3_evaluation.annotate score
-   -> Computes nominal Krippendorff's alpha and mean agreement from results/annotation_filled.csv
+   -> Computes nominal Krippendorff's alpha and mean majority agreement proportion from results/annotation_filled.csv
       and writes results/subjectivity.csv.
 """
 
 import argparse
 import csv
+import random
 from collections import Counter
 from pathlib import Path
 
@@ -56,6 +57,8 @@ def select_annotation_items(test_rows_by_task=None):
     """Select exactly 5 fixed test items per label per task (30 per task, 60 overall).
 
     Deterministic selection using seed=0 on real test split with exact=True coverage checks.
+    After stratified selection, deterministically shuffles items within each task using
+    ANNOTATION_SEED so that row position does not leak gold-label groupings (ADR-0005).
     """
     items = []
     for task in TASKS:
@@ -78,14 +81,21 @@ def select_annotation_items(test_rows_by_task=None):
             required_labels=task_labels,
             exact=True,
         )
-        for r in sampled:
-            items.append({
+        task_items = [
+            {
                 "item_id": r["id"],
                 "task": task,
                 "text": r["text"],
                 "gold_label": r["label"],
                 "allowed_labels": " | ".join(task_labels),
-            })
+            }
+            for r in sampled
+        ]
+        # Deterministically shuffle items within each task so row position does not leak
+        # gold-label groupings (per ADR-0005 and review [P1]).
+        rng = random.Random(ANNOTATION_SEED)
+        rng.shuffle(task_items)
+        items.extend(task_items)
     return items
 
 
@@ -314,7 +324,7 @@ def combine_responses(response_files=None, out_dir=None, annotators=None, key_pa
 
 
 def score(filled_path=None, out_dir=None):
-    """Score nominal Krippendorff's alpha and mean agreement from combined responses."""
+    """Score nominal Krippendorff's alpha and mean majority agreement proportion from combined responses."""
     import krippendorff
 
     path = Path(filled_path) if filled_path else results_dir() / "annotation_filled.csv"
@@ -362,10 +372,13 @@ def score(filled_path=None, out_dir=None):
                 alpha = np.nan
             mean_agree = float(np.mean(agree))
 
+        # Count actual active annotators for this task (annotators providing at least one valid label)
+        active_annotators = sum(1 for n in names if any(r[n].strip() in lab_set for r in items))
+
         out.append({
             "task": task,
             "items": valid_items_count,
-            "annotators": len(names),
+            "annotators": active_annotators,
             "mean_agreement": round(mean_agree, 3) if not np.isnan(mean_agree) else "nan",
             "alpha": round(float(alpha), 3) if not np.isnan(alpha) else "nan",
         })

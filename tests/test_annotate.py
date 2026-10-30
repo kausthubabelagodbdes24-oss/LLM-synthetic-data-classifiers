@@ -404,3 +404,117 @@ def test_combine_rejects_invalid_label_without_normalization(tmp_path):
 
     with pytest.raises(ValueError, match=invalid_upper):
         combine_responses(out_dir=tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# New tests: deterministic shuffle, active annotator coverage, and metric accuracy
+# ---------------------------------------------------------------------------
+
+def test_select_annotation_items_deterministic_shuffle_and_non_grouped():
+    """Selection must deterministically shuffle items per task so row position does not leak gold."""
+    mock_data = _mock_test_dataset()
+    items1 = select_annotation_items(test_rows_by_task=mock_data)
+    items2 = select_annotation_items(test_rows_by_task=mock_data)
+
+    # 1. Stable reproducibility across repeated calls
+    assert [it["item_id"] for it in items1] == [it["item_id"] for it in items2]
+    assert [it["gold_label"] for it in items1] == [it["gold_label"] for it in items2]
+
+    # 2. Exact balance preserved: 30 per task, exactly 5 per label
+    trec_items = [it for it in items1 if it["task"] == "trec"]
+    emotion_items = [it for it in items1 if it["task"] == "emotion"]
+    assert len(trec_items) == 30
+    assert len(emotion_items) == 30
+    for lab in labels("trec"):
+        assert sum(1 for it in trec_items if it["gold_label"] == lab) == 5
+    for lab in labels("emotion"):
+        assert sum(1 for it in emotion_items if it["gold_label"] == lab) == 5
+
+    # 3. Non-grouped ordering: items must NOT appear in 5-item contiguous blocks of the same label
+    for task_name, task_items in [("trec", trec_items), ("emotion", emotion_items)]:
+        task_labs = [it["gold_label"] for it in task_items]
+        # If it were grouped, every chunk of 5 would have the identical label
+        grouped = all(len(set(task_labs[i:i + 5])) == 1 for i in range(0, 30, 5))
+        assert not grouped, f"{task_name} annotation items are still grouped in 5-item blocks by gold label"
+        # Verify frequent transitions between different labels across the 30 items
+        transitions = sum(1 for i in range(len(task_labs) - 1) if task_labs[i] != task_labs[i + 1])
+        assert transitions >= 15, f"{task_name} has only {transitions} label transitions across 30 items"
+
+
+def test_make_shuffled_order_matches_across_key_and_all_response_files(tmp_path):
+    """make() must write identical shuffled item order to annotation_key.csv and all response files."""
+    mock_data = _mock_test_dataset()
+    items, created_files = make(out_dir=tmp_path, test_rows_by_task=mock_data)
+
+    key_rows = list(csv.DictReader(open(tmp_path / "annotation_key.csv", encoding="utf-8")))
+    key_ids = [r["item_id"] for r in key_rows]
+    assert len(key_ids) == 60
+
+    for name in ANNOTATORS:
+        rf = tmp_path / f"annotation_{name}.csv"
+        rows = list(csv.DictReader(open(rf, encoding="utf-8")))
+        resp_ids = [r["item_id"] for r in rows]
+        assert resp_ids == key_ids, f"Item ID order mismatch in {rf.name} compared to annotation_key.csv"
+
+
+def test_score_reports_actual_active_annotator_coverage(tmp_path):
+    """score() must report actual active annotators, not len(names), when an annotator is blank."""
+    mock_data = _mock_test_dataset()
+    make(out_dir=tmp_path, test_rows_by_task=mock_data)
+
+    # Kausthuba and Harshita provide valid labels; Hementh leaves all rows blank
+    key_rows = list(csv.DictReader(open(tmp_path / "annotation_key.csv", encoding="utf-8")))
+    for name in ["kausthuba", "harshita"]:
+        rf = tmp_path / f"annotation_{name}.csv"
+        rows = list(csv.DictReader(open(rf, encoding="utf-8")))
+        for r, k in zip(rows, key_rows):
+            r["label"] = k["gold_label"]
+        with open(rf, "w", newline="", encoding="utf-8") as fh:
+            writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
+            writer.writeheader()
+            writer.writerows(rows)
+
+    # hementh's file remains completely blank
+    combine_responses(out_dir=tmp_path)
+    res = score(filled_path=tmp_path / "annotation_filled.csv", out_dir=tmp_path)
+
+    assert len(res) == 2
+    for r in res:
+        assert r["items"] == 30
+        # Active annotators must be 2, NOT 3
+        assert r["annotators"] == 2, f"Expected 2 active annotators, got {r['annotators']}"
+        assert r["mean_agreement"] == 1.0
+
+
+def test_score_majority_agreement_calculation(tmp_path):
+    """score() must correctly calculate mean majority agreement proportion across items."""
+    mock_data = _mock_test_dataset()
+    make(out_dir=tmp_path, test_rows_by_task=mock_data)
+
+    key_rows = list(csv.DictReader(open(tmp_path / "annotation_key.csv", encoding="utf-8")))
+    trec_labs = labels("trec")
+    emotion_labs = labels("emotion")
+
+    # On every item: Kausthuba and Harshita pick label 0, Hementh picks label 1
+    # Majority agreement proportion is 2/3 = 0.667 for every item
+    for name in ANNOTATORS:
+        rf = tmp_path / f"annotation_{name}.csv"
+        rows = list(csv.DictReader(open(rf, encoding="utf-8")))
+        for r in rows:
+            task_labs = trec_labs if r["task"] == "trec" else emotion_labs
+            if name in ("kausthuba", "harshita"):
+                r["label"] = task_labs[0]
+            else:
+                r["label"] = task_labs[1]
+        with open(rf, "w", newline="", encoding="utf-8") as fh:
+            writer = csv.DictWriter(fh, fieldnames=["item_id", "task", "text", "choose_one_of", "label"])
+            writer.writeheader()
+            writer.writerows(rows)
+
+    combine_responses(out_dir=tmp_path)
+    res = score(filled_path=tmp_path / "annotation_filled.csv", out_dir=tmp_path)
+
+    for r in res:
+        assert r["annotators"] == 3
+        assert r["items"] == 30
+        assert r["mean_agreement"] == round(2 / 3, 3)

@@ -77,7 +77,8 @@
 
 - **Task Subjectivity Verification**:
   - Independent human annotation on 30 common test items per task (60 total items) by three annotators (Kausthuba, Harshita, Hementh) without access to gold labels or peer submissions.
-  - Inter-annotator agreement metrics: Nominal Krippendorff's alpha ($\alpha$) and percentage pairwise agreement.
+  - Inter-annotator agreement metrics: Nominal Krippendorff's alpha ($\alpha$) and mean majority agreement proportion (percentage of annotators agreeing with the majority label per item, averaged across items).
+  - Operational procedures and file distribution protocols are maintained in [docs/ANNOTATION_GUIDE.md](ANNOTATION_GUIDE.md).
 - **Classification Performance**:
   - Macro-F1 scores (mean $\pm$ standard deviation across replicates 13, 42, 7) across conditions C1 through C5b for TREC and Emotion.
 - **Relative Performance Gap Analysis**:
@@ -102,34 +103,7 @@
 
 ---
 
-## Appendix A. Annotation File Distribution Guide
-
-*Owner: Hementh (@hem4456) — operational reference for distributing annotation response files.*
-
-The `python -m ws3_evaluation.annotate make` command produces the following files.
-Distribute them as described below; **never share `annotation_key.csv` with any annotator**.
-
-| File | Recipient | Contains gold labels? | Safe to share? |
-|------|-----------|----------------------|----------------|
-| `results/annotation_key.csv` | Internal only — do NOT share | **Yes** | **No — private audit record** |
-| `results/annotation_kausthuba.csv` | @kausthubabelagodbdes24-oss only | No | Yes — only to this annotator |
-| `results/annotation_harshita.csv` | @harshitadjainbdes24-byte only | No | Yes — only to this annotator |
-| `results/annotation_hementh.csv` | @hem4456 only | No | Yes — only to this annotator |
-
-**Human process requirement — Hementh completes first:**
-Hementh (@hem4456) must complete and return `annotation_hementh.csv` independently before any
-other annotator's labels are viewed or before `combine` is run. This order is required by
-ADR-0005 (independent annotation) but is **not enforced by the code**. The team lead must
-confirm Hementh's submission separately (e.g., a comment on Issue #8) before running
-`python -m ws3_evaluation.annotate combine`.
-
-**Overwrite protection:**
-Running `make` a second time without `--force` will abort rather than overwrite completed judgments.
-Only use `--force` after explicitly confirming that no completed responses will be lost.
-
----
-
-## Appendix B. Prompt Templates and Generation Examples
+## Appendix A. Prompt Templates and Generation Examples
 
 *Owner: Harshita (@harshitadjainbdes24-byte)*
 *Planning length: ~1.0 page*
