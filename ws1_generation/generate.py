@@ -7,6 +7,8 @@ After that everything runs offline.
     python -m ws1_generation.generate --setting few_shot --seed all          # full generation across repetitions
     python -m ws1_generation.generate --smoke-ollama                         # check Ollama status & model readiness
     python -m ws1_generation.generate --setting zero_shot --dry-run          # fake model, for testing
+    python -m ws1_generation.generate --setting auggpt --seed all            # six paraphrases per exact source
+    python -m ws1_generation.generate --setting auggpt --seed all --verify   # fail-closed AugGPT handoff check
 
 Resumable: stop it any time and run the same command again; resume is isolated to task x setting x repetition.
 Writes real output under data/synthetic/ and --dry-run fixtures under data/synthetic-fixtures/.
@@ -775,11 +777,26 @@ def generate_labelled(task, setting, target, fake, seed=None):
     return rows, provenance
 
 
+def load_auggpt_sources(task, seed):
+    """Return this repetition's exact low-resource sources keyed by ID."""
+    source_files = ([real_path(task, f"lowres_seed{seed}")] if seed is not None else
+                    sorted(real_path(task, "x").parent.glob("lowres_seed*.jsonl")))
+    sources = {}
+    for source_file in source_files:
+        for row in read_jsonl(source_file):
+            prior = sources.get(row["id"])
+            if prior and (prior.get("text"), prior.get("label")) != (row.get("text"), row.get("label")):
+                raise ValueError(f"Conflicting low-resource source ID {row['id']!r} for {task} seed {seed}")
+            sources.setdefault(row["id"], row)
+    return sources
+
+
 def validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sources):
     required = {
         "id", "task", "text", "label", "setting", "repetition", "source_ids",
         "schema_version", "generation_mode", "generation_fingerprint",
     }
+    source_texts = {norm(row["text"]) for row in sources.values()}
     seen_ids = set()
     seen_texts = set()
     per_source = {}
@@ -813,6 +830,8 @@ def validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sou
                 reason = "duplicate normalized text"
             elif norm(row["text"]) == norm(sources[source_id]["text"]):
                 reason = "paraphrase copies its source"
+            elif norm(row["text"]) in source_texts:
+                reason = "paraphrase copies another low-resource source"
         if reason:
             raise ValueError(f"incompatible existing row {index} in {path}: {reason}")
         seen_ids.add(row["id"])
@@ -822,8 +841,25 @@ def validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sou
             raise ValueError(f"incompatible existing row {index} in {path}: too many paraphrases for {source_id}")
 
 
+def auggpt_generation_identity(task, seed, mode, model_identity, sources):
+    test_rows = read_jsonl(real_path(task, "test"))
+    source_identity = {
+        "low_resource_sample": rows_identity(list(sources.values())),
+        "held_out_test": rows_identity(test_rows),
+    }
+    identity, fingerprint = build_generation_identity(
+        task, "auggpt", seed, mode, model_identity, source_identity
+    )
+    return identity, fingerprint, test_rows
+
+
 def generate_auggpt(task, fake, seed=None):
-    """Generate provenance-checked AugGPT paraphrases for low-resource sources."""
+    """Generate provenance-checked AugGPT paraphrases for this repetition's exact sources.
+
+    Each source resumes until it has auggpt_k valid paraphrases; a partially populated source
+    is never treated as complete. Batches use the same write-ahead journal and atomic sidecar
+    checkpoint as zero/few-shot generation, so interruption cannot inflate counts.
+    """
     started_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
     started_clock = time.perf_counter()
     run_id = str(uuid.uuid4())
@@ -836,28 +872,13 @@ def generate_auggpt(task, fake, seed=None):
     } if fake else resolve_model_identity())
     path = synth_path(task, "auggpt", seed=seed, mode=mode)
 
-    source_files = ([real_path(task, f"lowres_seed{seed}")] if seed is not None else
-                    sorted(real_path(task, "x").parent.glob("lowres_seed*.jsonl")))
-    all_source_rows = [row for source_file in source_files for row in read_jsonl(source_file)]
-    sources = {}
-    for row in all_source_rows:
-        prior = sources.get(row["id"])
-        if prior and (prior.get("text"), prior.get("label")) != (row.get("text"), row.get("label")):
-            raise ValueError(f"Conflicting low-resource source ID {row['id']!r} for {task} seed {seed}")
-        sources.setdefault(row["id"], row)
-    source_rows = list(sources.values())
+    sources = load_auggpt_sources(task, seed)
     if not sources:
         raise SystemExit(f"No lowres_seed*.jsonl for {task}: run ws2_training.prepare_data first.")
-
-    test_rows = read_jsonl(real_path(task, "test"))
-    source_identity = {
-        "low_resource_sample": rows_identity(source_rows),
-        "held_out_test": rows_identity(test_rows),
-    }
-    generation_identity, fingerprint = build_generation_identity(
-        task, "auggpt", seed, mode, model_identity, source_identity
+    generation_identity, fingerprint, test_rows = auggpt_generation_identity(
+        task, seed, mode, model_identity, sources
     )
-    existing = read_generation_rows(path)
+    existing = recover_labelled_journal(path, generation_identity, fingerprint)
     rows_before = len(existing)
     validate_existing_auggpt_rows(existing, path, task, seed, mode, fingerprint, sources)
     previous_provenance = read_existing_provenance(
@@ -865,6 +886,7 @@ def generate_auggpt(task, fake, seed=None):
     )
 
     test_seen = {norm(row["text"]) for row in test_rows}
+    source_texts = {norm(row["text"]) for row in sources.values()}
     seen = {norm(row["text"]) for row in existing}
     stats = {
         "calls": 0, "call_failures": 0, "parse_failures": 0,
@@ -872,17 +894,69 @@ def generate_auggpt(task, fake, seed=None):
         "rejected_test_leak": 0, "rejected_source_copy": 0,
         "accepted_new": 0,
     }
+    prior_sessions = list(previous_provenance.get("sessions", [])) if previous_provenance else []
+    prior_cumulative = dict(previous_provenance.get("cumulative_stats", {})) if previous_provenance else {}
+    prov_path = path.with_suffix(".provenance.json")
+
+    def build_provenance(status, rows_snapshot):
+        checkpointed_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        counts_by_source = {
+            source_id: sum(row["source_ids"] == [source_id] for row in rows_snapshot)
+            for source_id in sorted(sources)
+        }
+        complete = all(count == CFG["auggpt_k"] for count in counts_by_source.values())
+        cumulative_stats = {key: prior_cumulative.get(key, 0) + value for key, value in stats.items()}
+        session = {
+            "run_id": run_id,
+            "generation_mode": mode,
+            "started_at": started_at,
+            "finished_at": checkpointed_at if status != "in_progress" else None,
+            "elapsed_seconds": round(time.perf_counter() - started_clock, 6),
+            "target_per_source": CFG["auggpt_k"],
+            "rows_before": rows_before,
+            "rows_after": len(rows_snapshot),
+            "accepted_row_ids": [row["id"] for row in rows_snapshot[rows_before:]],
+            "stats": dict(stats),
+            "status": status,
+        }
+        return {
+            "task": task,
+            "setting": "auggpt",
+            "repetition": seed,
+            "model": CFG.get("model") if not fake else "synthetic-fake-model",
+            "model_identity": model_identity,
+            "generation_mode": mode,
+            "generation_identity": generation_identity,
+            "generation_fingerprint": fingerprint,
+            "temperature": CFG.get("temperature") if not fake else None,
+            "target_per_source": CFG["auggpt_k"],
+            "source_count": len(sources),
+            "counts_by_source": counts_by_source,
+            "incomplete_source_ids": [sid for sid, count in counts_by_source.items() if count != CFG["auggpt_k"]],
+            "total_count": len(rows_snapshot),
+            "is_complete": complete,
+            "cumulative_stats": cumulative_stats,
+            "stats": cumulative_stats,
+            "sessions": prior_sessions + [session],
+            "created_at": previous_provenance.get("created_at", started_at) if previous_provenance else started_at,
+            "updated_at": checkpointed_at,
+        }
+
     for source_id, source_row in sorted(sources.items()):
         have = sum(row["source_ids"] == [source_id] for row in existing)
         attempts = 0
         while have < CFG["auggpt_k"] and attempts < 3:
             attempts += 1
-            candidates = ask(
-                prompt_auggpt(source_row["text"], CFG["auggpt_k"] - have),
-                fake,
-                max_words=CFG["tasks"][task]["max_words"],
-                stats=stats,
-            )
+            try:
+                candidates = ask(
+                    prompt_auggpt(source_row["text"], CFG["auggpt_k"] - have),
+                    fake,
+                    max_words=CFG["tasks"][task]["max_words"],
+                    stats=stats,
+                )
+            except KeyboardInterrupt:
+                atomic_write_json(prov_path, build_provenance("interrupted", existing))
+                raise
             new = []
             for candidate in candidates:
                 if have >= CFG["auggpt_k"]:
@@ -894,7 +968,7 @@ def generate_auggpt(task, fake, seed=None):
                 if normalized in test_seen:
                     stats["rejected_test_leak"] += 1
                     continue
-                if normalized == norm(source_row["text"]):
+                if normalized in source_texts:
                     stats["rejected_source_copy"] += 1
                     continue
                 have += 1
@@ -915,52 +989,77 @@ def generate_auggpt(task, fake, seed=None):
                     "generation_fingerprint": fingerprint,
                 })
             if new:
-                write_jsonl(path, new, append=True)
+                checkpoint = build_provenance("in_progress", existing + new)
+                write_labelled_batch(path, existing, new, checkpoint, fingerprint)
                 existing += new
 
-    counts_by_source = {
-        source_id: sum(row["source_ids"] == [source_id] for row in existing)
-        for source_id in sources
-    }
-    complete = all(count == CFG["auggpt_k"] for count in counts_by_source.values())
-    finished_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    prior_sessions = list(previous_provenance.get("sessions", [])) if previous_provenance else []
-    prior_cumulative = dict(previous_provenance.get("cumulative_stats", {})) if previous_provenance else {}
-    cumulative_stats = {key: prior_cumulative.get(key, 0) + value for key, value in stats.items()}
-    session = {
-        "run_id": run_id,
-        "generation_mode": mode,
-        "started_at": started_at,
-        "finished_at": finished_at,
-        "elapsed_seconds": round(time.perf_counter() - started_clock, 6),
-        "target_per_source": CFG["auggpt_k"],
-        "rows_before": rows_before,
-        "rows_after": len(existing),
-        "accepted_row_ids": [row["id"] for row in existing[rows_before:]],
-        "stats": stats,
-        "status": "no_op" if stats["accepted_new"] == 0 and complete else ("complete" if complete else "incomplete"),
-    }
-    provenance = {
+    provenance = build_provenance("finished", existing)
+    complete = provenance["is_complete"]
+    status = "no_op" if stats["accepted_new"] == 0 and complete else ("complete" if complete else "incomplete")
+    provenance["sessions"][-1]["status"] = status
+    atomic_write_json(prov_path, provenance)
+    print(f"  {task} auggpt (seed={seed}): {len(sources)} source examples, {len(existing)} paraphrases; "
+          f"complete={complete}")
+    if not complete:
+        print(f"    {len(provenance['incomplete_source_ids'])} incomplete sources: rerun the same command to resume")
+    return existing, provenance
+
+
+def verify_auggpt(task, seed, mode="real"):
+    """Fail-closed handoff check for one task x repetition AugGPT artifact.
+
+    Recomputes the generation identity from the sidecar's recorded model and the current exact
+    sources/prompts, revalidates every row, and requires auggpt_k paraphrases for every source of
+    an exact lowres_seed<seed> sample. Raises ValueError on any shortfall; never repairs data.
+    """
+    if seed is None:
+        raise ValueError("AugGPT verification requires a repetition seed")
+    path = synth_path(task, "auggpt", seed=seed, mode=mode)
+    prov_path = path.with_suffix(".provenance.json")
+    if generation_journal_path(path).exists():
+        raise ValueError(f"{path}: unrecovered interrupted batch; rerun generation to recover it")
+    if not path.exists() or not prov_path.exists():
+        raise ValueError(f"{path}: artifact or provenance sidecar is missing")
+    try:
+        recorded = json.loads(prov_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"{path}: invalid provenance sidecar") from exc
+    model_identity = recorded.get("model_identity")
+    if mode == "real" and (not isinstance(model_identity, dict)
+                           or model_identity.get("provider") != "ollama"
+                           or not model_identity.get("digest")):
+        raise ValueError(f"{path}: real artifact lacks an Ollama model digest")
+
+    sources = load_auggpt_sources(task, seed)
+    expected = CFG["lowres_per_label"]
+    label_counts = {lab: sum(row["label"] == lab for row in sources.values()) for lab in labels(task)}
+    if any(count != expected for count in label_counts.values()) or len(sources) != expected * len(labels(task)):
+        raise ValueError(f"{task} seed {seed}: low-resource sample is not exactly {expected} per label: {label_counts}")
+
+    identity, fingerprint, _ = auggpt_generation_identity(task, seed, mode, model_identity, sources)
+    rows = read_generation_rows(path)
+    validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sources)
+    provenance = read_existing_provenance(path, rows, identity, fingerprint)
+    counts = {sid: sum(row["source_ids"] == [sid] for row in rows) for sid in sorted(sources)}
+    short = {sid: count for sid, count in counts.items() if count != CFG["auggpt_k"]}
+    if short:
+        raise ValueError(f"{path}: {len(short)} of {len(sources)} sources lack {CFG['auggpt_k']} paraphrases: "
+                         f"{dict(list(short.items())[:5])}")
+    if provenance.get("counts_by_source") != counts or provenance.get("is_complete") is not True:
+        raise ValueError(f"{path}: provenance completeness does not match the rows")
+    return {
         "task": task,
-        "setting": "auggpt",
         "repetition": seed,
         "generation_mode": mode,
+        "path": str(path),
+        "source_count": len(sources),
+        "total_count": len(rows),
         "model_identity": model_identity,
-        "generation_identity": generation_identity,
         "generation_fingerprint": fingerprint,
-        "target_per_source": CFG["auggpt_k"],
-        "counts_by_source": counts_by_source,
-        "total_count": len(existing),
-        "is_complete": complete,
-        "cumulative_stats": cumulative_stats,
-        "stats": cumulative_stats,
-        "sessions": prior_sessions + [session],
-        "created_at": previous_provenance.get("created_at", started_at) if previous_provenance else started_at,
-        "updated_at": finished_at,
+        "sessions": len(provenance["sessions"]),
+        "elapsed_seconds": round(sum(s.get("elapsed_seconds") or 0 for s in provenance["sessions"]), 6),
+        "cumulative_stats": provenance["cumulative_stats"],
     }
-    path.with_suffix(".provenance.json").write_text(json.dumps(provenance, indent=2), encoding="utf-8")
-    print(f"  {task} auggpt (seed={seed}): {len(sources)} source examples; complete={complete}")
-    return existing, provenance
 
 
 def inspect_pilot(task, setting, seed=None, mode="real"):
@@ -989,6 +1088,8 @@ def main(argv=None):
     ap.add_argument("--dry-run", action="store_true", help="fake model, for testing")
     ap.add_argument("--smoke-ollama", action="store_true", help="verify local Ollama service and model readiness")
     ap.add_argument("--inspect", action="store_true", help="inspect sample pilot rows across tasks/settings")
+    ap.add_argument("--verify", action="store_true",
+                    help="fail-closed AugGPT completeness/provenance check (with --setting auggpt --seed)")
     args = ap.parse_args(argv)
 
     if args.smoke_ollama:
@@ -1012,6 +1113,21 @@ def main(argv=None):
 
     if not args.setting:
         ap.error("--setting is required unless --smoke-ollama or --inspect is given")
+
+    if args.verify:
+        if args.setting != "auggpt" or args.seed is None:
+            ap.error("--verify supports --setting auggpt with --seed 13|42|7|all")
+        verify_seeds = [int(s) for s in CFG["seeds"]] if args.seed == "all" else [int(args.seed)]
+        failures = 0
+        for seed in verify_seeds:
+            for task in TASKS if args.task == "all" else [args.task]:
+                try:
+                    summary = verify_auggpt(task, seed, mode="fake" if args.dry_run else "real")
+                    print(f"PASS {task} auggpt seed {seed}: {json.dumps(summary)}")
+                except ValueError as exc:
+                    failures += 1
+                    print(f"FAIL {task} auggpt seed {seed}: {exc}")
+        sys.exit(1 if failures else 0)
 
     # Determine seeds to run
     if args.seed == "all":
