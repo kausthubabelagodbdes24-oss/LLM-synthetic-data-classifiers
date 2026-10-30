@@ -4,12 +4,12 @@ The specification defines experimental meaning. Record exact accepted interfaces
 
 **30 October fallback-pilot decision:** the sole operator/lead Kausthuba approved an isolated `qwen3:4b` pilot using unchanged final prompts and data interfaces; see [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md). This approves testing the shared model setting, not dataset acceptance or full generation. Preserve all earlier Llama artifacts and reviews; model digests/fingerprints remain incompatible across resume. Runtime option changes need a separate decision if compatibility problems arise.
 
-**31 October acceptance, superseding the pilot-only status above:** Kausthuba accepted Qwen with the documented quality limitations and chose uniform 100 per label. See [ADR 0011](../adr/0011-accept-qwen-pilot-and-uniform-100-target.md). Lead scientific acceptance is recorded; integration remains subject to PR review/CI. Exact full-data completeness, content audit and freeze acceptance are still future gates.
+**31 October acceptance, superseding the pilot-only status above:** Kausthuba accepted Qwen with the documented quality limitations and chose uniform 100 per label. See [ADR 0011](../adr/0011-accept-qwen-pilot-and-uniform-100-target.md). Lead scientific acceptance and final implementation review are recorded; consult PR #22 for current CI/merge state. Exact full-data completeness, content audit and freeze acceptance are still future gates.
 
 | Interface | Current state / agreement required | Owners |
 | --- | --- | --- |
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
-| Repetition-specific generation | Lead accepted the Qwen pilot and uniform 100 target for Issue #6; PR #22 integration review/CI remains the final gate. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
+| Repetition-specific generation | Accepted Qwen pilot and uniform 100 target for Issue #6; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
 | Run records and paired analysis | Preserve unique task/condition/repetition keys and exact matching baselines. Agree precision, provenance and schema changes before changing writer/reader. Zero-baseline policy remains unresolved. | Training + evaluation |
 | Annotation exchange | Independent responses must combine without changed judgments. Agree stable item matching, label validation, missing responses and actual active-annotator reporting; preserve original responses. | Evaluation + all human annotators |
@@ -68,7 +68,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 
 ## Repetition-specific generation & provenance
 
-- **Approval status**: Lead scientific acceptance recorded on 31 October 2026 in ADR 0011 for Issue #6 and PR #22. Kausthuba accepted the real Qwen pilot with its disclosed quality limitations and uniform 100-per-label target. Integration is subject to final review/CI; full-data audit/freeze acceptance is not implied.
+- **Approval status**: Lead scientific acceptance recorded on 31 October 2026 in ADR 0011 for Issue #6 and PR #22. Kausthuba accepted the real Qwen pilot with its disclosed quality limitations and uniform 100-per-label target. Final implementation review is clear; integration requires current-head CI at merge (see PR #22). Full-data audit/freeze acceptance is not implied.
 - **Producer**: `ws1_generation/generate.py` (Owner: @harshitadjainbdes24-byte).
 - **Consumers**:
   - `ws2_training/train.py` (C2, C3, C4, C5b model training)

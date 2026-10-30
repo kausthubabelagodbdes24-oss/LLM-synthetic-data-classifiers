@@ -1,7 +1,7 @@
 # Generation pilot report and target decision
 
 - **Operator and lead:** Kausthuba (@kausthubabelagodbdes24-oss), now executing all workstreams personally in separate workspaces.
-- **Status:** Kausthuba accepted the Qwen pilot with disclosed limitations and uniform 100 examples per label on 31 October 2026. Final implementation review/CI and merge remain pending. Downstream full-data implementation, exact completeness, audit and freeze requirements still apply.
+- **Status:** Kausthuba accepted the Qwen pilot with disclosed limitations and uniform 100 examples per label on 31 October 2026. Final standards/specification review is clear and 50 local tests pass. PR #22 records the required current-head CI and integration state. Downstream full-data implementation, exact completeness, audit and freeze requirements still apply.
 - **Last updated:** 31 October 2026.
 
 ## Verified real execution
@@ -230,3 +230,10 @@ The lead accepts the disclosed 30 Good / 6 Ambiguous / 4 Bad screening findings 
 The remaining zero/few-shot estimate is approximately 12 hours at the chosen target; AugGPT's 2,160 paraphrases still need measured timing. Monitor the 1 November 2026, 18:00 IST freeze. Any later target revision needs a recorded coordinated decision and consistent affected training counts. The later 180-item audit and completeness gates remain required. Full generated corpora are not yet complete, audited or frozen.
 
 Issue #6's operational and target criteria are now met; final implementation review and CI are the remaining integration gates. After merge, #7 (C1/C5a baselines), #9 (exact-source AugGPT) and #10 (full zero/few-shot corpora) can proceed under their own criteria. This acceptance does not claim those tickets or the entire version-2 experiment are complete. Independent annotation under one operator remains unresolved separately.
+## Final implementation review and regression check
+
+Separate Standards and Spec reviews found no remaining actionable blockers within issue #6 after correction `c1720d93195b5c36570d4b9509a5f903bc7267c8`. The final review identified a structured-reply edge case: empty examples, wrong-shaped examples, error-key arrays, prose-wrapped errors and malformed JSON could previously fall into plain-line candidates. Five ask-level cases reproduced the defect before the fix; they now retry without counting non-examples. The full suite passes **50 tests**, including the offline end-to-end smoke and persistence regressions.
+
+This correction changes reply admission only, not the approved model, final prompt templates, temperature or generation options. All 240 accepted Qwen texts were re-hashed and revalidated against the same fingerprints/provenance, exact counts and valid structured-array parsing; they remain unchanged. The human submission and eight selected appendix examples are preserved. No regeneration or additional human inspection is required for this parser fix.
+
+Current-head Windows/Ubuntu CI must pass before merge. PR #22 and issue #6 record the actual merge/closure outcome. Acceptance of this generator interface does not establish completion of downstream full generation, source-complete AugGPT, training, annotation, the 180-item audit or freeze requirements.
