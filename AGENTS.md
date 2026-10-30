@@ -1,5 +1,7 @@
 # Instructions for every SynthText implementation agent
 
+**Current lead instruction, 30 October 2026:** Kausthuba (@kausthubabelagodbdes24-oss) is the sole implementing operator for generation, training and evaluation. Keep the workspaces separate; historical teammate ownership below does not require waiting for those teammates to execute tickets. Guide Kausthuba through physical setup, real runs and human quality review. This operating change does not turn one person's repeated judgments into independent annotators; requirements involving genuinely independent humans still need an explicit scientific decision.
+
 This repository is the central project record for every provider. Explicitly read [the shared protocol](docs/agents/IMPLEMENTATION_PROTOCOL.md) before editing, then use [the issue prompt](docs/agents/ISSUE_PROMPT.md) to launch tasks. Claude and Gemini entry files point to these same rules, without separate policies.
 
 Read live issues and blockers, current main, README, specification, glossary, relevant decisions, contracts, code and tests. Planned requirements are not proof of implemented behavior. Do not rely on another chat or invent missing decisions.
