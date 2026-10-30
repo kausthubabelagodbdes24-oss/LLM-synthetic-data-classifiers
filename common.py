@@ -33,7 +33,9 @@ def real_path(task, name):            # name: train | test | pool | lowres_seed1
     return data_dir() / "real" / task / f"{name}.jsonl"
 
 
-def synth_path(task, setting):        # setting: zero_shot | few_shot | auggpt
+def synth_path(task, setting, seed=None):  # setting: zero_shot | few_shot | auggpt; seed: 13 | 42 | 7 ...
+    if seed is not None:
+        return data_dir() / "synthetic" / task / f"{setting}_seed{seed}.jsonl"
     return data_dir() / "synthetic" / task / f"{setting}.jsonl"
 
 
