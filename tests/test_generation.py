@@ -599,6 +599,24 @@ def test_parse_robustness():
     assert generate.parse(f'{{"examples": ["{long_q}", "short question ?"]}}', max_words=10) == ["short question ?"]
 
 
+@pytest.mark.parametrize("unusable_reply", [
+    '{"examples": [], "message": "generation failed please retry"}',
+    '{"examples": "generation failed please retry"}',
+    '{"error": ["model unavailable please retry"]}',
+    'Result: {"error": ["model unavailable please retry"]}',
+    '{"examples": ["unfinished example"',
+])
+def test_structured_non_examples_retry_before_counting_candidates(monkeypatch, unusable_reply):
+    replies = iter([unusable_reply, '{"examples": ["what causes the tides ?"]}'])
+    monkeypatch.setattr(generate, "ask_ollama", lambda *args, **kwargs: next(replies))
+    stats = {"calls": 0, "call_failures": 0, "parse_failures": 0, "candidates_received": 0}
+
+    result = generate.ask("test prompt", fake=False, retries=2, stats=stats)
+
+    assert result == ["what causes the tides ?"]
+    assert stats == {"calls": 2, "call_failures": 0, "parse_failures": 1, "candidates_received": 1}
+
+
 def test_network_connection_failure_handling(monkeypatch):
     """Verify that network/Ollama connection failures retry and fail cleanly without corrupting datasets."""
     mock_post = MagicMock(side_effect=requests.exceptions.ConnectionError("Connection refused"))

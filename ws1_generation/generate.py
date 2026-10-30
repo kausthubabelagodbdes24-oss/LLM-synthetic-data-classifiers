@@ -152,29 +152,36 @@ def parse(reply, max_words=None):
         return []
     cleaned = clean_markdown_fences(reply)
     items = []
+    structured = False
 
     # 1. Try structured JSON parsing
     try:
         obj = json.loads(cleaned)
-        if isinstance(obj, dict):
-            items = obj.get("examples", next(iter(obj.values()), []))
-        elif isinstance(obj, list):
-            items = obj
-    except (json.JSONDecodeError, StopIteration, AttributeError, TypeError):
+        structured = True
+    except json.JSONDecodeError:
         # Try finding JSON substring
-        sub_m = re.search(r"(\{[\s\S]*\"examples\"\s*:\s*\[[\s\S]*\][\s\S]*\}|\[[\s\S]*\])", cleaned)
+        sub_m = re.search(r"(\{[\s\S]*\}|\[[\s\S]*\])", cleaned)
         if sub_m:
             try:
-                sub_obj = json.loads(sub_m.group(1))
-                if isinstance(sub_obj, dict):
-                    items = sub_obj.get("examples", [])
-                elif isinstance(sub_obj, list):
-                    items = sub_obj
-            except Exception:
-                items = []
+                obj = json.loads(sub_m.group(1))
+                structured = True
+            except json.JSONDecodeError:
+                return []
+        elif cleaned.startswith(("{", "[")):
+            return []
 
-    # 2. Fallback to line-by-line parsing if no JSON items extracted
-    if not items or not isinstance(items, list):
+    # A structured empty/error reply is not a line of training text.
+    if structured:
+        if isinstance(obj, dict):
+            items = obj.get("examples", [])
+        elif isinstance(obj, list):
+            items = obj
+        else:
+            return []
+        if not isinstance(items, list):
+            return []
+    else:
+        # Preserve the legacy plain/numbered-line reply format.
         raw_lines = [re.sub(r"^\s*(?:\d+[.)]|[-*•])\s*", "", ln).strip() for ln in cleaned.splitlines()]
         items = [ln for ln in raw_lines if ln]
 
