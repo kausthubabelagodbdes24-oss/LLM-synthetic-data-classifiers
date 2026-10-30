@@ -375,7 +375,7 @@ def validate_existing_rows(rows, path, task, setting, seed, mode, fingerprint, p
 
 def read_existing_provenance(path, rows, generation_identity, fingerprint):
     prov_path = path.with_suffix(".provenance.json")
-    if not rows:
+    if not rows and not prov_path.exists():
         return None
     if not prov_path.exists():
         raise ValueError(f"incompatible existing artifact {path}: provenance sidecar is missing")
@@ -418,6 +418,104 @@ def rows_identity(rows):
     return {"row_count": len(selected), "sha256": _identity_hash(selected)}
 
 
+def atomic_write_json(path, value):
+    """Replace a JSON file atomically after writing its complete temporary file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = path.with_suffix(path.suffix + ".tmp")
+    temp_path.write_text(json.dumps(value, indent=2), encoding="utf-8")
+    temp_path.replace(path)
+
+
+def generation_journal_path(path):
+    return path.with_suffix(".generation-journal.json")
+
+
+def write_labelled_batch(path, existing_rows, new_rows, provenance_after, fingerprint):
+    """Write a recoverable batch across the JSONL/provenance file boundary."""
+    journal_path = generation_journal_path(path)
+    journal = {
+        "schema_version": 1,
+        "artifact_name": path.name,
+        "generation_fingerprint": fingerprint,
+        "rows_before": len(existing_rows),
+        "prefix_sha256": _identity_hash(existing_rows),
+        "batch_rows": new_rows,
+        "batch_sha256": _identity_hash(new_rows),
+        "provenance_after": provenance_after,
+    }
+    atomic_write_json(journal_path, journal)
+    write_jsonl(path, new_rows, append=True)
+    atomic_write_json(path.with_suffix(".provenance.json"), provenance_after)
+    journal_path.unlink()
+
+
+def recover_labelled_journal(path, rows, generation_identity, fingerprint):
+    """Reconcile a durable batch journal without accepting unrelated artifact rows."""
+    journal_path = generation_journal_path(path)
+    journal_temp = journal_path.with_suffix(journal_path.suffix + ".tmp")
+    provenance_path = path.with_suffix(".provenance.json")
+    provenance_temp = provenance_path.with_suffix(provenance_path.suffix + ".tmp")
+    if not journal_path.exists():
+        # A journal temp without its atomic replacement cannot precede a data append.
+        journal_temp.unlink(missing_ok=True)
+        if provenance_path.exists():
+            provenance_temp.unlink(missing_ok=True)
+        return rows
+
+    try:
+        journal = json.loads(journal_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"incompatible recovery journal for {path}: invalid JSON") from exc
+
+    required = {
+        "schema_version", "artifact_name", "generation_fingerprint", "rows_before",
+        "prefix_sha256", "batch_rows", "batch_sha256", "provenance_after",
+    }
+    if required - set(journal):
+        raise ValueError(f"incompatible recovery journal for {path}: required identity is missing")
+    batch_rows = journal["batch_rows"]
+    provenance_after = journal["provenance_after"]
+    rows_before = journal["rows_before"]
+    if (
+        journal["schema_version"] != 1
+        or journal["artifact_name"] != path.name
+        or journal["generation_fingerprint"] != fingerprint
+        or not isinstance(rows_before, int)
+        or rows_before < 0
+        or not isinstance(batch_rows, list)
+        or not batch_rows
+        or journal["batch_sha256"] != _identity_hash(batch_rows)
+        or provenance_after.get("generation_identity") != generation_identity
+        or provenance_after.get("generation_fingerprint") != fingerprint
+        or provenance_after.get("total_count") != rows_before + len(batch_rows)
+    ):
+        raise ValueError(f"incompatible recovery journal for {path}: identity or counts do not match")
+    if len(rows) < rows_before or _identity_hash(rows[:rows_before]) != journal["prefix_sha256"]:
+        raise ValueError(f"incompatible recovery journal for {path}: persisted prefix does not match")
+
+    persisted_tail = rows[rows_before:]
+    if len(persisted_tail) > len(batch_rows) or persisted_tail != batch_rows[:len(persisted_tail)]:
+        raise ValueError(f"incompatible recovery journal for {path}: persisted batch does not match")
+    missing_rows = batch_rows[len(persisted_tail):]
+    if missing_rows:
+        write_jsonl(path, missing_rows, append=True)
+        rows += missing_rows
+
+    recovered_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    sessions = provenance_after.get("sessions")
+    if not isinstance(sessions, list) or not sessions:
+        raise ValueError(f"incompatible recovery journal for {path}: session evidence is missing")
+    sessions[-1]["status"] = "interrupted"
+    sessions[-1]["finished_at"] = recovered_at
+    sessions[-1]["recovered_at"] = recovered_at
+    provenance_after["updated_at"] = recovered_at
+    atomic_write_json(provenance_path, provenance_after)
+    provenance_temp.unlink(missing_ok=True)
+    journal_temp.unlink(missing_ok=True)
+    journal_path.unlink()
+    return rows
+
+
 # ---------------- generation ----------------
 
 def generate_labelled(task, setting, target, fake, seed=None):
@@ -434,7 +532,6 @@ def generate_labelled(task, setting, target, fake, seed=None):
     } if fake else resolve_model_identity())
     path = synth_path(task, setting, seed=seed, mode=mode)
     rows = read_generation_rows(path)
-    rows_before = len(rows)
 
     pool = read_jsonl(real_path(task, "pool"))
     if setting == "few_shot" and not pool:
@@ -447,6 +544,10 @@ def generate_labelled(task, setting, target, fake, seed=None):
     generation_identity, generation_fingerprint = build_generation_identity(
         task, setting, seed, mode, model_identity, source_identity
     )
+    rows = recover_labelled_journal(
+        path, rows, generation_identity, generation_fingerprint
+    )
+    rows_before = len(rows)
     validate_existing_rows(
         rows, path, task, setting, seed, mode, generation_fingerprint, pool
     )
@@ -474,10 +575,9 @@ def generate_labelled(task, setting, target, fake, seed=None):
     prior_cumulative = dict(previous_provenance.get("cumulative_stats", {})) if previous_provenance else {}
     prov_path = path.with_suffix(".provenance.json")
 
-    def persist_provenance(status):
-        """Atomically checkpoint rows and the current invocation's evidence."""
+    def build_provenance(status, rows_snapshot):
         checkpointed_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        complete = all(sum(r["label"] == lab for r in rows) >= target for lab in labels(task))
+        complete = all(sum(r["label"] == lab for r in rows_snapshot) >= target for lab in labels(task))
         cumulative_stats = {
             key: prior_cumulative.get(key, 0) + value
             for key, value in stats.items()
@@ -490,8 +590,8 @@ def generate_labelled(task, setting, target, fake, seed=None):
             "elapsed_seconds": round(time.perf_counter() - session_started_clock, 6),
             "target_per_label": target,
             "rows_before": rows_before,
-            "rows_after": len(rows),
-            "accepted_row_ids": [row["id"] for row in rows[rows_before:]],
+            "rows_after": len(rows_snapshot),
+            "accepted_row_ids": [row["id"] for row in rows_snapshot[rows_before:]],
             "stats": dict(stats),
             "status": status,
         }
@@ -506,8 +606,8 @@ def generate_labelled(task, setting, target, fake, seed=None):
             "generation_fingerprint": generation_fingerprint,
             "temperature": CFG.get("temperature", 0.9) if not fake else None,
             "target_per_label": target,
-            "counts_by_label": {lab: sum(r["label"] == lab for r in rows) for lab in labels(task)},
-            "total_count": len(rows),
+            "counts_by_label": {lab: sum(r["label"] == lab for r in rows_snapshot) for lab in labels(task)},
+            "total_count": len(rows_snapshot),
             "is_complete": complete,
             "distinct_demonstrations_count": len(demonstrations_used),
             "distinct_demonstration_ids": sorted(demonstrations_used),
@@ -517,9 +617,12 @@ def generate_labelled(task, setting, target, fake, seed=None):
             "created_at": previous_provenance.get("created_at", session_started_at) if previous_provenance else session_started_at,
             "updated_at": checkpointed_at,
         }
-        temp_path = prov_path.with_suffix(prov_path.suffix + ".tmp")
-        temp_path.write_text(json.dumps(provenance, indent=2), encoding="utf-8")
-        temp_path.replace(prov_path)
+        return provenance
+
+    def persist_provenance(status):
+        """Atomically checkpoint the current invocation's evidence."""
+        provenance = build_provenance(status, rows)
+        atomic_write_json(prov_path, provenance)
         return provenance
 
     for label in labels(task):
@@ -595,9 +698,11 @@ def generate_labelled(task, setting, target, fake, seed=None):
                 new.append(row)
 
             if new:
-                write_jsonl(path, new, append=True)
+                checkpoint = build_provenance("in_progress", rows + new)
+                write_labelled_batch(
+                    path, rows, new, checkpoint, generation_fingerprint
+                )
                 rows += new
-                persist_provenance("in_progress")
 
         print(f"  {task} {setting} (seed={seed}) {label}: {have}/{target}")
 

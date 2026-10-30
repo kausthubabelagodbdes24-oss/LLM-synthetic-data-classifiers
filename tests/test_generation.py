@@ -233,6 +233,109 @@ def test_interrupted_generation_checkpoints_and_resumes(fake_env, monkeypatch):
     assert [session["status"] for session in provenance["sessions"]] == ["interrupted", "complete"]
 
 
+def test_resume_recovers_crash_after_data_append_before_provenance(fake_env, monkeypatch):
+    """A write-ahead checkpoint reconciles a batch saved before its sidecar."""
+    original_write_jsonl = generate.write_jsonl
+    crashed = False
+
+    def crash_after_append(path, rows, append=False):
+        nonlocal crashed
+        original_write_jsonl(path, rows, append=append)
+        if append and not crashed:
+            crashed = True
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(generate, "write_jsonl", crash_after_append)
+    with pytest.raises(KeyboardInterrupt):
+        generate.generate_labelled("trec", "zero_shot", target=1, fake=True, seed=13)
+
+    path = synth_path("trec", "zero_shot", seed=13, mode="fake")
+    rows_after_crash = read_jsonl(path)
+    assert len(rows_after_crash) == 1
+    assert not path.with_suffix(".provenance.json").exists()
+    assert path.with_suffix(".generation-journal.json").exists()
+
+    monkeypatch.setattr(generate, "write_jsonl", original_write_jsonl)
+    rows, provenance = generate.generate_labelled(
+        "trec", "zero_shot", target=1, fake=True, seed=13
+    )
+
+    assert rows[0] == rows_after_crash[0]
+    assert len(rows) == len(labels("trec"))
+    assert len({row["id"] for row in rows}) == len(rows)
+    assert [session["status"] for session in provenance["sessions"]] == ["interrupted", "complete"]
+    assert not path.with_suffix(".generation-journal.json").exists()
+
+
+def test_resume_reconciles_later_append_with_stale_sidecar_temp(fake_env, monkeypatch):
+    """Journal recovery supersedes a stale sidecar and incomplete sidecar temp safely."""
+    generate.generate_labelled("trec", "zero_shot", target=1, fake=True, seed=13)
+    path = synth_path("trec", "zero_shot", seed=13, mode="fake")
+    original_rows = read_jsonl(path)
+    original_write_jsonl = generate.write_jsonl
+    crashed = False
+
+    def crash_after_resumed_append(path, rows, append=False):
+        nonlocal crashed
+        original_write_jsonl(path, rows, append=append)
+        if append and not crashed:
+            crashed = True
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(generate, "write_jsonl", crash_after_resumed_append)
+    with pytest.raises(KeyboardInterrupt):
+        generate.generate_labelled("trec", "zero_shot", target=2, fake=True, seed=13)
+
+    rows_after_crash = read_jsonl(path)
+    assert rows_after_crash[:len(original_rows)] == original_rows
+    assert len(rows_after_crash) == len(original_rows) + 1
+    sidecar = path.with_suffix(".provenance.json")
+    stale_sidecar = json.loads(sidecar.read_text(encoding="utf-8"))
+    assert stale_sidecar["total_count"] == len(original_rows)
+    sidecar_temp = sidecar.with_suffix(sidecar.suffix + ".tmp")
+    sidecar_temp.write_text('{"truncated":', encoding="utf-8")
+
+    monkeypatch.setattr(generate, "write_jsonl", original_write_jsonl)
+    rows, provenance = generate.generate_labelled(
+        "trec", "zero_shot", target=2, fake=True, seed=13
+    )
+
+    assert len(rows) == 2 * len(labels("trec"))
+    assert len({row["id"] for row in rows}) == len(rows)
+    assert rows[:len(rows_after_crash)] == rows_after_crash
+    assert [session["status"] for session in provenance["sessions"]] == [
+        "complete", "interrupted", "complete"
+    ]
+    assert not sidecar_temp.exists()
+    assert not path.with_suffix(".generation-journal.json").exists()
+
+
+def test_recovery_rejects_rows_that_do_not_match_the_journal(fake_env, monkeypatch):
+    """A journal cannot authorize a changed or unrelated row at the persistence boundary."""
+    original_write_jsonl = generate.write_jsonl
+    crashed = False
+
+    def crash_after_append(path, rows, append=False):
+        nonlocal crashed
+        original_write_jsonl(path, rows, append=append)
+        if append and not crashed:
+            crashed = True
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(generate, "write_jsonl", crash_after_append)
+    with pytest.raises(KeyboardInterrupt):
+        generate.generate_labelled("trec", "zero_shot", target=1, fake=True, seed=13)
+
+    path = synth_path("trec", "zero_shot", seed=13, mode="fake")
+    incompatible = read_jsonl(path)
+    incompatible[0]["repetition"] = 42
+    original_write_jsonl(path, incompatible)
+    monkeypatch.setattr(generate, "write_jsonl", original_write_jsonl)
+
+    with pytest.raises(ValueError, match="persisted batch does not match"):
+        generate.generate_labelled("trec", "zero_shot", target=1, fake=True, seed=13)
+
+
 @pytest.mark.parametrize("changed_identity", ["model", "prompt"])
 def test_resume_rejects_changed_model_or_prompt_identity(fake_env, monkeypatch, changed_identity):
     """A resume cannot append to rows produced by a different model digest or prompt protocol."""
