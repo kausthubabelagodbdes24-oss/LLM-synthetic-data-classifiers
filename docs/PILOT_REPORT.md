@@ -1,8 +1,8 @@
 # Generation pilot report and target decision
 
 - **Operator and lead:** Kausthuba (@kausthubabelagodbdes24-oss), now executing all workstreams personally in separate workspaces.
-- **Status:** Initial real pilot and 40-item human inspection completed. Round-one human inspection also found clear quality failures. The final allowed refined pilot and its human inspection are complete, with remaining quality failures; no full-generation acceptance has been given. Kausthuba has approved an isolated Qwen fallback pilot, which is now generated and structurally verified; its quality acceptance remains pending. Issue #6 is not accepted; dependent experiments remain blocked.
-- **Last updated:** 30 October 2026.
+- **Status:** Qwen fallback generation, structural verification and the 40-item human review are complete. The review supports pilot acceptance with disclosed limitations; explicit lead acceptance and the uniform target decision remain pending. PR #22 and issue #6 remain open; no full generation is approved.
+- **Last updated:** 31 October 2026.
 
 ## Verified real execution
 
@@ -183,3 +183,39 @@ Total generation-session time: 1490.374461 seconds (24 minutes 50 seconds); 24 m
 A new reproducibly sampled 40-item Qwen review packet is ready, ten per task/setting covering every label, with blank judgments, the approved six-label guide and distinct browser autosave identity. The export identifies `generator_candidate: qwen3:4b` and the retained focused-prompt version (refinement round 2). No semantic-quality improvement is claimed before the human submission.
 
 Measured Qwen timing replaces all Llama-based scheduling estimates for this candidate. Linear extrapolation suggests approximately 12 hours of remaining zero/few-shot generation at 100 per label, or 7 hours at 60, assuming the Qwen pilot is accepted and retained for its own repetition. This is an estimate, not a measured full run; the additional 2,160 AugGPT paraphrases have not been timed, and rejection rates/thermal or scheduling conditions can increase runtime. No uniform target decision or approval to run full experiments is inferred.
+
+## Qwen human review completed — acceptance recommendation
+
+Kausthuba Belagod completed the fallback review at `2026-10-30T18:36:02.114Z` (31 October 2026, 00:06 IST). The submission identifies `qwen3:4b`, seed 13 and the existing focused-prompt refinement version 2. All 40 submitted IDs, texts, tasks, settings and labels matched the Qwen inspection packet. The original JSON is archived byte-for-byte locally; SHA-256: `aead0290df83f98ffa3c417a1e98c57f66710b294631793c035cbd3818dded26`. All four rounds' output artifacts and all four submitted reviews were re-hashed and remain unchanged.
+
+| Qwen reviewed group | Good | Ambiguous | Bad |
+| --- | ---: | ---: | ---: |
+| TREC zero-shot | 8 | 1 | 1 |
+| TREC few-shot | 8 | 1 | 1 |
+| Emotion zero-shot | 8 | 1 | 1 |
+| Emotion few-shot | 6 | 3 | 1 |
+| Total | 30 | 6 | 4 |
+
+The four Bad notes concern missing context, near-reuse of a few-shot question frame, or unnatural wording. Ambiguous notes include broad questions, repeated frames, awkward tense and unclear affect. Preserve all judgments and generated text unchanged; do not silently fix grammar, relabel, discard the reviewed Bad rows or count the Ambiguous rows as clear label errors.
+
+Assessment: this pilot supports acceptance with disclosed limitations, not a claim of perfect data. Every reviewed group contains one Bad item, and the notes do not report two clear wrong-label errors within any ten-item group. The agreed two-clear-errors investigation rule is a later full-data audit trigger; using it as context here does not replace the required 180-item pre-freeze audit or establish a population error rate. Small screened counts do not establish that Qwen is generally superior or that task subjectivity caused any difference.
+
+The operator selected exactly two Good and two Bad actual Qwen examples per task for the appendix. These are the current candidate's examples; earlier Llama selections remain historical failed-pilot evidence.
+
+| Task | Setting | Item ID | Intended label | Human judgment | Actual generated text |
+| --- | --- | --- | --- | --- | --- |
+| trec | zero_shot | trec.zero_shot.seed13.description.0005 | description | good | What causes the tides? |
+| trec | zero_shot | trec.zero_shot.seed13.entity.0005 | entity | bad | What is the next event? |
+| trec | few_shot | trec.few_shot.seed13.location.0007 | location | bad | What river runs through London? |
+| trec | few_shot | trec.few_shot.seed13.entity.0003 | entity | good | What is the most expensive car ever sold? |
+| emotion | zero_shot | emotion.zero_shot.seed13.joy.0002 | joy | bad | i feel excited about the summer as a vacation |
+| emotion | zero_shot | emotion.zero_shot.seed13.sadness.0002 | sadness | good | i feel hurt because my friend broke our promise last week |
+| emotion | few_shot | emotion.few_shot.seed13.love.0009 | love | good | i feel my heart swell with love for the way you listen to me. |
+| emotion | few_shot | emotion.few_shot.seed13.fear.0005 | fear | bad | i feel cold sweat imagining the worst test result |
+### Concrete acceptance/target decision awaiting the lead
+
+Recommendation: accept the Qwen pilot with the above limitations and retain the default uniform **100 examples per label** for C1–C4 across both tasks and all three repetitions. C4 would remain 50 real plus 50 few-shot per label; C5a/C5b remain 60/420. Retain accepted Qwen pilot rows only within their own task/setting/seed-13 artifact, with no Llama reuse. This is a recommendation, not recorded approval.
+
+The Qwen-based linear estimate is about 12 hours of remaining zero/few-shot generation at 100 per label, or 7 hours at the approved uniform 60 fallback. AugGPT's additional 2,160 paraphrases have not yet been timed; measure them and monitor the schedule rather than assuming those 12 hours cover every setting. The agreed freeze remains 1 November 2026 at 18:00 IST. The default is plausible from current throughput, but completion time is not guaranteed. If measured AugGPT timing changes the deadline assessment, record an explicit coordinated target decision before affected full generation and preserve matched training counts.
+
+No additional model/prompt change is proposed. Human independence requirements for later annotation remain a separate unresolved scientific decision under the sole-operator arrangement. All 45 local software checks passed with Qwen and CI at pre-review head `fa741797b87dc9f74ed6ea760d89d24856c03225` passed. Current-head CI and final integration review must be verified separately. Do not close issue #6, merge PR #22, launch dependent full experiments or fabricate acceptance until the lead's decision and required checks are recorded.
