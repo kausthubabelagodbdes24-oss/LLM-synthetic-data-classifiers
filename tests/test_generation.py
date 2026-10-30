@@ -336,6 +336,86 @@ def test_recovery_rejects_rows_that_do_not_match_the_journal(fake_env, monkeypat
         generate.generate_labelled("trec", "zero_shot", target=1, fake=True, seed=13)
 
 
+def test_resume_recovers_partial_first_json_row(fake_env, monkeypatch):
+    """A valid journal repairs an interrupted byte prefix before strict JSONL parsing."""
+    original_write_jsonl = generate.write_jsonl
+    crashed = False
+
+    def write_partial_row_then_crash(path, rows, append=False):
+        nonlocal crashed
+        if append and not crashed:
+            crashed = True
+            path.parent.mkdir(parents=True, exist_ok=True)
+            intended = (json.dumps(rows[0], ensure_ascii=False) + "\n").encode("utf-8")
+            with path.open("ab") as handle:
+                handle.write(intended[:20])
+            raise KeyboardInterrupt
+        original_write_jsonl(path, rows, append=append)
+
+    monkeypatch.setattr(generate, "write_jsonl", write_partial_row_then_crash)
+    with pytest.raises(KeyboardInterrupt):
+        generate.generate_labelled("trec", "zero_shot", target=1, fake=True, seed=13)
+
+    path = synth_path("trec", "zero_shot", seed=13, mode="fake")
+    assert len(path.read_bytes()) == 20
+    assert path.with_suffix(".generation-journal.json").exists()
+
+    monkeypatch.setattr(generate, "write_jsonl", original_write_jsonl)
+    rows, provenance = generate.generate_labelled(
+        "trec", "zero_shot", target=1, fake=True, seed=13
+    )
+
+    assert len(rows) == len(labels("trec"))
+    assert len({row["id"] for row in rows}) == len(rows)
+    assert provenance["sessions"][0]["status"] == "interrupted"
+    assert not path.with_suffix(".generation-journal.json").exists()
+
+
+def test_resume_recovers_partial_utf8_row_during_later_batch(fake_env, monkeypatch):
+    """A resumed batch recovers even when interruption splits a UTF-8 code point."""
+    generate.generate_labelled("trec", "zero_shot", target=1, fake=True, seed=13)
+    path = synth_path("trec", "zero_shot", seed=13, mode="fake")
+    original_rows = read_jsonl(path)
+    original_write_jsonl = generate.write_jsonl
+    answer_number = 0
+    crashed = False
+
+    def non_ascii_answer(*args, **kwargs):
+        nonlocal answer_number
+        answer_number += 1
+        return [f"what is café resumed output number {answer_number} ?"]
+
+    def split_utf8_then_crash(path, rows, append=False):
+        nonlocal crashed
+        if append and not crashed:
+            crashed = True
+            path.parent.mkdir(parents=True, exist_ok=True)
+            intended = (json.dumps(rows[0], ensure_ascii=False) + "\n").encode("utf-8")
+            split_at = intended.index("é".encode("utf-8")) + 1
+            with path.open("ab") as handle:
+                handle.write(intended[:split_at])
+            raise KeyboardInterrupt
+        original_write_jsonl(path, rows, append=append)
+
+    monkeypatch.setattr(generate, "ask", non_ascii_answer)
+    monkeypatch.setattr(generate, "write_jsonl", split_utf8_then_crash)
+    with pytest.raises(KeyboardInterrupt):
+        generate.generate_labelled("trec", "zero_shot", target=2, fake=True, seed=13)
+
+    assert path.read_bytes().endswith(b"\xc3")
+    monkeypatch.setattr(generate, "write_jsonl", original_write_jsonl)
+    rows, provenance = generate.generate_labelled(
+        "trec", "zero_shot", target=2, fake=True, seed=13
+    )
+
+    assert rows[:len(original_rows)] == original_rows
+    assert len(rows) == 2 * len(labels("trec"))
+    assert len({row["id"] for row in rows}) == len(rows)
+    assert [session["status"] for session in provenance["sessions"]] == [
+        "complete", "interrupted", "complete"
+    ]
+
+
 @pytest.mark.parametrize("changed_identity", ["model", "prompt"])
 def test_resume_rejects_changed_model_or_prompt_identity(fake_env, monkeypatch, changed_identity):
     """A resume cannot append to rows produced by a different model digest or prompt protocol."""

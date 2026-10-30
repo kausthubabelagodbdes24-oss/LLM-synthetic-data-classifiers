@@ -430,17 +430,26 @@ def generation_journal_path(path):
     return path.with_suffix(".generation-journal.json")
 
 
+def serialize_jsonl_rows(rows):
+    return "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows).encode("utf-8")
+
+
 def write_labelled_batch(path, existing_rows, new_rows, provenance_after, fingerprint):
     """Write a recoverable batch across the JSONL/provenance file boundary."""
     journal_path = generation_journal_path(path)
+    prefix_bytes = path.read_bytes() if path.exists() else b""
+    batch_bytes = serialize_jsonl_rows(new_rows)
     journal = {
-        "schema_version": 1,
+        "schema_version": 2,
         "artifact_name": path.name,
         "generation_fingerprint": fingerprint,
         "rows_before": len(existing_rows),
-        "prefix_sha256": _identity_hash(existing_rows),
+        "prefix_byte_count": len(prefix_bytes),
+        "prefix_bytes_sha256": hashlib.sha256(prefix_bytes).hexdigest(),
         "batch_rows": new_rows,
         "batch_sha256": _identity_hash(new_rows),
+        "batch_jsonl": batch_bytes.decode("utf-8"),
+        "batch_bytes_sha256": hashlib.sha256(batch_bytes).hexdigest(),
         "provenance_after": provenance_after,
     }
     atomic_write_json(journal_path, journal)
@@ -449,7 +458,7 @@ def write_labelled_batch(path, existing_rows, new_rows, provenance_after, finger
     journal_path.unlink()
 
 
-def recover_labelled_journal(path, rows, generation_identity, fingerprint):
+def recover_labelled_journal(path, generation_identity, fingerprint):
     """Reconcile a durable batch journal without accepting unrelated artifact rows."""
     journal_path = generation_journal_path(path)
     journal_temp = journal_path.with_suffix(journal_path.suffix + ".tmp")
@@ -460,7 +469,7 @@ def recover_labelled_journal(path, rows, generation_identity, fingerprint):
         journal_temp.unlink(missing_ok=True)
         if provenance_path.exists():
             provenance_temp.unlink(missing_ok=True)
-        return rows
+        return read_generation_rows(path)
 
     try:
         journal = json.loads(journal_path.read_text(encoding="utf-8"))
@@ -469,37 +478,55 @@ def recover_labelled_journal(path, rows, generation_identity, fingerprint):
 
     required = {
         "schema_version", "artifact_name", "generation_fingerprint", "rows_before",
-        "prefix_sha256", "batch_rows", "batch_sha256", "provenance_after",
+        "prefix_byte_count", "prefix_bytes_sha256", "batch_rows", "batch_sha256",
+        "batch_jsonl", "batch_bytes_sha256", "provenance_after",
     }
     if required - set(journal):
         raise ValueError(f"incompatible recovery journal for {path}: required identity is missing")
     batch_rows = journal["batch_rows"]
     provenance_after = journal["provenance_after"]
     rows_before = journal["rows_before"]
+    prefix_byte_count = journal["prefix_byte_count"]
+    expected_batch_bytes = serialize_jsonl_rows(batch_rows) if isinstance(batch_rows, list) else b""
     if (
-        journal["schema_version"] != 1
+        journal["schema_version"] != 2
         or journal["artifact_name"] != path.name
         or journal["generation_fingerprint"] != fingerprint
         or not isinstance(rows_before, int)
         or rows_before < 0
+        or not isinstance(prefix_byte_count, int)
+        or prefix_byte_count < 0
         or not isinstance(batch_rows, list)
         or not batch_rows
         or journal["batch_sha256"] != _identity_hash(batch_rows)
+        or not isinstance(journal["batch_jsonl"], str)
+        or journal["batch_jsonl"].encode("utf-8") != expected_batch_bytes
+        or journal["batch_bytes_sha256"] != hashlib.sha256(expected_batch_bytes).hexdigest()
         or provenance_after.get("generation_identity") != generation_identity
         or provenance_after.get("generation_fingerprint") != fingerprint
         or provenance_after.get("total_count") != rows_before + len(batch_rows)
     ):
         raise ValueError(f"incompatible recovery journal for {path}: identity or counts do not match")
-    if len(rows) < rows_before or _identity_hash(rows[:rows_before]) != journal["prefix_sha256"]:
-        raise ValueError(f"incompatible recovery journal for {path}: persisted prefix does not match")
 
-    persisted_tail = rows[rows_before:]
-    if len(persisted_tail) > len(batch_rows) or persisted_tail != batch_rows[:len(persisted_tail)]:
+    persisted_bytes = path.read_bytes() if path.exists() else b""
+    if len(persisted_bytes) < prefix_byte_count:
+        raise ValueError(f"incompatible recovery journal for {path}: persisted prefix does not match")
+    persisted_prefix = persisted_bytes[:prefix_byte_count]
+    if hashlib.sha256(persisted_prefix).hexdigest() != journal["prefix_bytes_sha256"]:
+        raise ValueError(f"incompatible recovery journal for {path}: persisted prefix does not match")
+    persisted_tail = persisted_bytes[prefix_byte_count:]
+    if (len(persisted_tail) > len(expected_batch_bytes)
+            or persisted_tail != expected_batch_bytes[:len(persisted_tail)]):
         raise ValueError(f"incompatible recovery journal for {path}: persisted batch does not match")
-    missing_rows = batch_rows[len(persisted_tail):]
-    if missing_rows:
-        write_jsonl(path, missing_rows, append=True)
-        rows += missing_rows
+    missing_bytes = expected_batch_bytes[len(persisted_tail):]
+    if missing_bytes:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("ab") as handle:
+            handle.write(missing_bytes)
+
+    rows = read_generation_rows(path)
+    if len(rows) != rows_before + len(batch_rows) or rows[rows_before:] != batch_rows:
+        raise ValueError(f"incompatible recovery journal for {path}: recovered rows do not match")
 
     recovered_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
     sessions = provenance_after.get("sessions")
@@ -531,7 +558,6 @@ def generate_labelled(task, setting, target, fake, seed=None):
         "digest": "fixture-v1",
     } if fake else resolve_model_identity())
     path = synth_path(task, setting, seed=seed, mode=mode)
-    rows = read_generation_rows(path)
 
     pool = read_jsonl(real_path(task, "pool"))
     if setting == "few_shot" and not pool:
@@ -544,9 +570,7 @@ def generate_labelled(task, setting, target, fake, seed=None):
     generation_identity, generation_fingerprint = build_generation_identity(
         task, setting, seed, mode, model_identity, source_identity
     )
-    rows = recover_labelled_journal(
-        path, rows, generation_identity, generation_fingerprint
-    )
+    rows = recover_labelled_journal(path, generation_identity, generation_fingerprint)
     rows_before = len(rows)
     validate_existing_rows(
         rows, path, task, setting, seed, mode, generation_fingerprint, pool
