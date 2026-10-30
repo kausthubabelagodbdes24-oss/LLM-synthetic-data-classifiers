@@ -21,3 +21,4 @@ data/**/*.provenance.json.tmp
 results/sample/
 results/*
 !results/.gitkeep
+!results/runs.csv

@@ -11,7 +11,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
 | Repetition-specific generation | Accepted Qwen pilot and uniform 100 target for Issue #6; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
-| Run records and paired analysis | Preserve unique task/condition/repetition keys and exact matching baselines. Agree precision, provenance and schema changes before changing writer/reader. Zero-baseline policy remains unresolved. | Training + evaluation |
+| Run records and paired analysis | Completed Checkpoint 1 baselines (C1, C5a) for Issue #7; 12 unique results in results/runs.csv with canonical LF CSV serialization. Full 36-result grid remains pending synthetic generation. | Training (@kausthubabelagodbdes24-oss) + evaluation (@hem4456) |
 | Annotation exchange | Independent responses must combine without changed judgments. Agree stable item matching, label validation, missing responses and actual active-annotator reporting; preserve original responses. | Evaluation + all human annotators |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
@@ -126,3 +126,43 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 - **Verification**:
   - Unit tests: `tests/test_generation.py` verifies repetition isolation, fake-to-real isolation, model-call interruption, crash recovery across initial and resumed JSONL/provenance writes, partial first-row and split-UTF-8 recovery, stale temporary checkpoint handling, fail-closed corrupt/legacy/misplaced rows, model/prompt dependency incompatibility, no-op history preservation, demonstration source tracking, AugGPT fixture isolation, non-example/malformed reply filtering, and mock connection recovery.
   - Full pipeline test: `tests/test_pipeline.py` uses fake-only storage and offline embeddings. Passing it is smoke validation, not Ollama or experimental evidence.
+
+## Real-data baseline run records (Checkpoint 1)
+
+- **Approving issue & lead decision**: Issue #7 ([Training and project lead] Publish the twelve real-data baseline results at the chosen target), approved by @kausthubabelagodbdes24-oss.
+- **Producer**: `ws2_training/train.py` (Owner: @kausthubabelagodbdes24-oss).
+- **Consumer**: `ws3_evaluation/analyze.py` (Owner: @hem4456).
+- **File path**: `results/runs.csv`.
+- **Serialization**: Canonical UTF-8 CSV with explicit LF (`\n`, byte `0x0A`, no OS-specific CRLF translation) using `csv.DictWriter(..., lineterminator="\n")`.
+- **Schema**:
+  - `task`: task identifier string (`trec` or `emotion`).
+  - `condition`: training condition string (`C1` for full real data, `C5a` for low-resource 10-per-label real data).
+  - `seed`: integer sampling seed (`13`, `42`, or `7`).
+  - `n_train`: integer number of training examples used.
+  - `macro_f1`: float macro-F1 score on the held-out real test set, rounded to 4 decimal places.
+  - `accuracy`: float accuracy score on the held-out real test set, rounded to 4 decimal places.
+- **Planned training counts**:
+  - `trec C1`: exactly 576 rows across all 6 labels (100 per label for description, entity, human, location, numeric; 76 for abbreviation due to total available count in `trec/train.jsonl`).
+  - `trec C5a`: exactly 60 rows across all 6 labels (10 per label from `trec/lowres_seed<S>.jsonl`).
+  - `emotion C1`: exactly 600 rows across all 6 labels (100 per label for sadness, joy, love, anger, fear, surprise).
+  - `emotion C5a`: exactly 60 rows across all 6 labels (10 per label from `emotion/lowres_seed<S>.jsonl`).
+- **Observed Checkpoint 1 baseline values**:
+  - `trec,C1,13`: n_train=576, macro_f1=0.7471, accuracy=0.7680
+  - `trec,C1,42`: n_train=576, macro_f1=0.7471, accuracy=0.7760
+  - `trec,C1,7`: n_train=576, macro_f1=0.7589, accuracy=0.7980
+  - `trec,C5a,13`: n_train=60, macro_f1=0.5974, accuracy=0.6400
+  - `trec,C5a,42`: n_train=60, macro_f1=0.5375, accuracy=0.5900
+  - `trec,C5a,7`: n_train=60, macro_f1=0.4921, accuracy=0.5180
+  - `emotion,C1,13`: n_train=600, macro_f1=0.4629, accuracy=0.5060
+  - `emotion,C1,42`: n_train=600, macro_f1=0.4587, accuracy=0.4960
+  - `emotion,C1,7`: n_train=600, macro_f1=0.4623, accuracy=0.4990
+  - `emotion,C5a,13`: n_train=60, macro_f1=0.3381, accuracy=0.3730
+  - `emotion,C5a,42`: n_train=60, macro_f1=0.3243, accuracy=0.3570
+  - `emotion,C5a,7`: n_train=60, macro_f1=0.3085, accuracy=0.3155
+- **Resume & Replacement Policy**:
+  - Running without `--force` verifies that each existing row matches current expected `n_train`; rows from obsolete targets or corrupt counts are replaced rather than preserved.
+  - Unaffected condition rows are strictly preserved on targeted reruns (e.g. `--conditions C1 --force` replaces only C1 rows).
+  - Missing labels or incomplete class coverage fail closed with `ValueError` rather than producing partial-class runs.
+- **Verification**:
+  - Unit tests in `tests/test_train.py` verify incomplete-class rejection, test-set presence validation, metric bounds [0, 1], resume skipping, `--force` targeted replacement, old-count replacement, and canonical LF CSV serialization.
+  - End-to-end pipeline test in `tests/test_pipeline.py` passes offline.
