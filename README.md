@@ -125,7 +125,7 @@ export PYTHONUTF8=1
 )
 ```
 
-Expected outputs: synthetic fixture JSONL files in `data/sample/synthetic/`, plus `runs.csv` (36 legacy task/condition/seed rows), `summary.md`, `f1_by_condition.png` and `gap.png` in `results/sample/`. Resume skips existing generated rows and run keys. Fake scores have no scientific meaning; sample sets intentionally do not meet the planned experimental sizes.
+Expected outputs: synthetic fixture JSONL files in `data/sample/synthetic-fixtures/`, plus `runs.csv` (36 legacy task/condition/seed rows), `summary.md`, `f1_by_condition.png` and `gap.png` in `results/sample/`. The fake pipeline explicitly opts into fixture storage; real consumers default to `data/synthetic/`. Resume skips only compatible existing rows and run keys. Fake scores have no scientific meaning; sample sets intentionally do not meet the planned experimental sizes.
 
 ## Files and remaining setup confirmations
 

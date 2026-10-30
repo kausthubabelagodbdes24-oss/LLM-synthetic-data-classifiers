@@ -32,7 +32,7 @@ def test_repetition_isolation(fake_env):
     """Verify that generation produces separate files per seed with correct repetition metadata."""
     # Generate for seed 13
     generate.main(["--setting", "few_shot", "--seed", "13", "--target", "3", "--dry-run", "--task", "trec"])
-    path_13 = synth_path("trec", "few_shot", seed=13)
+    path_13 = synth_path("trec", "few_shot", seed=13, mode="fake")
     assert path_13.exists()
 
     rows_13 = read_jsonl(path_13)
@@ -42,7 +42,7 @@ def test_repetition_isolation(fake_env):
 
     # Generate for seed 42
     generate.main(["--setting", "few_shot", "--seed", "42", "--target", "3", "--dry-run", "--task", "trec"])
-    path_42 = synth_path("trec", "few_shot", seed=42)
+    path_42 = synth_path("trec", "few_shot", seed=42, mode="fake")
     assert path_42.exists()
     assert path_13 != path_42
 
@@ -59,7 +59,7 @@ def test_resume_isolated_to_repetition(fake_env):
     """Verify resume skips already generated rows within the repetition and adds only the shortfall."""
     # Step 1: generate target 2
     generate.main(["--setting", "zero_shot", "--seed", "13", "--target", "2", "--dry-run", "--task", "emotion"])
-    path = synth_path("emotion", "zero_shot", seed=13)
+    path = synth_path("emotion", "zero_shot", seed=13, mode="fake")
     rows_initial = read_jsonl(path)
     assert len(rows_initial) == 2 * len(labels("emotion"))
 
@@ -76,10 +76,221 @@ def test_resume_isolated_to_repetition(fake_env):
     assert rows_expanded[:len(rows_initial)] == rows_initial
 
 
+def test_dry_run_rows_cannot_satisfy_a_real_generation_target(fake_env, monkeypatch):
+    """Fixture output is isolated, so a real run still calls the configured model."""
+    generate.generate_labelled("trec", "zero_shot", target=1, fake=True, seed=13)
+
+    fake_path = fake_env / "data" / "synthetic-fixtures" / "trec" / "zero_shot_seed13.jsonl"
+    real_output = synth_path("trec", "zero_shot", seed=13)
+    assert fake_path.exists()
+    assert not real_output.exists()
+
+    call_count = 0
+
+    def real_ask(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        return [f"what is real model output number {call_count} ?"]
+
+    monkeypatch.setattr(generate, "ask", real_ask)
+    monkeypatch.setattr(
+        generate,
+        "resolve_model_identity",
+        lambda: {
+            "provider": "ollama",
+            "configured_tag": "llama3.2:3b",
+            "resolved_name": "llama3.2:3b",
+            "digest": "sha256:real-model-digest",
+        },
+    )
+
+    rows, _ = generate.generate_labelled("trec", "zero_shot", target=1, fake=False, seed=13)
+
+    assert call_count == len(labels("trec"))
+    assert len(rows) == len(labels("trec"))
+    assert all(row["generation_mode"] == "real" for row in rows)
+    assert len(read_jsonl(fake_path)) == len(labels("trec"))
+
+
+@pytest.mark.parametrize(
+    "corrupt_row",
+    [
+        lambda row: row.pop("repetition"),
+        lambda row: row.__setitem__("repetition", None),
+        lambda row: row.__setitem__("task", "emotion"),
+        lambda row: row.__setitem__("setting", "few_shot"),
+        lambda row: row.__setitem__("source_ids", ["trec.pool.00001"]),
+        lambda row: row.pop("schema_version"),
+        lambda row: row.pop("generation_fingerprint"),
+        lambda row: row.__setitem__("id", "trec.zero_shot.seed42.abbreviation.0001"),
+    ],
+    ids=[
+        "missing-repetition",
+        "null-repetition",
+        "wrong-task",
+        "wrong-setting",
+        "wrong-sources",
+        "missing-schema",
+        "missing-generation-identity",
+        "misplaced-row-id",
+    ],
+)
+def test_resume_rejects_missing_or_incompatible_row_identity(fake_env, monkeypatch, corrupt_row):
+    """Existing rows count only when every persisted identity field matches the invocation."""
+    model_identity = {
+        "provider": "ollama",
+        "configured_tag": "llama3.2:3b",
+        "resolved_name": "llama3.2:3b",
+        "digest": "sha256:model-a",
+    }
+    call_number = 0
+
+    def real_ask(*args, **kwargs):
+        nonlocal call_number
+        call_number += 1
+        return [f"what is validated real output number {call_number} ?"]
+
+    monkeypatch.setattr(generate, "resolve_model_identity", lambda: model_identity)
+    monkeypatch.setattr(generate, "ask", real_ask)
+    generate.generate_labelled("trec", "zero_shot", target=1, fake=False, seed=13)
+
+    path = synth_path("trec", "zero_shot", seed=13)
+    rows = read_jsonl(path)
+    corrupt_row(rows[0])
+    from common import write_jsonl
+    write_jsonl(path, rows)
+
+    with pytest.raises(ValueError, match="incompatible existing row"):
+        generate.generate_labelled("trec", "zero_shot", target=1, fake=False, seed=13)
+
+
+def test_noop_resume_preserves_prior_session_history(fake_env, monkeypatch):
+    """A completed artifact retains its first run record when resumed without new work."""
+    model_identity = {
+        "provider": "ollama",
+        "configured_tag": "llama3.2:3b",
+        "resolved_name": "llama3.2:3b",
+        "digest": "sha256:model-a",
+    }
+    call_number = 0
+
+    def real_ask(*args, **kwargs):
+        nonlocal call_number
+        call_number += 1
+        return [f"what is history preserving output number {call_number} ?"]
+
+    monkeypatch.setattr(generate, "resolve_model_identity", lambda: model_identity)
+    monkeypatch.setattr(generate, "ask", real_ask)
+    _, first = generate.generate_labelled("trec", "zero_shot", target=1, fake=False, seed=13)
+    _, second = generate.generate_labelled("trec", "zero_shot", target=1, fake=False, seed=13)
+
+    assert len(first["sessions"]) == 1
+    assert len(second["sessions"]) == 2
+    assert second["sessions"][0] == first["sessions"][0]
+    assert second["created_at"] == first["created_at"]
+    assert second["sessions"][1]["status"] == "no_op"
+    assert second["sessions"][1]["rows_before"] == second["sessions"][1]["rows_after"]
+    assert second["cumulative_stats"] == first["cumulative_stats"]
+
+
+@pytest.mark.parametrize("changed_identity", ["model", "prompt"])
+def test_resume_rejects_changed_model_or_prompt_identity(fake_env, monkeypatch, changed_identity):
+    """A resume cannot append to rows produced by a different model digest or prompt protocol."""
+    model_identity = {
+        "provider": "ollama",
+        "configured_tag": "llama3.2:3b",
+        "resolved_name": "llama3.2:3b",
+        "digest": "sha256:model-a",
+    }
+    call_number = 0
+
+    def real_ask(*args, **kwargs):
+        nonlocal call_number
+        call_number += 1
+        return [f"what is stable identity output number {call_number} ?"]
+
+    monkeypatch.setattr(generate, "resolve_model_identity", lambda: model_identity)
+    monkeypatch.setattr(generate, "ask", real_ask)
+    generate.generate_labelled("trec", "zero_shot", target=1, fake=False, seed=13)
+
+    if changed_identity == "model":
+        monkeypatch.setattr(
+            generate,
+            "resolve_model_identity",
+            lambda: {**model_identity, "digest": "sha256:model-b"},
+        )
+    else:
+        monkeypatch.setattr(generate, "PROMPT_PROTOCOL_VERSION", "issue-6-v2-revised")
+
+    with pytest.raises(ValueError, match="generation identity"):
+        generate.generate_labelled("trec", "zero_shot", target=2, fake=False, seed=13)
+
+
+def test_resume_rejects_corrupt_jsonl_before_counting(fake_env, monkeypatch):
+    """Malformed persisted rows are reported as an incompatible artifact, never ignored or counted."""
+    path = synth_path("trec", "zero_shot", seed=13)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('{"id": "truncated"\n', encoding="utf-8")
+    monkeypatch.setattr(
+        generate,
+        "resolve_model_identity",
+        lambda: {
+            "provider": "ollama",
+            "configured_tag": "llama3.2:3b",
+            "resolved_name": "llama3.2:3b",
+            "digest": "sha256:model-a",
+        },
+    )
+
+    with pytest.raises(ValueError, match="invalid JSONL"):
+        generate.generate_labelled("trec", "zero_shot", target=1, fake=False, seed=13)
+
+
+def test_auggpt_dry_run_uses_identified_fixture_storage(fake_env):
+    """Fake AugGPT rows are visibly fake and cannot occupy the real artifact path."""
+    generate.generate_auggpt("trec", fake=True, seed=13)
+
+    fixture_path = synth_path("trec", "auggpt", seed=13, mode="fake")
+    real_output = synth_path("trec", "auggpt", seed=13, mode="real")
+    rows = read_jsonl(fixture_path)
+    assert rows
+    assert not real_output.exists()
+    assert all(row["generation_mode"] == "fake" for row in rows)
+    assert fixture_path.with_suffix(".provenance.json").exists()
+
+
+def test_resume_rejects_sidecar_identity_that_disagrees_with_rows(fake_env, monkeypatch):
+    """A matching fingerprint cannot mask a misplaced or relabelled provenance sidecar."""
+    model_identity = {
+        "provider": "ollama",
+        "configured_tag": "llama3.2:3b",
+        "resolved_name": "llama3.2:3b",
+        "digest": "sha256:model-a",
+    }
+    call_number = 0
+
+    def real_ask(*args, **kwargs):
+        nonlocal call_number
+        call_number += 1
+        return [f"what is sidecar validation output number {call_number} ?"]
+
+    monkeypatch.setattr(generate, "resolve_model_identity", lambda: model_identity)
+    monkeypatch.setattr(generate, "ask", real_ask)
+    generate.generate_labelled("trec", "zero_shot", target=1, fake=False, seed=13)
+
+    sidecar = synth_path("trec", "zero_shot", seed=13).with_suffix(".provenance.json")
+    provenance = json.loads(sidecar.read_text(encoding="utf-8"))
+    provenance["task"] = "emotion"
+    sidecar.write_text(json.dumps(provenance), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="provenance identity does not match"):
+        generate.generate_labelled("trec", "zero_shot", target=1, fake=False, seed=13)
+
+
 def test_demonstration_sampling_and_provenance(fake_env):
     """Verify few-shot uses 3 demonstrations from pool.jsonl, tracks source_ids, and creates provenance."""
     generate.main(["--setting", "few_shot", "--seed", "7", "--target", "2", "--dry-run", "--task", "trec"])
-    path = synth_path("trec", "few_shot", seed=7)
+    path = synth_path("trec", "few_shot", seed=7, mode="fake")
     rows = read_jsonl(path)
 
     # Every few-shot row must have exactly few_shot_k source demonstration IDs
@@ -185,7 +396,7 @@ def test_pilot_workflow_and_uniform_target(fake_env):
 
     for task in ["trec", "emotion"]:
         for setting in ["zero_shot", "few_shot"]:
-            p = synth_path(task, setting, seed=13)
+            p = synth_path(task, setting, seed=13, mode="fake")
             rows = read_jsonl(p)
             # Pilot target is 10 per label across 6 labels = 60
             assert len(rows) == 10 * len(labels(task))

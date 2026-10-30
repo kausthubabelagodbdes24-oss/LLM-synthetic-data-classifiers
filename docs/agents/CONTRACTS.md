@@ -5,7 +5,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Interface | Current state / agreement required | Owners |
 | --- | --- | --- |
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
-| Repetition-specific generation | Accepted in Issue #6. Repetition-specific files (seeds 13, 42, 7) with isolated resume boundaries, demonstration source tracking, sidecar provenance manifests, and backward-compatible legacy fallback. | Generation (@harshitadjainbdes24-byte) + training (@kausthubabelagodbdes24-oss) |
+| Repetition-specific generation | Proposed in PR #22 for Issue #6; acceptance is pending owner-run Ollama smoke/pilot evidence and review. Real and fake artifacts are isolated, and resume fails closed on incompatible row, model, prompt, option or source identity. | Generation (@harshitadjainbdes24-byte) + training (@kausthubabelagodbdes24-oss) |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
 | Run records and paired analysis | Preserve unique task/condition/repetition keys and exact matching baselines. Agree precision, provenance and schema changes before changing writer/reader. Zero-baseline policy remains unresolved. | Training + evaluation |
 | Annotation exchange | Independent responses must combine without changed judgments. Agree stable item matching, label validation, missing responses and actual active-annotator reporting; preserve original responses. | Evaluation + all human annotators |
@@ -64,13 +64,14 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 
 ## Repetition-specific generation & provenance
 
-- **Approving issue & lead decision**: Issue #6 ([Generation] Run a repetition-aware generation pilot and choose the uniform target), owned by @harshitadjainbdes24-byte, approved for integration into main.
+- **Approval status**: Proposed by PR #22 for Issue #6 ([Generation] Run a repetition-aware generation pilot and choose the uniform target), owned by @harshitadjainbdes24-byte. Not yet accepted for integration; the real Ollama smoke, pilot, inspection and target decision remain pending.
 - **Producer**: `ws1_generation/generate.py` (Owner: @harshitadjainbdes24-byte).
 - **Consumers**:
   - `ws2_training/train.py` (C2, C3, C4, C5b model training)
   - `ws3_evaluation/` (provenance audit, reporting, appendix documentation)
 - **File paths and structure**:
-  - Written under `data/synthetic/<task>/` (where `<task>` is `trec` or `emotion`):
+  - Real model output is written under `data/synthetic/<task>/`; fake dry-run output is written under `data/synthetic-fixtures/<task>/` and cannot satisfy a real resume target.
+  - In either mode:
     - Repetition-specific files: `<setting>_seed<seed>.jsonl` where `<setting>` is `zero_shot`, `few_shot`, or `auggpt`, and `<seed>` is in `[13, 42, 7]`.
     - Sidecar provenance manifest: `<setting>_seed<seed>.provenance.json`.
     - Legacy unseeded compatibility: `<setting>.jsonl` (when `--seed` is omitted).
@@ -79,11 +80,15 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
     ```json
     {
       "id": "<task>.<setting>.seed<seed>.<label>.<index:04d>",
+      "task": "<task>",
       "text": "<generated text>",
       "label": "<canonical label>",
       "setting": "<zero_shot|few_shot|auggpt>",
       "repetition": 13,
-      "source_ids": ["<id1>", "<id2>", "<id3>"]
+      "source_ids": ["<id1>", "<id2>", "<id3>"],
+      "generation_mode": "real",
+      "schema_version": 2,
+      "generation_fingerprint": "<sha256>"
     }
     ```
     - `source_ids`: empty list `[]` for `zero_shot`; contains exactly three real demonstration IDs from `data/real/<task>/pool.jsonl` for `few_shot`; contains single source ID from `lowres_seed<seed>.jsonl` for `auggpt`.
@@ -93,23 +98,26 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
     - `task`: task name (`trec` or `emotion`)
     - `setting`: generation setting (`zero_shot`, `few_shot`, `auggpt`)
     - `repetition`: seed (`13`, `42`, `7`, or `null` for legacy)
-    - `model`: model tag / identifier (`llama3.2:3b`)
-    - `temperature`: generation temperature (`0.9`)
+    - `generation_mode`: `real` or `fake`; fake and real sidecars never share a path.
+    - `model_identity`: provider, configured tag, resolved model name and actual Ollama digest (or the explicit fixture identity).
+    - `generation_identity` / `generation_fingerprint`: stable task, setting, repetition, mode, model digest, prompt hash, options hash and source-input hashes used to authorize resume.
     - `target_per_label`: target count per class
     - `counts_by_label`: dictionary mapping each class label to accepted count
     - `total_count`: total accepted rows in file
     - `is_complete`: boolean gate indicating if all classes meet target
     - `distinct_demonstrations_count`: count of unique real demonstration items used
     - `distinct_demonstration_ids`: sorted list of distinct pool source IDs
-    - `stats`: diagnostic counters (`calls`, `call_failures`, `parse_failures`, rejections by cause)
-    - `updated_at`: ISO 8601 UTC timestamp
+    - `sessions`: append-only invocation history containing a UUID run ID, start/finish, actual elapsed seconds, target, before/after counts, accepted row IDs, per-session statistics and completion/no-op status.
+    - `cumulative_stats`: diagnostic counters accumulated without erasing prior sessions.
+    - `created_at` / `updated_at`: ISO 8601 UTC timestamps.
 - **Resume and isolation policy**:
-  - Resume boundaries are strictly isolated to `(task, setting, repetition)`.
+  - Resume boundaries are isolated to mode plus `(task, setting, repetition)` and the complete generation fingerprint.
   - When re-running, existing rows in `<setting>_seed<seed>.jsonl` are read; if already at or above target, 0 calls are made.
   - Rows from one repetition are never copied, reshuffled, or mixed into another repetition.
+  - Missing/null identity fields, corrupt JSONL, missing/corrupt sidecars, incompatible model digests, prompt/options changes, and changed or misplaced source identities fail before existing rows are counted.
 - **Migration & backward compatibility**:
-  - `common.synth_path(task, setting, seed=None)`: if `seed` is provided, returns `<setting>_seed<seed>.jsonl`; if omitted, returns legacy `<setting>.jsonl`.
-  - Legacy tests and consumers calling `synth_path(task, setting)` without `seed` continue to work without modification.
+  - `common.synth_path(task, setting, seed=None, mode=None)` defaults to real storage. `mode="fake"` selects fixture-only storage; the offline pipeline test opts into it with `SYNTHTEXT_GENERATION_MODE=fake`.
+  - Unseeded file naming remains available for the legacy smoke seam, but legacy rows without the required identity fields and matching sidecar are intentionally not resumable. Regenerate them in the selected mode instead of relabeling or silently counting them.
 - **Verification**:
-  - Unit tests: `tests/test_generation.py` verifies repetition isolation, resume boundaries, demonstration source tracking, non-example/malformed reply filtering, and mock connection recovery.
-  - Full pipeline test: `tests/test_pipeline.py` passes offline with fake data.
+  - Unit tests: `tests/test_generation.py` verifies repetition isolation, fake-to-real isolation, fail-closed corrupt/legacy/misplaced rows, model/prompt incompatibility, no-op history preservation, demonstration source tracking, AugGPT fixture isolation, non-example/malformed reply filtering, and mock connection recovery.
+  - Full pipeline test: `tests/test_pipeline.py` uses fake-only storage and offline embeddings. Passing it is smoke validation, not Ollama or experimental evidence.

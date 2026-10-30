@@ -13,6 +13,7 @@ def test_whole_pipeline(tmp_path, monkeypatch):
     monkeypatch.setenv("SYNTHTEXT_DATA", str(tmp_path / "data"))
     monkeypatch.setenv("SYNTHTEXT_RESULTS", str(tmp_path / "results"))
     monkeypatch.setenv("SYNTHTEXT_EMBEDDER", "hashing")
+    monkeypatch.setenv("SYNTHTEXT_GENERATION_MODE", "fake")
 
     from common import CFG, labels, read_jsonl, synth_path
     from ws1_generation import generate
