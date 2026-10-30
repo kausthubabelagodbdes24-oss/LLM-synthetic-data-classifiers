@@ -154,7 +154,7 @@ The operator selected the following final-round examples, exactly two Good and t
 | emotion | few_shot | emotion.few_shot.seed13.surprise.0005 | surprise | bad | i feel really scared of that haunted house |
 ### Proposed next step, not approved or executed
 
-The specification's two prompt-refinement rounds are exhausted. Section 193 of `docs/PROJECT_SPEC.md` already proposes `qwen3:4b` as the failed-quality fallback, explicitly requiring approval of the shared-setting change and coordinated regeneration. No third prompt refinement or silent model change is authorized.
+The specification's two prompt-refinement rounds are exhausted. The failed-model-quality entry in `docs/PROJECT_SPEC.md` already proposes `qwen3:4b` as the failed-quality fallback, explicitly requiring approval of the shared-setting change and coordinated regeneration. No third prompt refinement or silent model change is authorized.
 
 Recommendation: obtain the lead's approval to test that named fallback, keeping the final focused prompts, task definitions, temperature and repetitions unchanged. First download and identify `qwen3:4b`, verify real JSON completion compatibility and measure its actual runtime, then produce a fresh isolated 240-row pilot and obtain human inspection before approving full generation. If accepted, use the same accepted generator for both tasks, all three synthetic settings and all three repetitions; retain old Llama pilots as failed-pilot evidence, never as Qwen-generated rows. Any further prompt changes, runtime option changes or acceptance-policy changes require an explicit recorded decision.
 
