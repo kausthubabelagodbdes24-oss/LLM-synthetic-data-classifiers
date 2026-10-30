@@ -53,34 +53,38 @@ PROMPT_PROTOCOL_VERSION = "issue-6-v2"
 
 def prompt_zero_shot(task, label, n, i):
     t = CFG["tasks"][task]
-    label_guide = "\n".join(f'- {name}: {meaning}' for name, meaning in t["labels"].items())
     if task == "trec":
-        boundaries = (
-            "Classify by the TYPE OF ANSWER requested, not by a person or place mentioned in the question.\n"
-            "A question naming a painting asks for an entity, even if an artist is mentioned. "
-            "A definition or explanation asks for description, not the term being defined. "
-            "A person, team, group or organisation is human. A place is location. "
-            "A count, date, duration or measurement is numeric. "
-            "An abbreviation question asks for an expansion or shortened form.\n"
-            "Ask an open question whose answer type clearly matches the requested label. "
-            "Avoid yes/no questions and questions that plausibly belong to another label.\n"
-        )
+        boundaries = {
+            "abbreviation": "Ask explicitly for an acronym's expansion or a shortened form. "
+                            "Do not ask for a general definition or explanation.",
+            "entity": "The answer must name a non-human thing, object, product, animal or substance. "
+                      "Do not ask for a definition, acronym expansion or chemical symbol.",
+            "description": "Ask for an explanation, definition, reason or how something works. "
+                           "Do not ask what an acronym stands for.",
+            "human": "The answer must name a person, team, group or organisation. "
+                     "Mentioning a person does not suffice when the requested answer is their work or creation.",
+            "location": "The answer must be a geographic place such as a city, country, mountain or river. "
+                        "Do not ask for a person, definition, count, age or acronym expansion.",
+            "numeric": "The answer must be a number, count, date, age, duration or measurement. "
+                       "Do not ask for a product name or a place name.",
+        }[label] + " Ask open questions, not yes/no questions."
     else:
-        boundaries = (
-            "Use the six broad emotion labels below. Anger includes annoyance or irritation; "
-            "fear includes anxiety, nervousness or worry.\n"
-            "Make the requested emotion the clear dominant feeling. Love needs affection or "
-            "tenderness toward someone or something; happiness alone is not sufficient. "
-            "Surprise needs an unexpected event and an amazed or shocked reaction; routine, "
-            "boredom or tiredness alone is not surprise. Gratitude, relief or nostalgia alone "
-            "is insufficient when the requested emotion is not clearly expressed.\n"
-            "Use varied concrete situations and natural wording. Do not make every example "
-            "a repetition of the emotion's name or rely only on label keywords.\n"
-        )
+        boundaries = {
+            "sadness": "Clearly express feeling sad, lonely, hurt or low in a concrete situation.",
+            "joy": "Clearly express happiness, delight, contentment or excitement. "
+                   "The dominant feeling should be happiness rather than affection toward someone.",
+            "love": "Clearly express affection, tenderness or care toward someone or something. "
+                    "A good event or feeling happy alone is not sufficient.",
+            "anger": "Clearly express anger, irritation, frustration or annoyance about a situation. "
+                     "Do not rely on a situation alone without expressing the writer's reaction.",
+            "fear": "Clearly express feeling afraid, anxious, nervous or worried about a threat or uncertainty.",
+            "surprise": "Clearly express being amazed, shocked or caught off guard by an unexpected event. "
+                        "Mentioning a surprise party alone does not establish the writer's reaction.",
+        }[label] + " Make this the clear dominant emotion; use varied situations and natural wording."
     return (f"You are building a dataset of {t['context']}.\n"
             f"Write {n} different examples of {t['style']}.\n"
             f'Every example must have the label "{label}", meaning: {t["labels"][label]}.\n'
-            f"Label guide:\n{label_guide}\n{boundaries}"
+            f"Requirements for this label: {boundaries}\n"
             f"At most {t['max_words']} words each. {NUDGES[i % len(NUDGES)]}\n"
             "Check each candidate against the requested label before returning it. "
             "Return only examples that clearly fit; do not include answers or explanations.\n"
@@ -91,7 +95,7 @@ def prompt_few_shot(task, label, n, examples, i):
     shown = "\n".join(f"- {json.dumps(e)}" for e in examples)
     return (prompt_zero_shot(task, label, n, i).replace(
         "Reply only", f"Here are real examples with this label:\n{shown}\n"
-        "Use these for style, while following the label guide above: real examples can be noisy.\n"
+        "Use these for style, while following the requested label's requirements above.\n"
         "Write NEW examples in the same style. Do not copy or paraphrase these.\nReply only"))
 
 
