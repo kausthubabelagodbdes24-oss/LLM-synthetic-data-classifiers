@@ -33,8 +33,14 @@ def real_path(task, name):            # name: train | test | pool | lowres_seed1
     return data_dir() / "real" / task / f"{name}.jsonl"
 
 
-def synth_path(task, setting):        # setting: zero_shot | few_shot | auggpt
-    return data_dir() / "synthetic" / task / f"{setting}.jsonl"
+def synth_path(task, setting, seed=None, mode=None):  # mode: real | fake
+    mode = mode or os.environ.get("SYNTHTEXT_GENERATION_MODE", "real")
+    if mode not in {"real", "fake"}:
+        raise ValueError(f"Unknown generation mode {mode!r}; expected 'real' or 'fake'")
+    root = "synthetic-fixtures" if mode == "fake" else "synthetic"
+    if seed is not None:
+        return data_dir() / root / task / f"{setting}_seed{seed}.jsonl"
+    return data_dir() / root / task / f"{setting}.jsonl"
 
 
 def labels(task):

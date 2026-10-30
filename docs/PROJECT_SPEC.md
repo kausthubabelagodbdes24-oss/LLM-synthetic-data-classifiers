@@ -3,6 +3,10 @@
 Status: version 2, approved by Kausthuba for publication on 29 October 2026 following the grill-with-docs review.
 Prepared: 29 October 2026. Submission deadline: 4 November 2026.
 
+Operational decision, 30 October 2026: Kausthuba approved testing the documented `qwen3:4b` fallback after the Llama quality screen. See [ADR 0010](adr/0010-test-qwen-fallback-after-pilot-failure.md). Approval covers an isolated pilot with the final existing prompts; full-generation acceptance and target choice remain pending. The historical default below records the original plan.
+
+Accepted decision, 31 October 2026: Kausthuba accepted the Qwen pilot with disclosed limitations and selected uniform **100 examples per label**; see [ADR 0011](adr/0011-accept-qwen-pilot-and-uniform-100-target.md). This supersedes the pilot-only status above and the original Llama generator selection. Qwen is the accepted generator for both tasks, all synthetic settings and all repetitions; downstream implementation, exact counts, audit and freeze checks still apply.
+
 This specification consolidates the supplied master plan and all three instruction manuals dated 29 October 2026, reconciled with the orchestrator handoff, configuration, scripts, tests and subsequent corrections from Kausthuba. Requirements describe intended behavior; they do not certify that the implementation or experiment has passed them. Original documents are preserved with this specification for traceability. Later direct decisions from Kausthuba take precedence over older source text.
 
 ## Problem Statement

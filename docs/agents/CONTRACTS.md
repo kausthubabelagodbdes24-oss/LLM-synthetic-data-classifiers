@@ -2,13 +2,17 @@
 
 The specification defines experimental meaning. Record exact accepted interfaces here or link to their authoritative definitions. Proposed formats are not accepted contracts.
 
+**30 October fallback-pilot decision:** the sole operator/lead Kausthuba approved an isolated `qwen3:4b` pilot using unchanged final prompts and data interfaces; see [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md). This approves testing the shared model setting, not dataset acceptance or full generation. Preserve all earlier Llama artifacts and reviews; model digests/fingerprints remain incompatible across resume. Runtime option changes need a separate decision if compatibility problems arise.
+
+**31 October acceptance, superseding the pilot-only status above:** Kausthuba accepted Qwen with the documented quality limitations and chose uniform 100 per label. See [ADR 0011](../adr/0011-accept-qwen-pilot-and-uniform-100-target.md). Lead scientific acceptance and final implementation review are recorded; consult PR #22 for current CI/merge state. Exact full-data completeness, content audit and freeze acceptance are still future gates.
+
 | Interface | Current state / agreement required | Owners |
 | --- | --- | --- |
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
-| Repetition-specific generation | Legacy artifacts are shared across seeds. Agree naming/layout, repetition identity, IDs, source provenance, generation provenance, resume boundaries and legacy handling before the generation producer and training consumer migrate. | Generation + training; lead approves shared changes |
+| Repetition-specific generation | Accepted Qwen pilot and uniform 100 target for Issue #6; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
 | Run records and paired analysis | Preserve unique task/condition/repetition keys and exact matching baselines. Agree precision, provenance and schema changes before changing writer/reader. Zero-baseline policy remains unresolved. | Training + evaluation |
-| Annotation exchange | Accepted in Issue #8. Independent response distribution without gold answers or peer visibility, reproducible item selection key, schema validation, and independent combination for nominal Krippendorff's alpha and agreement scoring. | Evaluation (@hem4456) + all human annotators |
+| Annotation exchange | Proposed in Issue #8 / PR #23 (pending lead review, acceptance, and operational distribution confirmation). Independent response distribution without gold answers or peer visibility, reproducible item selection key, schema validation, and independent combination for nominal Krippendorff's alpha and agreement scoring. | Evaluation (@hem4456) + all human annotators |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
 
@@ -62,51 +66,105 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - Rebuild command: `python -m ws2_training.prepare_data`
   - Verification command: `python -m ws2_training.prepare_data --verify` checks existing files against the SHA-256 hashes and line counts.
 
+## Repetition-specific generation & provenance
+
+- **Approval status**: Lead scientific acceptance recorded on 31 October 2026 in ADR 0011 for Issue #6 and PR #22. Kausthuba accepted the real Qwen pilot with its disclosed quality limitations and uniform 100-per-label target. Final implementation review is clear; integration requires current-head CI at merge (see PR #22). Full-data audit/freeze acceptance is not implied.
+- **Producer**: `ws1_generation/generate.py` (Owner: @harshitadjainbdes24-byte).
+- **Consumers**:
+  - `ws2_training/train.py` (C2, C3, C4, C5b model training)
+  - `ws3_evaluation/` (provenance audit, reporting, appendix documentation)
+- **File paths and structure**:
+  - Real model output is written under `data/synthetic/<task>/`; fake dry-run output is written under `data/synthetic-fixtures/<task>/` and cannot satisfy a real resume target.
+  - In either mode:
+    - Repetition-specific files: `<setting>_seed<seed>.jsonl` where `<setting>` is `zero_shot`, `few_shot`, or `auggpt`, and `<seed>` is in `[13, 42, 7]`.
+    - Sidecar provenance manifest: `<setting>_seed<seed>.provenance.json`.
+    - Legacy unseeded compatibility: `<setting>.jsonl` (when `--seed` is omitted).
+  - Serialization: Canonical UTF-8 JSON Lines with explicit LF newlines (`\n`) using `common.write_jsonl`.
+  - Record schema:
+    ```json
+    {
+      "id": "<task>.<setting>.seed<seed>.<label>.<index:04d>",
+      "task": "<task>",
+      "text": "<generated text>",
+      "label": "<canonical label>",
+      "setting": "<zero_shot|few_shot|auggpt>",
+      "repetition": 13,
+      "source_ids": ["<id1>", "<id2>", "<id3>"],
+      "generation_mode": "real",
+      "schema_version": 2,
+      "generation_fingerprint": "<sha256>"
+    }
+    ```
+    - `source_ids`: empty list `[]` for `zero_shot`; contains exactly three real demonstration IDs from `data/real/<task>/pool.jsonl` for `few_shot`; contains single source ID from `lowres_seed<seed>.jsonl` for `auggpt`.
+- **Sidecar Provenance Manifest Schema**:
+  - Path: `data/synthetic/<task>/<setting>_seed<seed>.provenance.json`
+  - Keys:
+    - `task`: task name (`trec` or `emotion`)
+    - `setting`: generation setting (`zero_shot`, `few_shot`, `auggpt`)
+    - `repetition`: seed (`13`, `42`, `7`, or `null` for legacy)
+    - `generation_mode`: `real` or `fake`; fake and real sidecars never share a path.
+    - `model_identity`: provider, configured tag, resolved model name and actual Ollama digest (or the explicit fixture identity).
+    - `generation_identity` / `generation_fingerprint`: stable task, setting, repetition, mode, model digest, prompt dependency hashes, options hash and source-input hashes used to authorize resume. Few-shot identity covers both its own template and the inherited zero-shot template.
+    - `target_per_label`: target count per class
+    - `counts_by_label`: dictionary mapping each class label to accepted count
+    - `total_count`: total accepted rows in file
+    - `is_complete`: boolean gate indicating if all classes meet target
+    - `distinct_demonstrations_count`: count of unique real demonstration items used
+    - `distinct_demonstration_ids`: sorted list of distinct pool source IDs
+    - `sessions`: append-only invocation history containing a UUID run ID, start/finish, actual elapsed seconds, target, before/after counts, accepted row IDs, per-session statistics and completion/no-op status.
+    - `cumulative_stats`: diagnostic counters accumulated without erasing prior sessions.
+    - `created_at` / `updated_at`: ISO 8601 UTC timestamps.
+- **Resume and isolation policy**:
+  - Resume boundaries are isolated to mode plus `(task, setting, repetition)` and the complete generation fingerprint.
+  - When re-running, existing rows in `<setting>_seed<seed>.jsonl` are read; if already at or above target, 0 calls are made.
+  - Rows from one repetition are never copied, reshuffled, or mixed into another repetition.
+  - Missing/null identity fields, corrupt JSONL, missing/corrupt sidecars, incompatible model digests, prompt/options changes, and changed or misplaced source identities fail before existing rows are counted.
+    - Each accepted labeled-generation batch uses an identity-bound write-ahead journal before JSONL append, followed by atomic provenance replacement and journal removal. Restart consults the journal before strict JSONL parsing, verifies the exact raw-byte prefix and authorized batch serialization (including a partial UTF-8 sequence), completes only the missing authorized bytes, then validates the recovered rows normally. It records the prior session as `interrupted`, preserves accepted rows/history and resumes the shortfall. Missing or incompatible journals do not bypass ordinary provenance validation.
+- **Migration & backward compatibility**:
+  - `common.synth_path(task, setting, seed=None, mode=None)` defaults to real storage. `mode="fake"` selects fixture-only storage; the offline pipeline test opts into it with `SYNTHTEXT_GENERATION_MODE=fake`.
+  - Unseeded file naming remains available for the legacy smoke seam, but legacy rows without the required identity fields and matching sidecar are intentionally not resumable. Regenerate them in the selected mode instead of relabeling or silently counting them.
+- **Verification**:
+  - Unit tests: `tests/test_generation.py` verifies repetition isolation, fake-to-real isolation, model-call interruption, crash recovery across initial and resumed JSONL/provenance writes, partial first-row and split-UTF-8 recovery, stale temporary checkpoint handling, fail-closed corrupt/legacy/misplaced rows, model/prompt dependency incompatibility, no-op history preservation, demonstration source tracking, AugGPT fixture isolation, non-example/malformed reply filtering, and mock connection recovery.
+  - Full pipeline test: `tests/test_pipeline.py` uses fake-only storage and offline embeddings. Passing it is smoke validation, not Ollama or experimental evidence.
+
 ## Annotation exchange and independent distribution
 
-- **Approving issue & lead decision**: Issue #8 ([Evaluation] Distribute independent annotation responses and open the shared report), approved by @hem4456 and project lead.
-- **Producer**: ws3_evaluation/annotate.py (Owner: @hem4456).
+- **Approving issue & lead decision**: Issue #8 ([Evaluation] Distribute independent annotation responses and open the shared report) — proposed implementation in PR #23 pending lead acceptance and operational distribution confirmation.
+- **Producer**: `ws3_evaluation/annotate.py` (Owner: @hem4456).
 - **Consumers**:
-  - Human annotators (@kausthubabelagodbdes24-oss, @harshitadjainbdes24-byte, @hem4456): receive individual response files 
-esults/annotation_<name>.csv without gold labels or access to others responses.
-  - ws3_evaluation/annotate.py (combine step): merges individual completed files into 
-esults/annotation_filled.csv after validating all submissions against the canonical nnotation_key.csv.
-  - ws3_evaluation/annotate.py (score step): computes nominal Krippendorff alpha and mean agreement, writing 
-esults/subjectivity.csv.
+  - Human annotators (@kausthubabelagodbdes24-oss, @harshitadjainbdes24-byte, @hem4456): receive individual response files `results/annotation_<name>.csv` without gold labels or access to others' responses.
+  - `ws3_evaluation/annotate.py` (`combine` step): merges individual completed files into `results/annotation_filled.csv` after validating all submissions against the canonical `results/annotation_key.csv`.
+  - `ws3_evaluation/annotate.py` (`score` step): computes nominal Krippendorff's alpha and mean agreement, writing `results/subjectivity.csv`.
 - **File privacy and distribution**:
-  - 
-esults/annotation_key.csv -- PRIVATE. Contains gold labels. Do NOT share with any annotator. Internal audit record only.
-  - 
-esults/annotation_kausthuba.csv -- share only with @kausthubabelagodbdes24-oss.
-  - 
-esults/annotation_harshita.csv -- share only with @harshitadjainbdes24-byte.
-  - 
-esults/annotation_hementh.csv -- share only with @hem4456.
-  - No annotator should receive another annotators response file.
-- **Human process requirement -- Hementh completes annotations first**:
-  - Per ADR-0005, the independent annotation rule requires Hementh (@hem4456) to complete and submit his response file before any other annotators labels are viewed or combined.
+  - `results/annotation_key.csv` — PRIVATE. Contains gold labels. Do NOT share with any annotator. Internal audit record only.
+  - `results/annotation_kausthuba.csv` — share only with @kausthubabelagodbdes24-oss.
+  - `results/annotation_harshita.csv` — share only with @harshitadjainbdes24-byte.
+  - `results/annotation_hementh.csv` — share only with @hem4456.
+  - No annotator should receive another annotator's response file.
+- **Human process requirement — Hementh completes annotations first**:
+  - Per ADR-0005, the independent annotation rule requires Hementh (@hem4456) to complete and submit his response file before any other annotator's labels are viewed or combined.
   - This is a human process constraint, not code-enforced. The combine command does not and cannot verify submission order. The team lead must confirm Hementh has submitted his completed file before running combine.
   - Record this confirmation separately (e.g., a comment on Issue #8) before merging.
-- **File paths and schemas**:
-  - 
-esults/annotation_key.csv: internal reproducible selection record with columns: item_id, task, text, gold_label, allowed_labels.
-  - 
-esults/annotation_<name>.csv (one per annotator): item_id, task, text, choose_one_of, label.
-  - 
-esults/annotation_filled.csv (combined matrix): item_id, task, text, choose_one_of, kausthuba, harshita, hementh.
-  - docs/REPORT.md: shared report draft with all required sections and workstream ownership.
-- **Item counts and balance**:
-  - Exactly 5 test items per label per task: 30 items per task across 6 classes, 60 common items total.
-  - Deterministic sampling with seed 0 from data/real/<task>/test.jsonl.
-- **Validation policy** (enforced by combine_responses()):
-  - Each submission must have exactly the correct headers: [item_id, task, text, choose_one_of, label].
-  - No duplicate item_id rows within a single submission.
-  - No missing or extra item IDs relative to the canonical annotation_key.csv.
-  - task, text, and choose_one_of must match the canonical key exactly for each item.
-  - Labels are validated with strip() only -- no case normalisation. Labels must match the exact allowed values.
-  - Blank labels are accepted as incomplete (excluded from agreement/alpha computation).
-  - Invalid non-blank labels raise ValueError with an actionable message naming the annotator, item, submitted label, and valid options.
-  - No gold answers or peer response columns in annotator response templates.
-- **Overwrite protection** (enforced by make()):
-  - make() refuses to overwrite existing annotation files unless --force (CLI) or force=True (API) is explicitly passed.
-  - Use --force only after confirming no completed judgments will be lost.
+- **File format and schema**:
+  - `results/annotation_key.csv`:
+    - Headers: `item_id`, `task`, `text`, `gold_label`, `allowed_labels`
+    - Items: exactly 5 items per label per task (30 per task, 60 total items), deterministically selected from `data/real/<task>/test.jsonl` and deterministically shuffled per task so row position does not leak gold labels.
+  - `results/annotation_<name>.csv`:
+    - Headers: `item_id`, `task`, `text`, `choose_one_of`, `label`
+    - Identical item order and content as `annotation_key.csv`, but without `gold_label` or any peer annotator columns.
+    - Initial `label` column is blank.
+  - `results/annotation_filled.csv`:
+    - Headers: `item_id`, `task`, `text`, `choose_one_of`, `kausthuba`, `harshita`, `hementh`
+    - Contains combined responses in canonical order matching `annotation_key.csv`.
+  - `results/subjectivity.csv`:
+    - Headers: `task`, `items`, `annotators`, `mean_agreement`, `alpha`
+- **Validation rules**:
+  - `make`: Protected against accidental overwrite; aborts with `FileExistsError` listing conflicting files unless `--force` (or `force=True`) is provided.
+  - `combine`: Strict validation against `results/annotation_key.csv`:
+    - Validates exact headers (`['item_id', 'task', 'text', 'choose_one_of', 'label']`).
+    - Validates no duplicate item IDs within any submission.
+    - Validates no missing item IDs and no extra item IDs.
+    - Validates that `task`, `text`, and `choose_one_of` metadata match canonical key exactly.
+    - Validates labels with `strip()` only (exact case match; no lowercase normalization). Blank labels accepted as incomplete.
+- **Operational status**:
+  - Code implementation and validation complete; distribution of response files, independent annotation collection (Hementh-first), and shared report creation remain operational human tasks.

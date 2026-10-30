@@ -7,12 +7,17 @@ venv/
 *.pem
 *.key
 .scratch/
+.ollama/
 .DS_Store
 .idea/
 .vscode/
 
 data/real/
 data/sample/synthetic/
+data/sample/synthetic-fixtures/
+data/synthetic-fixtures/
+data/**/*.generation-journal.json*
+data/**/*.provenance.json.tmp
 results/sample/
 results/*
 !results/.gitkeep
