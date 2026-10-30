@@ -13,6 +13,8 @@ venv/
 
 data/real/
 data/sample/synthetic/
+data/sample/synthetic-fixtures/
+data/synthetic-fixtures/
 results/sample/
 results/*
 !results/.gitkeep

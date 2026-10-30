@@ -97,6 +97,7 @@ Windows PowerShell:
 $env:SYNTHTEXT_DATA = 'data/sample'
 $env:SYNTHTEXT_RESULTS = 'results/sample'
 $env:SYNTHTEXT_EMBEDDER = 'hashing'
+$env:SYNTHTEXT_GENERATION_MODE = 'fake'
 $env:PYTHONUTF8 = '1'
 try {
     .\.venv\Scripts\python.exe -m ws1_generation.generate --setting zero_shot --dry-run
@@ -105,7 +106,7 @@ try {
     .\.venv\Scripts\python.exe -m ws2_training.train
     .\.venv\Scripts\python.exe -m ws3_evaluation.analyze
 } finally {
-    Remove-Item Env:SYNTHTEXT_DATA, Env:SYNTHTEXT_RESULTS, Env:SYNTHTEXT_EMBEDDER, Env:PYTHONUTF8 -ErrorAction SilentlyContinue
+    Remove-Item Env:SYNTHTEXT_DATA, Env:SYNTHTEXT_RESULTS, Env:SYNTHTEXT_EMBEDDER, Env:SYNTHTEXT_GENERATION_MODE, Env:PYTHONUTF8 -ErrorAction SilentlyContinue
 }
 ```
 
@@ -116,12 +117,14 @@ macOS / Linux (a subshell keeps these variables out of later real runs):
 export SYNTHTEXT_DATA=data/sample
 export SYNTHTEXT_RESULTS=results/sample
 export SYNTHTEXT_EMBEDDER=hashing
+export SYNTHTEXT_GENERATION_MODE=fake
 export PYTHONUTF8=1
 .venv/bin/python -m ws1_generation.generate --setting zero_shot --dry-run
 .venv/bin/python -m ws1_generation.generate --setting few_shot --dry-run
 .venv/bin/python -m ws1_generation.generate --setting auggpt --dry-run
 .venv/bin/python -m ws2_training.train
 .venv/bin/python -m ws3_evaluation.analyze
+unset SYNTHTEXT_DATA SYNTHTEXT_RESULTS SYNTHTEXT_EMBEDDER SYNTHTEXT_GENERATION_MODE PYTHONUTF8
 )
 ```
 

@@ -100,7 +100,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
     - `repetition`: seed (`13`, `42`, `7`, or `null` for legacy)
     - `generation_mode`: `real` or `fake`; fake and real sidecars never share a path.
     - `model_identity`: provider, configured tag, resolved model name and actual Ollama digest (or the explicit fixture identity).
-    - `generation_identity` / `generation_fingerprint`: stable task, setting, repetition, mode, model digest, prompt hash, options hash and source-input hashes used to authorize resume.
+    - `generation_identity` / `generation_fingerprint`: stable task, setting, repetition, mode, model digest, prompt dependency hashes, options hash and source-input hashes used to authorize resume. Few-shot identity covers both its own template and the inherited zero-shot template.
     - `target_per_label`: target count per class
     - `counts_by_label`: dictionary mapping each class label to accepted count
     - `total_count`: total accepted rows in file
@@ -115,9 +115,10 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - When re-running, existing rows in `<setting>_seed<seed>.jsonl` are read; if already at or above target, 0 calls are made.
   - Rows from one repetition are never copied, reshuffled, or mixed into another repetition.
   - Missing/null identity fields, corrupt JSONL, missing/corrupt sidecars, incompatible model digests, prompt/options changes, and changed or misplaced source identities fail before existing rows are counted.
+    - Each accepted labeled-generation batch is followed by an atomic provenance checkpoint. A caught interruption marks the current session `interrupted`; an identical invocation validates that checkpoint, preserves accepted rows/history and resumes the shortfall.
 - **Migration & backward compatibility**:
   - `common.synth_path(task, setting, seed=None, mode=None)` defaults to real storage. `mode="fake"` selects fixture-only storage; the offline pipeline test opts into it with `SYNTHTEXT_GENERATION_MODE=fake`.
   - Unseeded file naming remains available for the legacy smoke seam, but legacy rows without the required identity fields and matching sidecar are intentionally not resumable. Regenerate them in the selected mode instead of relabeling or silently counting them.
 - **Verification**:
-  - Unit tests: `tests/test_generation.py` verifies repetition isolation, fake-to-real isolation, fail-closed corrupt/legacy/misplaced rows, model/prompt incompatibility, no-op history preservation, demonstration source tracking, AugGPT fixture isolation, non-example/malformed reply filtering, and mock connection recovery.
+  - Unit tests: `tests/test_generation.py` verifies repetition isolation, fake-to-real isolation, interruption checkpoint/resume, fail-closed corrupt/legacy/misplaced rows, model/prompt dependency incompatibility, no-op history preservation, demonstration source tracking, AugGPT fixture isolation, non-example/malformed reply filtering, and mock connection recovery.
   - Full pipeline test: `tests/test_pipeline.py` uses fake-only storage and offline embeddings. Passing it is smoke validation, not Ollama or experimental evidence.

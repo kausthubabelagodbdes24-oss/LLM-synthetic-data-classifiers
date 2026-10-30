@@ -274,11 +274,18 @@ def _identity_hash(value):
 def build_generation_identity(task, setting, seed, mode, model_identity, source_identity):
     """Build the stable identity which must match across resumptions."""
     task_cfg = CFG["tasks"][task]
-    prompt_function = {
-        "zero_shot": prompt_zero_shot,
-        "few_shot": prompt_few_shot,
-        "auggpt": prompt_auggpt,
+    prompt_functions = {
+        "zero_shot": [prompt_zero_shot],
+        "few_shot": [prompt_zero_shot, prompt_few_shot],
+        "auggpt": [prompt_auggpt],
     }[setting]
+    template_components = [
+        {
+            "name": function.__name__,
+            "sha256": hashlib.sha256(inspect.getsource(function).encode("utf-8")).hexdigest(),
+        }
+        for function in prompt_functions
+    ]
     prompt_spec = {
         "protocol": PROMPT_PROTOCOL_VERSION,
         "task": task,
@@ -290,7 +297,8 @@ def build_generation_identity(task, setting, seed, mode, model_identity, source_
         "few_shot_k": CFG["few_shot_k"] if setting == "few_shot" else 0,
         "auggpt_k": CFG["auggpt_k"] if setting == "auggpt" else 0,
         "nudges": NUDGES,
-        "template_sha256": hashlib.sha256(inspect.getsource(prompt_function).encode("utf-8")).hexdigest(),
+        "template_components": template_components,
+        "template_sha256": _identity_hash(template_components),
     }
     options_spec = {
         "response_format": "json",
@@ -462,6 +470,58 @@ def generate_labelled(task, setting, target, fake, seed=None):
     for r in rows:
         demonstrations_used.update(r.get("source_ids", []))
 
+    prior_sessions = list(previous_provenance.get("sessions", [])) if previous_provenance else []
+    prior_cumulative = dict(previous_provenance.get("cumulative_stats", {})) if previous_provenance else {}
+    prov_path = path.with_suffix(".provenance.json")
+
+    def persist_provenance(status):
+        """Atomically checkpoint rows and the current invocation's evidence."""
+        checkpointed_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        complete = all(sum(r["label"] == lab for r in rows) >= target for lab in labels(task))
+        cumulative_stats = {
+            key: prior_cumulative.get(key, 0) + value
+            for key, value in stats.items()
+        }
+        session = {
+            "run_id": run_id,
+            "generation_mode": mode,
+            "started_at": session_started_at,
+            "finished_at": checkpointed_at if status != "in_progress" else None,
+            "elapsed_seconds": round(time.perf_counter() - session_started_clock, 6),
+            "target_per_label": target,
+            "rows_before": rows_before,
+            "rows_after": len(rows),
+            "accepted_row_ids": [row["id"] for row in rows[rows_before:]],
+            "stats": dict(stats),
+            "status": status,
+        }
+        provenance = {
+            "task": task,
+            "setting": setting,
+            "repetition": seed,
+            "model": CFG.get("model", "llama3.2:3b") if not fake else "synthetic-fake-model",
+            "model_identity": model_identity,
+            "generation_mode": mode,
+            "generation_identity": generation_identity,
+            "generation_fingerprint": generation_fingerprint,
+            "temperature": CFG.get("temperature", 0.9) if not fake else None,
+            "target_per_label": target,
+            "counts_by_label": {lab: sum(r["label"] == lab for r in rows) for lab in labels(task)},
+            "total_count": len(rows),
+            "is_complete": complete,
+            "distinct_demonstrations_count": len(demonstrations_used),
+            "distinct_demonstration_ids": sorted(demonstrations_used),
+            "stats": cumulative_stats,
+            "cumulative_stats": cumulative_stats,
+            "sessions": prior_sessions + [session],
+            "created_at": previous_provenance.get("created_at", session_started_at) if previous_provenance else session_started_at,
+            "updated_at": checkpointed_at,
+        }
+        temp_path = prov_path.with_suffix(prov_path.suffix + ".tmp")
+        temp_path.write_text(json.dumps(provenance, indent=2), encoding="utf-8")
+        temp_path.replace(prov_path)
+        return provenance
+
     for label in labels(task):
         have = sum(r["label"] == label for r in rows)
         calls = 0
@@ -485,7 +545,11 @@ def generate_labelled(task, setting, target, fake, seed=None):
             else:
                 prompt = prompt_zero_shot(task, label, CFG["per_call"], calls)
 
-            candidates = ask(prompt, fake, max_words=max_words, stats=stats)
+            try:
+                candidates = ask(prompt, fake, max_words=max_words, stats=stats)
+            except KeyboardInterrupt:
+                persist_provenance("interrupted")
+                raise
             shown_texts = {norm(r["text"]) for r in shown} if shown else set()
             new = []
             for text in candidates:
@@ -533,57 +597,13 @@ def generate_labelled(task, setting, target, fake, seed=None):
             if new:
                 write_jsonl(path, new, append=True)
                 rows += new
+                persist_provenance("in_progress")
 
         print(f"  {task} {setting} (seed={seed}) {label}: {have}/{target}")
 
-    session_finished_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    elapsed_seconds = round(time.perf_counter() - session_started_clock, 6)
     complete = all(sum(r["label"] == lab for r in rows) >= target for lab in labels(task))
-    prior_sessions = list(previous_provenance.get("sessions", [])) if previous_provenance else []
-    prior_cumulative = dict(previous_provenance.get("cumulative_stats", {})) if previous_provenance else {}
-    cumulative_stats = {
-        key: prior_cumulative.get(key, 0) + value
-        for key, value in stats.items()
-    }
-    session = {
-        "run_id": run_id,
-        "generation_mode": mode,
-        "started_at": session_started_at,
-        "finished_at": session_finished_at,
-        "elapsed_seconds": elapsed_seconds,
-        "target_per_label": target,
-        "rows_before": rows_before,
-        "rows_after": len(rows),
-        "accepted_row_ids": [row["id"] for row in rows[rows_before:]],
-        "stats": stats,
-        "status": "no_op" if stats["accepted_new"] == 0 and complete else ("complete" if complete else "incomplete"),
-    }
-
-    # Write provenance manifest sidecar without erasing prior run evidence.
-    prov_path = path.with_suffix(".provenance.json")
-    provenance = {
-        "task": task,
-        "setting": setting,
-        "repetition": seed,
-        "model": CFG.get("model", "llama3.2:3b") if not fake else "synthetic-fake-model",
-        "model_identity": model_identity,
-        "generation_mode": mode,
-        "generation_identity": generation_identity,
-        "generation_fingerprint": generation_fingerprint,
-        "temperature": CFG.get("temperature", 0.9) if not fake else None,
-        "target_per_label": target,
-        "counts_by_label": {lab: sum(r["label"] == lab for r in rows) for lab in labels(task)},
-        "total_count": len(rows),
-        "is_complete": complete,
-        "distinct_demonstrations_count": len(demonstrations_used),
-        "distinct_demonstration_ids": sorted(demonstrations_used),
-        "stats": cumulative_stats,
-        "cumulative_stats": cumulative_stats,
-        "sessions": prior_sessions + [session],
-        "created_at": previous_provenance.get("created_at", session_started_at) if previous_provenance else session_started_at,
-        "updated_at": session_finished_at,
-    }
-    prov_path.write_text(json.dumps(provenance, indent=2), encoding="utf-8")
+    final_status = "no_op" if stats["accepted_new"] == 0 and complete else ("complete" if complete else "incomplete")
+    provenance = persist_provenance(final_status)
     return rows, provenance
 
 

@@ -193,6 +193,46 @@ def test_noop_resume_preserves_prior_session_history(fake_env, monkeypatch):
     assert second["cumulative_stats"] == first["cumulative_stats"]
 
 
+def test_interrupted_generation_checkpoints_and_resumes(fake_env, monkeypatch):
+    """Accepted rows and their provenance survive an interruption between model calls."""
+    calls = 0
+
+    def interrupt_after_first_batch(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise KeyboardInterrupt
+        return ["what is the first checkpointed output ?"]
+
+    monkeypatch.setattr(generate, "ask", interrupt_after_first_batch)
+    with pytest.raises(KeyboardInterrupt):
+        generate.generate_labelled("trec", "zero_shot", target=1, fake=True, seed=13)
+
+    path = synth_path("trec", "zero_shot", seed=13, mode="fake")
+    accepted_before_resume = read_jsonl(path)
+    checkpoint = json.loads(path.with_suffix(".provenance.json").read_text(encoding="utf-8"))
+    assert len(accepted_before_resume) == 1
+    assert checkpoint["total_count"] == 1
+    assert checkpoint["sessions"][-1]["status"] == "interrupted"
+    assert checkpoint["sessions"][-1]["accepted_row_ids"] == [accepted_before_resume[0]["id"]]
+
+    resumed_calls = 0
+
+    def finish_generation(*args, **kwargs):
+        nonlocal resumed_calls
+        resumed_calls += 1
+        return [f"what is resumed output number {resumed_calls} ?"]
+
+    monkeypatch.setattr(generate, "ask", finish_generation)
+    rows, provenance = generate.generate_labelled(
+        "trec", "zero_shot", target=1, fake=True, seed=13
+    )
+
+    assert rows[0] == accepted_before_resume[0]
+    assert len(rows) == len(labels("trec"))
+    assert [session["status"] for session in provenance["sessions"]] == ["interrupted", "complete"]
+
+
 @pytest.mark.parametrize("changed_identity", ["model", "prompt"])
 def test_resume_rejects_changed_model_or_prompt_identity(fake_env, monkeypatch, changed_identity):
     """A resume cannot append to rows produced by a different model digest or prompt protocol."""
@@ -224,6 +264,22 @@ def test_resume_rejects_changed_model_or_prompt_identity(fake_env, monkeypatch, 
 
     with pytest.raises(ValueError, match="generation identity"):
         generate.generate_labelled("trec", "zero_shot", target=2, fake=False, seed=13)
+
+
+def test_few_shot_resume_rejects_changed_inherited_zero_shot_template(fake_env, monkeypatch):
+    """Few-shot identity includes the base zero-shot template it renders through."""
+    generate.generate_labelled("trec", "few_shot", target=1, fake=True, seed=13)
+
+    def revised_zero_shot(task, label, n, i):
+        return (
+            f"Revised inherited template for {task} label {label}. "
+            f"Write {n} different examples. Reply only with JSON."
+        )
+
+    monkeypatch.setattr(generate, "prompt_zero_shot", revised_zero_shot)
+
+    with pytest.raises(ValueError, match="generation identity"):
+        generate.generate_labelled("trec", "few_shot", target=2, fake=True, seed=13)
 
 
 def test_resume_rejects_corrupt_jsonl_before_counting(fake_env, monkeypatch):
