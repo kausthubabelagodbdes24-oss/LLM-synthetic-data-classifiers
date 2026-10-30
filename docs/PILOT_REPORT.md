@@ -1,7 +1,7 @@
 # Generation pilot report and target decision
 
 - **Operator and lead:** Kausthuba (@kausthubabelagodbdes24-oss), now executing all workstreams personally in separate workspaces.
-- **Status:** Initial real pilot and 40-item human inspection completed. Round-one human inspection also found clear quality failures. The final allowed refined pilot and its human inspection are complete, with remaining quality failures; no full-generation acceptance has been given. Kausthuba has approved an isolated Qwen fallback pilot, which is now running; its quality acceptance remains pending. Issue #6 is not accepted; dependent experiments remain blocked.
+- **Status:** Initial real pilot and 40-item human inspection completed. Round-one human inspection also found clear quality failures. The final allowed refined pilot and its human inspection are complete, with remaining quality failures; no full-generation acceptance has been given. Kausthuba has approved an isolated Qwen fallback pilot, which is now generated and structurally verified; its quality acceptance remains pending. Issue #6 is not accepted; dependent experiments remain blocked.
 - **Last updated:** 30 October 2026.
 
 ## Verified real execution
@@ -165,4 +165,21 @@ On 30 October 2026, Kausthuba explicitly approved: "Approve the qwen3:4b fallbac
 
 The candidate configuration and decision were committed in `4ed4a4bc703869cced69f6c14129a0068aadafce`. Installed model tag/name: `qwen3:4b`; actual digest: `359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7`. Ollama 0.40.13 on the same RTX 4060 Laptop GPU returned valid JSON with the unchanged request settings (temperature 0.9, JSON format, no explicit think override). Model metadata reports thinking enabled by default; that behavior was left unchanged. Compatibility completion took 13.784201 seconds including initial load; the project's warmed smoke check passed in 10.882349 seconds. These small smoke timings are not full-pilot throughput measurements.
 
-All 45 software tests passed with the candidate configuration. Real input files were copied unchanged into a separate `.ollama/pilot-qwen3-4b/data` root; all 12 canonical hashes/counts matched. Earlier synthetic rows were not copied. Generation is in progress for seed 13, both tasks and zero-shot/few-shot, at ten accepted rows per label. Completion, provenance verification, measured pilot timing and a new 40-item human inspection are still pending. No improvement in semantic quality is claimed from the model download, compatibility check or tests.
+All 45 software tests passed with the candidate configuration. Real input files were copied unchanged into a separate `.ollama/pilot-qwen3-4b/data` root; all 12 canonical hashes/counts matched. Earlier synthetic rows were not copied. Generation and structural/provenance verification have completed for seed 13, both tasks and zero-shot/few-shot, at ten accepted rows per label. Measured pilot timing is recorded below; a new 40-item human quality inspection remains pending. No improvement in semantic quality is claimed from the model download, compatibility check or tests.
+
+### Completed Qwen fallback pilot: measured evidence
+
+All four real artifacts have exactly ten accepted rows per configured label (240 total), matching the smoke-tested actual Qwen digest. Current generation fingerprints, repetition, expected three same-label few-shot source IDs, normalized exact-leak checks, completeness and sidecar identities passed verification. No unfinished generation journals remain. The twelve real input checksums/counts matched again. All previous Llama artifact hashes and human-review hashes were verified unchanged after this run.
+
+| Task | Setting | Rows | Session seconds | Calls | Distinct real demos | Run ID | JSONL SHA-256 |
+| --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+| trec | zero_shot | 60 | 379.883445 | 6 | 0 | ce698d61-843f-44b0-8904-c1d83ec2c9c2 | e0dcad1d167025660f812ead4a0f4d2f7e8443b9b9b2fa684350323d87b84c3a |
+| trec | few_shot | 60 | 456.076075 | 6 | 18 | 6bcda2de-5838-43f5-82fd-f9d472030698 | 0870d8d02d9064e8338d8484323436726a39cc851fb3af08f0fed4d7bd8d4207 |
+| emotion | zero_shot | 60 | 297.268824 | 6 | 0 | 0d2dcee5-3b39-4d2d-9191-fb7448f97fad | c863cd14b23e8a8a54bf320de2727a666564f17b038e620197f6d08871e45ef4 |
+| emotion | few_shot | 60 | 357.146117 | 6 | 18 | c29ef9fc-5375-455c-8560-21b53c5d00a8 | 21c00a8994a2dbf8537412122d36c80d26b560b153c8d694210e4cfd547d6800 |
+
+Total generation-session time: 1490.374461 seconds (24 minutes 50 seconds); 24 model calls; no recorded call or parse failures. Generation began with candidate decision/configuration commit `4ed4a4bc703869cced69f6c14129a0068aadafce`; verification used `ff1f882d2d26e14d9a25abcd8a44f1978555deae` with unchanged generation code, prompts and configuration. Detailed counters/model identities are in the ignored local `.ollama/pilot-qwen3-4b/verification-summary.json`.
+
+A new reproducibly sampled 40-item Qwen review packet is ready, ten per task/setting covering every label, with blank judgments, the approved six-label guide and distinct browser autosave identity. The export identifies `generator_candidate: qwen3:4b` and the retained focused-prompt version (refinement round 2). No semantic-quality improvement is claimed before the human submission.
+
+Measured Qwen timing replaces all Llama-based scheduling estimates for this candidate. Linear extrapolation suggests approximately 12 hours of remaining zero/few-shot generation at 100 per label, or 7 hours at 60, assuming the Qwen pilot is accepted and retained for its own repetition. This is an estimate, not a measured full run; the additional 2,160 AugGPT paraphrases have not been timed, and rejection rates/thermal or scheduling conditions can increase runtime. No uniform target decision or approval to run full experiments is inferred.
