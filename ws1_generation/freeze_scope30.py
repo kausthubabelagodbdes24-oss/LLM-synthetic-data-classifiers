@@ -493,10 +493,15 @@ def main(argv=None):
                       f"{ev['outcome']} clear_errors={ev['clear_errors']}")
             print(f"AUDIT PASS{note}: totals {manifest['totals']}; nothing written")
         elif args.write:
-            manifest, digest, written = write_freeze(mode, repo_revision(), args.manifest, args.evidence_dir)
-            print(f"FREEZE {'WRITTEN' if written else 'ALREADY PRESENT (identical)'}{note}: sha256 {digest} "
-                  f"revision {manifest['repository_revision']}")
-            result = verify_freeze(mode, args.manifest, args.evidence_dir)
+            if Path(args.manifest or FREEZE_PATH).exists():
+                # Never rewritten: an existing freeze is only re-verified under its recorded revision.
+                result = verify_freeze(mode, args.manifest, args.evidence_dir)
+                print(f"FREEZE ALREADY PRESENT{note} (not rewritten): sha256 {result['freeze_sha256']} "
+                      f"revision {result['repository_revision']}")
+            else:
+                manifest, digest, _ = write_freeze(mode, repo_revision(), args.manifest, args.evidence_dir)
+                print(f"FREEZE WRITTEN{note}: sha256 {digest} revision {manifest['repository_revision']}")
+                result = verify_freeze(mode, args.manifest, args.evidence_dir)
             print(f"VERIFY PASS{note}: {json.dumps(result)}")
         else:
             result = verify_freeze(mode, args.manifest, args.evidence_dir)

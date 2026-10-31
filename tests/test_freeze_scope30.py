@@ -220,6 +220,18 @@ def test_crlf_checkout_of_the_manifest_still_verifies(env):
     verify(env)
 
 
+def test_cli_write_on_an_existing_freeze_only_reverifies(env, capsys):
+    write(env)
+    before = env["manifest"].read_bytes()
+    args = ["--write", "--dry-run", "--manifest", str(env["manifest"]), "--evidence-dir", str(env["evidence"])]
+    fz.main(args)
+    assert "FREEZE ALREADY PRESENT" in capsys.readouterr().out and env["manifest"].read_bytes() == before
+    _reorder(synth_path("emotion", "auggpt", seed=13, mode="fake"))
+    with pytest.raises(SystemExit) as exc:
+        fz.main(args)
+    assert exc.value.code == 1 and env["manifest"].read_bytes() == before
+
+
 def test_cli_verify_exit_codes(env, capsys):
     write(env)
     args = ["--verify", "--dry-run", "--manifest", str(env["manifest"]), "--evidence-dir", str(env["evidence"])]
