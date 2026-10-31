@@ -12,7 +12,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Repetition-specific generation | Accepted Qwen pilot and uniform 100 target for Issue #6; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
 | Run records and paired analysis | Preserve unique task/condition/repetition keys and exact matching baselines. Agree precision, provenance and schema changes before changing writer/reader. Zero-baseline policy remains unresolved. | Training + evaluation |
-| Annotation exchange | Proposed in Issue #8 / PR #23 (pending lead review, acceptance, and operational distribution confirmation). Independent response distribution without gold answers or peer visibility, reproducible item selection key, schema validation, and independent combination for nominal Krippendorff's alpha and agreement scoring. | Evaluation (@hem4456) + all human annotators |
+| In-repository evaluation and annotation interface | Accepted in ADR 0012 (Issue #8 / PR #23). Independent human annotation and external distribution superseded by in-repository evaluation under sole-operator execution. Preserves balanced sample selection, deterministic shuffling, separate gold key, schema validation, and overwrite protection. | Evaluation (@hem4456) + Lead (@kausthubabelagodbdes24-oss) |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
 
@@ -127,31 +127,26 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - Unit tests: `tests/test_generation.py` verifies repetition isolation, fake-to-real isolation, model-call interruption, crash recovery across initial and resumed JSONL/provenance writes, partial first-row and split-UTF-8 recovery, stale temporary checkpoint handling, fail-closed corrupt/legacy/misplaced rows, model/prompt dependency incompatibility, no-op history preservation, demonstration source tracking, AugGPT fixture isolation, non-example/malformed reply filtering, and mock connection recovery.
   - Full pipeline test: `tests/test_pipeline.py` uses fake-only storage and offline embeddings. Passing it is smoke validation, not Ollama or experimental evidence.
 
-## Annotation exchange and independent distribution
+## In-repository evaluation and annotation interface
 
-- **Approving issue & lead decision**: Issue #8 ([Evaluation] Distribute independent annotation responses and open the shared report) — proposed implementation in PR #23 pending lead acceptance and operational distribution confirmation.
-- **Producer**: `ws3_evaluation/annotate.py` (Owner: @hem4456).
+- **Approving issue & lead decision**: Issue #8 ([Evaluation] Distribute independent annotation responses and open the shared report) — accepted in ADR 0012 by @kausthubabelagodbdes24-oss.
+- **Producer**: `ws3_evaluation/annotate.py` (Owner: @hem4456; operator: @kausthubabelagodbdes24-oss).
 - **Consumers**:
-  - Human annotators (@kausthubabelagodbdes24-oss, @harshitadjainbdes24-byte, @hem4456): receive individual response files `results/annotation_<name>.csv` without gold labels or access to others' responses.
-  - `ws3_evaluation/annotate.py` (`combine` step): merges individual completed files into `results/annotation_filled.csv` after validating all submissions against the canonical `results/annotation_key.csv`.
-  - `ws3_evaluation/annotate.py` (`score` step): computes nominal Krippendorff's alpha and mean agreement, writing `results/subjectivity.csv`.
-- **File privacy and distribution**:
-  - `results/annotation_key.csv` — PRIVATE. Contains gold labels. Do NOT share with any annotator. Internal audit record only.
-  - `results/annotation_kausthuba.csv` — share only with @kausthubabelagodbdes24-oss.
-  - `results/annotation_harshita.csv` — share only with @harshitadjainbdes24-byte.
-  - `results/annotation_hementh.csv` — share only with @hem4456.
-  - No annotator should receive another annotator's response file.
-- **Human process requirement — Hementh completes annotations first**:
-  - Per ADR-0005, the independent annotation rule requires Hementh (@hem4456) to complete and submit his response file before any other annotator's labels are viewed or combined.
-  - This is a human process constraint, not code-enforced. The combine command does not and cannot verify submission order. The team lead must confirm Hementh has submitted his completed file before running combine.
-  - Record this confirmation separately (e.g., a comment on Issue #8) before merging.
+  - Evaluation pipelines and report drafting in `docs/REPORT.md`.
+  - `ws3_evaluation/annotate.py` (`combine` step): merges individual completed files into `results/annotation_filled.csv` after validating submissions against canonical `results/annotation_key.csv`.
+  - `ws3_evaluation/annotate.py` (`score` step): computes nominal Krippendorff's alpha and mean majority agreement proportion, writing `results/subjectivity.csv`.
+- **Policy transition under ADR 0012**:
+  - Independent human annotation is no longer required, superseding the human collection constraint of ADR 0005. Under the sole-operator execution model, no independent multi-human judgments will be fabricated.
+  - Physical distribution of separate response files via external channels and external report sharing (Google Docs) are no longer required; evaluation and report preparation proceed directly within the repository (`docs/REPORT.md`).
+  - Human-agreement completion gates are removed. Checkpoint 1 and Checkpoint 2 evaluation requirements evaluate reproducible artifacts directly within the repository.
 - **File format and schema**:
   - `results/annotation_key.csv`:
     - Headers: `item_id`, `task`, `text`, `gold_label`, `allowed_labels`
-    - Items: exactly 5 items per label per task (30 per task, 60 total items), deterministically selected from `data/real/<task>/test.jsonl` and deterministically shuffled per task so row position does not leak gold labels.
-  - `results/annotation_<name>.csv`:
+    - Items: exactly 5 items per label per task (30 per task, 60 total items), deterministically selected from `data/real/<task>/test.jsonl` and deterministically shuffled per task using `seed=0` so row position does not leak gold labels.
+    - Private audit key; not exposed to evaluators during blind scoring.
+  - `results/annotation_<name>.csv` / evaluation templates:
     - Headers: `item_id`, `task`, `text`, `choose_one_of`, `label`
-    - Identical item order and content as `annotation_key.csv`, but without `gold_label` or any peer annotator columns.
+    - Identical item order and content as `annotation_key.csv`, but without `gold_label`.
     - Initial `label` column is blank.
   - `results/annotation_filled.csv`:
     - Headers: `item_id`, `task`, `text`, `choose_one_of`, `kausthuba`, `harshita`, `hementh`
@@ -166,5 +161,5 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
     - Validates no missing item IDs and no extra item IDs.
     - Validates that `task`, `text`, and `choose_one_of` metadata match canonical key exactly.
     - Validates labels with `strip()` only (exact case match; no lowercase normalization). Blank labels accepted as incomplete.
-- **Operational status**:
-  - Code implementation and validation complete; distribution of response files, independent annotation collection (Hementh-first), and shared report creation remain operational human tasks.
+- **Verification**:
+  - Unit & behavioral tests in `tests/test_annotate.py` (18 tests) verify balanced counts, deterministic shuffle, non-grouped ordering, overwrite protection, strict schema validation, active annotator reporting, and majority agreement proportion calculation.

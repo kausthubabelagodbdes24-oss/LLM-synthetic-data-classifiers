@@ -20,12 +20,15 @@ _Avoid_: independent dataset when only the row order changed
 One seed-identified comparison across the six training conditions, using that repetition's separately generated zero-shot, few-shot and AugGPT data and its matched real-data samples. Repetitions share the fixed held-out real test set.
 _Avoid_: additional test split, independent test set per seed
 
-**Independent annotation submission**:
-One annotator's judgments on the common 60-item set, completed without seeing other annotators' responses or the gold answers. The three submissions are combined only after each person's judgments are complete.
-_Avoid_: shared answer sheet, consensus labels
+**In-repository evaluation**:
+Evaluation conducted directly within the repository using reproducible artifacts and scripts, with evaluation evidence and findings documented in `docs/REPORT.md`. Supersedes independent human annotation and external report sharing (ADR 0012) under the sole-operator execution model.
+_Avoid_: claiming independent human consensus when evaluations are performed in-repo by the operator or agent
+
+**Independent annotation submission (historical / superseded)**:
+Originally, one annotator's judgments on the common 60-item set, completed without seeing other annotators' responses or the gold answers (ADR 0005). Superseded by ADR 0012, which removes the independent-human annotation requirement and external distribution gates.
 
 **Equal classifier training-set size**:
-The same number of examples supplied to the classifier in C1–C4 for a given task and repetition. This excludes labeled examples used only as generation demonstrations and does not imply equal human-labeling cost.
+The same number of examples supplied to the classifier in C1-C4 for a given task and repetition. This excludes labeled examples used only as generation demonstrations and does not imply equal human-labeling cost.
 _Avoid_: equal labeling budget, label-free few-shot generation
 
 **Paired relative gap**:

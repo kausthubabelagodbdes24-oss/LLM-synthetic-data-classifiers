@@ -7,6 +7,8 @@ Operational decision, 30 October 2026: Kausthuba approved testing the documented
 
 Accepted decision, 31 October 2026: Kausthuba accepted the Qwen pilot with disclosed limitations and selected uniform **100 examples per label**; see [ADR 0011](adr/0011-accept-qwen-pilot-and-uniform-100-target.md). This supersedes the pilot-only status above and the original Llama generator selection. Qwen is the accepted generator for both tasks, all synthetic settings and all repetitions; downstream implementation, exact counts, audit and freeze checks still apply.
 
+Accepted decision, 31 October 2026: Kausthuba explicitly changed the evaluation and reporting requirements: independent human annotation, separate human distribution, and external report-sharing are no longer required, superseding the human-collection constraints of ADR 0005. Evaluation and report preparation proceed directly within the repository (`docs/REPORT.md`). Human-agreement completion gates and unsupported human-agreement claims are removed. See [ADR 0012](adr/0012-in-repo-evaluation-without-human-annotation.md).
+
 This specification consolidates the supplied master plan and all three instruction manuals dated 29 October 2026, reconciled with the orchestrator handoff, configuration, scripts, tests and subsequent corrections from Kausthuba. Requirements describe intended behavior; they do not certify that the implementation or experiment has passed them. Original documents are preserved with this specification for traceability. Later direct decisions from Kausthuba take precedence over older source text.
 
 ## Problem Statement
@@ -15,9 +17,9 @@ The team needs to investigate whether classifiers trained on LLM-generated text 
 
 ## Solution
 
-Compare six training conditions on TREC question classification and Emotion classification, using three fixed sampling seeds per condition and task. Generate synthetic examples locally with Ollama and a small language model. Classify real held-out test examples using frozen sentence embeddings and logistic regression. Report macro-F1, variation across seeds and relative synthetic-versus-real performance gaps. Independently collect three human annotations on 30 test items per task and compute nominal Krippendorff's alpha.
+Compare six training conditions on TREC question classification and Emotion classification, using three fixed sampling seeds per condition and task. Generate synthetic examples locally with Ollama and a small language model. Classify real held-out test examples using frozen sentence embeddings and logistic regression. Report macro-F1, variation across seeds and relative synthetic-versus-real performance gaps. Conduct in-repository evaluation using balanced test sets and model-assisted evaluation where applicable, maintaining the project report in `docs/REPORT.md` (ADR 0012).
 
-The hypothesis is a larger negative synthetic-data performance gap for Emotion, with few-shot generation closing some of the gap. Treat that as a question to test, not an outcome to enforce. Annotation agreement supplies evidence for the subjectivity comparison; it does not guarantee the presumed ordering. Equal label counts do not control all other differences between the tasks: domain, style, size and class distributions can also affect performance. Kausthuba explicitly chose to retain the two-task comparison with careful comparative claims, without claiming that subjectivity caused an observed difference.
+The hypothesis is a larger negative synthetic-data performance gap for Emotion, with few-shot generation closing some of the gap. Treat that as a question to test, not an outcome to enforce. Evaluation results supply evidence for the subjectivity comparison; they do not guarantee the presumed ordering. Equal label counts do not control all other differences between the tasks: domain, style, size and class distributions can also affect performance. Kausthuba explicitly chose to retain the two-task comparison with careful comparative claims, without claiming that subjectivity caused an observed difference.
 
 ## User Stories
 
@@ -36,9 +38,9 @@ The hypothesis is a larger negative synthetic-data performance gap for Emotion, 
 13. As the training owner, I want three recorded repetitions with separately generated data for every generation setting, so that variation between generation runs is included.
 14. As the training owner, I want the same classifier and held-out test set across conditions, so that comparisons isolate training-data differences.
 15. As the training owner, I want training to resume and selected conditions to rerun, so that recoveries do not duplicate result rows.
-16. As the evaluation owner, I want a balanced 60-item annotation sheet without gold answers, so that annotators can label independently.
-17. As an annotator, I want clear allowed labels and a separate response file, so that I can submit judgments without seeing anyone else's answers.
-18. As the evaluation owner, I want agreement scores and annotator coverage reported, so that missing responses are visible.
+16. As the evaluation owner, I want a balanced 60-item evaluation set with reproducible selection and deterministic shuffling, so that evaluation items do not leak gold labels through ordering.
+17. As an evaluator, I want clear allowed labels and separate gold keys, so that evaluations can be scored reproducibly against known ground truth.
+18. As the evaluation owner, I want evaluation results, active coverage, and limitations reported transparently within the repository, without fabricating human consensus.
 19. As a reader, I want mean macro-F1 and standard deviation, so that I can compare performance and variation.
 20. As a reader, I want clearly defined relative gaps, so that the main hypothesis can be assessed.
 21. As the evaluation owner, I want reproducible summary tables and charts, so that the report matches recorded runs.
@@ -95,8 +97,8 @@ The equal-size comparison applies to classifier inputs for C1–C4. Report disti
 - Record the actual model tag and model ID, temperature, prompt templates, accepted counts and generation problems. Do not claim a measured parse-failure rate unless attempts and failures were recorded.
 - Run records identify task, condition, seed, training count, macro-F1 and accuracy. Validate uniqueness and full grid coverage, not only total row count.
 - Summaries report macro-F1 mean and standard deviation over repetitions. For each task and C2/C3, first compute (synthetic macro-F1 − C1 macro-F1) / C1 macro-F1 within each matching repetition, then report the mean and standard deviation of the three relative gaps. Do not calculate the headline gap only after averaging F1 scores. A zero denominator or missing baseline remains an analysis exception requiring an explicit handling rule before final analysis.
-- Annotation selects five test examples per label, giving 30 items per task and the same 60 items for all three annotators. Each person completes a separate response file without seeing other responses or gold answers. Hementh completes his own judgments before combining submissions into the scorer's expected combined format. Individual collection replaces the manuals' shared answer-sheet editing process.
-- Agreement uses nominal Krippendorff's alpha. Missing responses require coverage checks. A two-annotator fallback is permitted and must be disclosed. The accepted count is 30 sufficiently annotated items per task; do not interpret unavailable or undefined agreement as a measured result.
+- Evaluation selects five test examples per label, giving 30 items per task and 60 items overall, deterministically sampled and shuffled within tasks. Separate gold keys are generated for audit. Per ADR 0012, independent human annotation and separate response file distribution are superseded by in-repository evaluation under sole-operator execution.
+- Human-agreement completion gates are removed. Evaluation metrics, model-assisted evaluations, active coverage, and limitations are reported directly within `docs/REPORT.md`. Do not interpret unavailable or undefined agreement as a measured result, and do not report model-assisted evaluation as human annotation.
 - Interpret four comparisons explicitly: synthetic-versus-real gaps across tasks; few-shot versus zero-shot; C4 versus C1; and C5b versus C5a. Include both task agreement scores and mean agreement alongside the performance table and two charts.
 - Before Checkpoint 2, audit ten randomly selected generated examples per task × setting × repetition: 180 in total. Record label fit, naturalness, errors and ambiguous cases; compare AugGPT output against its source meaning. A batch is the set for one task, setting and repetition. At least two clear wrong-label or changed-meaning examples among its ten audited rows trigger investigation, correction of the underlying problem and a fresh random audit before acceptance. Record ambiguity separately and treat this as a quality screen rather than a statistical accuracy guarantee.
 
@@ -125,9 +127,9 @@ All checkpoint times below use Asia/Calcutta (IST). The master plan supplies dat
 | Thu 29 October | Repository, invitations, local setup and generation model download |
 | Thu 29–Fri 30 October | Real data, baseline runs, annotation sheet and shared report document |
 | Fri 30–Sat 31 October | Pilot followed by zero-shot and few-shot generation |
-| Fri 30 October, 9 pm | Checkpoint 1: baselines, inspected pilot, common annotation items distributed through separate response files, and shared report document |
-| Sat 31 October–Sun 1 November | Independent annotation, agreement scoring, AugGPT and synthetic-data handoff |
-| Sun 1 November, 6 pm | Checkpoint 2: accepted synthetic data frozen and agreement known |
+| Fri 30 October, 9 pm | Checkpoint 1: baselines, inspected pilot, balanced evaluation items selected, and in-repo report initialized (`docs/REPORT.md`) |
+| Sat 31 October–Sun 1 November | In-repo evaluation, AugGPT and synthetic-data handoff |
+| Sun 1 November, 6 pm | Checkpoint 2: accepted synthetic data frozen and in-repo evaluation recorded |
 | Sun 1–Mon 2 November | Remaining training, report sections, summaries and charts |
 | Mon 2 November, 9 pm | Checkpoint 3: final results and complete assembled report draft |
 | Tue 3 November | Slides, full-team read-through and final edit |
@@ -172,8 +174,8 @@ Use the existing end-to-end fake-data pipeline test as the primary automated sea
 | Gate | Required evidence |
 | --- | --- |
 | Setup | Four branches on GitHub; each contributor confirms Python 3.11 setup and the two existing tests pass; generation owner verifies Ollama/model availability |
-| Checkpoint 1 | Merged baseline records with 12 unique task/condition/repetition rows for C1 and C5a; plausible C1 performance; inspected pilot and documented timing/target choice; merged 60-item annotation template; separate response files distributed and report document shared |
-| Checkpoint 2 | Separate zero-shot, few-shot and AugGPT data for all three repetitions and both tasks; exact chosen counts for all labels and six valid distinct paraphrases per source; valid schema, labels and provenance; completed 180-example audit with flagged batches resolved and re-audited; independently collected agreement results with 30 scored items per task; synthetic data frozen |
+| Checkpoint 1 | Merged baseline records with 12 unique task/condition/repetition rows for C1 and C5a; plausible C1 performance; inspected pilot and documented timing/target choice; merged 60-item evaluation template; in-repo report initialized (`docs/REPORT.md`) |
+| Checkpoint 2 | Separate zero-shot, few-shot and AugGPT data for all three repetitions and both tasks; exact chosen counts for all labels and six valid distinct paraphrases per source; valid schema, labels and provenance; completed 180-example audit with flagged batches resolved and re-audited; in-repo evaluation recorded; synthetic data frozen |
 | Results | Merged 36-row complete result grid, summary and both report charts |
 | Checkpoint 3 | Report sections 1–6 and Appendix A all present in a complete assembled draft; results and charts final |
 | Finish | Final report and presentation material checked; Kausthuba submits; release tag only after explicit approval |

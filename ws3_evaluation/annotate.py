@@ -25,9 +25,10 @@ Commands:
       into results/annotation_filled.csv (item_id, task, text, choose_one_of, kausthuba, harshita, hementh),
       validating each submission against the canonical annotation_key.csv.
 
-   NOTE — Hementh completing his judgments before this step is run is a HUMAN PROCESS
-   REQUIREMENT (per ADR-0005 independent-annotation rule).  This code does not and cannot
-   verify that order; the team lead must confirm it separately before running combine.
+   NOTE — Under ADR 0012, independent human annotation and external file distribution are
+   superseded by in-repository evaluation under sole-operator execution. If human response files
+   are combined historically, submission order remains a human process constraint per ADR 0005
+   that is not code-enforced.
 
 3. python -m ws3_evaluation.annotate score
    -> Computes nominal Krippendorff's alpha and mean majority agreement proportion from results/annotation_filled.csv
@@ -184,9 +185,9 @@ def combine_responses(response_files=None, out_dir=None, annotators=None, key_pa
         Blank labels are accepted (treated as incomplete, NOT silently converted to any value).
         Invalid non-blank labels raise ValueError with an actionable message.
 
-    NOTE — The order in which annotators submit (e.g. Hementh completing first) is a
-    HUMAN PROCESS REQUIREMENT per ADR-0005.  This code does not enforce or verify that
-    ordering.  The team lead must confirm it before running combine.
+    NOTE — Under ADR 0012, independent human annotation and external file distribution are
+    superseded by in-repository evaluation under sole-operator execution. If human response files
+    are combined, submission order remains a human process constraint (ADR-0005) not enforced by code.
     """
     out_path = Path(out_dir) if out_dir else results_dir()
     annotator_list = annotators or ANNOTATORS
