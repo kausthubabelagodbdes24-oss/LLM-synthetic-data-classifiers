@@ -1,21 +1,21 @@
 # Shared experimental settings. Record lead approval before changing them.
 
 # --- generation (Kausthuba) ---
-model: qwen3:4b                # accepted generator and uniform target: ADR 0011
+model: qwen3:4b                # accepted model: ADR0011; current scope: ADR0012
 ollama_url: http://localhost:11434
 temperature: 0.9
-per_label: 100                  # synthetic texts per label, per setting
+per_label: 30                  # synthetic texts per label, per setting
 per_call: 10                    # texts asked for in one model call
 few_shot_k: 3                   # real examples shown in a few-shot prompt
 auggpt_k: 6                     # paraphrases per real example
 
-# --- training (Member B) ---
-train_per_label: 100            # C1-C4: 100 per label = 600 per task
+# --- training (Kausthuba) ---
+train_per_label: 30            # C1-C4: 30 per label = 180 per task
 lowres_per_label: 10            # C5a / C5b
-seeds: [13, 42, 7]
+seeds: [13]
 embedding_model: sentence-transformers/all-MiniLM-L6-v2
 
-# --- evaluation (Member C) ---
+# --- evaluation (Kausthuba; annotation tooling optional) ---
 annotate_per_task: 30
 
 tasks:

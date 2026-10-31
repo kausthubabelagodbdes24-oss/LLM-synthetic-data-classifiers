@@ -1,5 +1,8 @@
 # Test the documented Qwen fallback after the Llama quality screen
 
+Historical record: [ADR0012](0012-eod-exploratory-30-seed13.md) supersedes conflicting size, repetition, human-annotation, audit-count and analysis requirements below. Unchanged model/source/integrity safeguards remain.
+
+
 On 30 October 2026, after the initial Llama pilot and both permitted prompt-refinement rounds still showed human-reviewed quality problems, Kausthuba explicitly approved: "Approve the qwen3:4b fallback pilot". Kausthuba is the sole operator across the separate workspaces.
 
 Activate the fallback already proposed in the specification for an isolated pilot only. Use `qwen3:4b` with the existing final focused prompts, six-label definitions, temperature 0.9, three real few-shot demonstrations, and seed 13. Verify the actual model digest, JSON compatibility and measured timing, generate 10 accepted rows per label for both tasks/settings (240 total), and obtain a new human quality inspection. Do not treat a larger model or software test success as evidence of semantic acceptance.

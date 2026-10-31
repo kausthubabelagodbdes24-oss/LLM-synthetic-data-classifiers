@@ -1,5 +1,8 @@
 # Accept Qwen with disclosed pilot limitations and use 100 examples per label
 
+Historical record: [ADR0012](0012-eod-exploratory-30-seed13.md) supersedes conflicting size, repetition, human-annotation, audit-count and analysis requirements below. Unchanged model/source/integrity safeguards remain.
+
+
 On 31 October 2026, after reviewing the Qwen pilot, Kausthuba explicitly selected: "Accept Qwen; use 100 per label (recommended)". This supersedes ADR 0010's pilot-only limitation for generator selection and target choice, while preserving its model-isolation and historical-evidence requirements.
 
 Use the accepted `qwen3:4b` generator consistently for both tasks, all three synthetic settings and all three repetitions (13, 42, 7). The observed model digest is `359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7`; temperature remains 0.9 and Qwen's default thinking behavior was retained. Keep the final focused prompts; this decision does not approve another refinement or hidden generation-option change.

@@ -1,18 +1,23 @@
 # Shared contract register
 
+**Current authority: [ADR0012](../adr/0012-eod-exploratory-30-seed13.md), approved 31 October 2026.** Both tasks, six conditions, seed13 only, 30/label in C1–C4; totals180/180/180/180/60/420. Twelve result keys. Human annotation, distribution, external sharing and alpha are not required. Read [migration](../SCOPE_MIGRATION.md).
+
+Historical schemas/canonical hashes below remain valid. Target100 and three-seed statements describe earlier deliveries and are superseded for current execution. Producer sidecars preserve original targets/counts. Selected manifests record exact scope30-v1 IDs, original hashes/fingerprints; use ADR0012's deterministic excess-selection rule. Producers/consumers must implement and verify this in #10/#13; documentation does not establish implementation.
+
+
 The specification defines experimental meaning. Record exact accepted interfaces here or link to their authoritative definitions. Proposed formats are not accepted contracts.
 
 **30 October fallback-pilot decision:** the sole operator/lead Kausthuba approved an isolated `qwen3:4b` pilot using unchanged final prompts and data interfaces; see [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md). This approves testing the shared model setting, not dataset acceptance or full generation. Preserve all earlier Llama artifacts and reviews; model digests/fingerprints remain incompatible across resume. Runtime option changes need a separate decision if compatibility problems arise.
 
-**31 October acceptance, superseding the pilot-only status above:** Kausthuba accepted Qwen with the documented quality limitations and chose uniform 100 per label. See [ADR 0011](../adr/0011-accept-qwen-pilot-and-uniform-100-target.md). Lead scientific acceptance and final implementation review are recorded; consult PR #22 for current CI/merge state. Exact full-data completeness, content audit and freeze acceptance are still future gates.
+**Historical ADR0011 acceptance; target superseded by ADR0012:** Kausthuba accepted Qwen with the documented quality limitations and chose uniform 100 per label. See [ADR 0011](../adr/0011-accept-qwen-pilot-and-uniform-100-target.md). Lead scientific acceptance and final implementation review are recorded; consult PR #22 for current CI/merge state. Exact full-data completeness, content audit and freeze acceptance are still future gates.
 
 | Interface | Current state / agreement required | Owners |
 | --- | --- | --- |
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
-| Repetition-specific generation | Accepted Qwen pilot and uniform 100 target for Issue #6; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
+| Repetition-specific generation | Accepted Qwen pilot for Issue #6; current scope30/seed13 under ADR0012; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
-| Run records and paired analysis | Partial Checkpoint 1 baselines (Emotion C1, Emotion C5a, TREC C5a: 9 valid results) in results/runs.csv; TREC C1 blocked pending lead resolution of 76 abbreviation count constraint. | Training (@kausthubabelagodbdes24-oss) + evaluation (@hem4456) |
-| Annotation exchange | Independent responses must combine without changed judgments. Agree stable item matching, label validation, missing responses and actual active-annotator reporting; preserve original responses. | Evaluation + all human annotators |
+| Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion); fresh results/scope30-seed13 storage. ADR0012 defines current single-seed exploratory scope; 12 total keys. | Training (@kausthubabelagodbdes24-oss) + evaluation |
+| Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
 
@@ -68,7 +73,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 
 ## Repetition-specific generation & provenance
 
-- **Approval status**: Lead scientific acceptance recorded on 31 October 2026 in ADR 0011 for Issue #6 and PR #22. Kausthuba accepted the real Qwen pilot with its disclosed quality limitations and uniform 100-per-label target. Final implementation review is clear; integration requires current-head CI at merge (see PR #22). Full-data audit/freeze acceptance is not implied.
+- **Historical pilot approval (100 target superseded by ADR0012)**: Lead scientific acceptance recorded on 31 October 2026 in ADR 0011 for Issue #6 and PR #22. Kausthuba accepted the real Qwen pilot with its disclosed quality limitations and uniform 100-per-label target. Final implementation review is clear; integration requires current-head CI at merge (see PR #22). Full-data audit/freeze acceptance is not implied.
 - **Producer**: `ws1_generation/generate.py` (Owner: @harshitadjainbdes24-byte).
 - **Consumers**:
   - `ws2_training/train.py` (C2, C3, C4, C5b model training)

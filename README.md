@@ -1,6 +1,12 @@
 # LLM-synthetic-data-classifiers
  An open LLM is used to generate synthetic training examples in zero-shot and few-shot (example-guided) settings. Classifiers are then trained on (a) real data only, (b) synthetic data only, and (c) a mix of real and synthetic data at different ratios, and evaluated on a held-out real test set.
 
+## Current approved scope
+
+**31 October 2026:** [ADR0012](docs/adr/0012-eod-exploratory-30-seed13.md) approves 30/label, seed13 only, both tasks and all six conditions. C1–C4=180/task; C4=15 real+15 few-shot/label; C5a/C5b=60/420. Twelve result keys. Independent-human annotation, distribution and external report sharing are removed.
+
+Read [scope migration](docs/SCOPE_MIGRATION.md) before resuming old jobs or reusing results. Preserve original output/sidecars and use derived selections plus fresh result storage. Closed setup/preparation/pilot issues retain historical evidence, not proof the new experiment ran.
+
 ## Working with AI models
 
 Every model must read [AGENTS.md](AGENTS.md) and the [shared implementation protocol](docs/agents/IMPLEMENTATION_PROTOCOL.md). Copy the [reusable issue prompt](docs/agents/ISSUE_PROMPT.md), replace ISSUE_NUMBER, and provide repository access. Claude and Gemini entry files route to the same instructions. Consult the [shared contract register](docs/agents/CONTRACTS.md) before cross-workstream interface changes. Models must use isolated issue branches and PRs; human owners retain accountability.
@@ -9,17 +15,11 @@ Every model must read [AGENTS.md](AGENTS.md) and the [shared implementation prot
 
 Read the [SynthText project specification](docs/PROJECT_SPEC.md) for the experiment design, responsibilities, schedule, checkpoint checks and deliverables. The original master plan and three manuals are preserved in [source plans](docs/source-plans/).
 
-The published version 2 specification, [glossary](CONTEXT.md) and [decision records](docs/adr/) are the current plan. This restoration supplies the **legacy pipeline**, not a completed version 2 experiment. Three separate generation repetitions, strict dataset gates, independent annotation collection and paired repetition-level gap analysis still require later workstream issues. The legacy scripts reuse synthetic files across seeds, accept undersized inputs, expose shared annotation columns and calculate gaps from aggregate scores. Do not use those behaviors as evidence of compliance or report fake-data scores as research results.
+Current specification/ADR0012 define intent. Main includes accepted preparation and Qwen pilot code, but downstream exact selection, training gates and single-seed analysis still need issue-specific integration. CI and fake-data scores are not experiment results.
 
-## Contributors and branches
+## Ownership and separate workspaces
 
-| Owner | Workstream | Folder | Branch |
-| --- | --- | --- | --- |
-| @harshitadjainbdes24-byte | Generation | `ws1_generation/` | `ws1-generation` |
-| @kausthubabelagodbdes24-oss | Training and project lead | `ws2_training/` | `ws2-training` |
-| @hem4456 | Evaluation | `ws3_evaluation/` | `ws3-evaluation` |
-
-At the start of a session, commit or safely preserve local work, then run `git fetch origin` and `git merge origin/main` on your workstream branch. Open pull requests into `main`; merge with a merge commit after CI passes. Coordinate changes to `config.yaml` and `common.py` with the project lead and group. Do not force-push, delete branches or tag releases without explicit approval.
+Kausthuba (@kausthubabelagodbdes24-oss) owns generation (`ws1_generation/`), training (`ws2_training/`) and evaluation (`ws3_evaluation/`). Keep workspaces and issue branches separate; one active implementer/issue. Fetch and normally merge main, preserving local changes and active jobs. This revision's config changes are lead-approved. Do not force-push, delete branches, stop another job or tag releases without authorization.
 
 ## Setup: Python 3.11
 
@@ -51,7 +51,7 @@ python3.11 -m venv .venv
 .venv/bin/python -m pytest
 ```
 
-Expected: **2 passed** (fake-data pipeline and model-reply parser). The pipeline test uses temporary directories, fake generation and hashing embeddings; it needs no Ollama service, model download or real dataset. CI runs these same tests on Python 3.11 on Windows and Linux. Installing dependencies initially requires internet access.
+Expected: all current tests pass (the suite has expanded beyond the original two tests). The pipeline test uses temporary directories, fake generation and hashing embeddings; it needs no Ollama service, model download or real dataset. CI runs these same tests on Python 3.11 on Windows and Linux. Installing dependencies initially requires internet access.
 
 `requirements-test.txt` contains the lightweight subset needed by these tests. For real-data preparation and actual sentence embeddings, install the supplied full dependencies in the same environment:
 
@@ -65,7 +65,7 @@ Expected: **2 passed** (fake-data pipeline and model-reply parser). The pipeline
 .venv/bin/python -m pip install -r requirements.txt
 ```
 
-The full installation includes `datasets`, `sentence-transformers` and their dependencies. Dependency files specify minimum versions, not a reproducible lock of all packages. Initial dataset and embedding-model downloads also require internet access. The generation owner separately installs [Ollama](https://ollama.com) and downloads `llama3.2:3b`; model availability and quality must be confirmed on that computer. Passing tests does not establish real-data or real-model readiness.
+The full installation includes `datasets`, `sentence-transformers` and their dependencies. Dependency files specify minimum versions, not a reproducible lock of all packages. Initial dataset and embedding-model downloads also require internet access. The generation owner separately installs [Ollama](https://ollama.com) and uses the accepted `qwen3:4b` digest in ADR0012; model availability and quality must be confirmed on that computer. Passing tests does not establish real-data or real-model readiness.
 
 ### Real-data preparation and verification
 
@@ -128,15 +128,15 @@ unset SYNTHTEXT_DATA SYNTHTEXT_RESULTS SYNTHTEXT_EMBEDDER SYNTHTEXT_GENERATION_M
 )
 ```
 
-Expected outputs: synthetic fixture JSONL files in `data/sample/synthetic-fixtures/`, plus `runs.csv` (36 legacy task/condition/seed rows), `summary.md`, `f1_by_condition.png` and `gap.png` in `results/sample/`. The fake pipeline explicitly opts into fixture storage; real consumers default to `data/synthetic/`. Resume skips only compatible existing rows and run keys. Fake scores have no scientific meaning; sample sets intentionally do not meet the planned experimental sizes.
+Expected outputs: synthetic fixture JSONL files in `data/sample/synthetic-fixtures/`, plus `runs.csv` (12 configured task/condition/seed rows; fixture-only smoke evidence), `summary.md`, `f1_by_condition.png` and `gap.png` in `results/sample/`. The fake pipeline explicitly opts into fixture storage; real consumers default to `data/synthetic/`. Resume skips only compatible existing rows and run keys. Fake scores have no scientific meaning; sample sets intentionally do not meet the planned experimental sizes.
 
 ## Files and remaining setup confirmations
 
-- `config.yaml`, `common.py`: supplied settings and shared helpers, restored unchanged.
+- `config.yaml`, `common.py`: shared settings/helpers; config records ADR0012 scope.
 - `ws1_generation/`, `ws2_training/`, `ws3_evaluation/`: generation, preparation/training and annotation/analysis scripts. Their module help describes legacy commands; use the current specification and follow-up issues before real experiments.
 - `tests/`, `data/sample/real/`: existing tests and fake fixtures.
 - `data/real/`, local environments, credentials, generated sample files and results are ignored. Later result handoffs require explicit review and addition of the accepted owned files. Synthetic experiment artifacts are subject to the later acceptance/freeze process; do not add unreviewed artifacts.
 
-Each contributor must separately confirm Python 3.11 and the two tests on their own computer; the generation owner must also confirm Ollama/model setup. Record actual confirmations on [issue #4](https://github.com/kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers/issues/4). CI is automated evidence only. Check collaborator write access separately, and leave the issue open while required human confirmations are missing.
+Kausthuba verifies Python3.11, current tests and actual Ollama/model readiness on the working laptop. Historical setup evidence remains on issue #4. Teammate-computer confirmations are no longer gates; CI is automated evidence only.
 
 The supplied bundle history is retained through a merge with the existing GitHub history. Published planning documents and the license are preserved. Real datasets, secrets, environments and experimental results must not be committed.
