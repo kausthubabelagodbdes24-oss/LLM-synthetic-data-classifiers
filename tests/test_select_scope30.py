@@ -193,7 +193,7 @@ def test_corrupted_original_rows_fail_closed(env):
 def test_real_mode_requires_the_approved_generator(env, monkeypatch):
     """A real-mode artifact (mocked Ollama) selects only under the pinned qwen3:4b digest."""
     monkeypatch.setattr(generate, "resolve_model_identity", lambda: dict(APPROVED))
-    monkeypatch.setattr(generate, "ask_ollama", lambda prompt, timeout=120: generate.ask_fake(prompt))
+    monkeypatch.setattr(generate, "ask_ollama", lambda prompt, timeout=120, request=None: generate.ask_fake(prompt))
     generate.main(["--setting", "zero_shot", "--task", "emotion", "--seed", "13", "--target", "30"])
     summary = sel.write_selection("emotion", "zero_shot", mode="real")
     assert summary["real_run_evidence"] is True and summary["selected_total"] == 180
