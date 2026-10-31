@@ -23,6 +23,9 @@ def fake_env(tmp_path, monkeypatch):
     monkeypatch.setenv("SYNTHTEXT_RESULTS", str(tmp_path / "results"))
     # The committed fixtures hold two sources per label; verification checks that exact size.
     monkeypatch.setitem(CFG, "lowres_per_label", 2)
+    # These tests exercise the uncorrected AugGPT machinery (length guard, carry-forward) on TREC
+    # fixtures. The ADR 0013 TREC correction is covered in tests/test_auggpt_trec_correction.py.
+    monkeypatch.setattr(generate, "AUGGPT_CORRECTIONS", {})
     return tmp_path
 
 
