@@ -1,8 +1,11 @@
-# Evaluation and Annotation Operational Guide
+# Optional Evaluation & Annotation Tooling Guide (Historical)
 
 *Owner: Hementh (@hem4456); Operator: Kausthuba (@kausthubabelagodbdes24-oss)*
 
-**Status (31 October 2026):** Per [ADR 0012](adr/0012-in-repo-evaluation-without-human-annotation.md), independent human annotation and external file distribution (email/shared drive/Google Docs) are no longer required and are superseded by in-repository evaluation under the sole-operator execution model. This guide documents the preserved evaluation utilities (`make`, `combine`, `score`), data formats, and in-repository evaluation procedures.
+**Status:** Preserved as optional historical response tooling under canonical [ADR 0012](adr/0012-eod-exploratory-30-seed13.md). Independent human annotation, physical response distribution (email/drive), external document sharing, and human-agreement completion gates are removed under the sole-operator execution model.
+
+> [!IMPORTANT]
+> **Scope Distinction:** These optional 60-item held-out test annotation utilities (`make`, `combine`, `score`) are strictly distinct from the required 60 generated-text quality reviews (10 examples per task per setting for seed 13) conducted in Workstream 1/3 (#11/#12).
 
 ## 1. Evaluation Item Selection and Shuffling
 
@@ -37,7 +40,7 @@ To merge evaluation response files into `results/annotation_filled.csv`, run:
 python -m ws3_evaluation.annotate combine
 ```
 
-This merges the response files while validating every submission against the canonical `results/annotation_key.csv`:
+This merges the response files while validating every submission against canonical `results/annotation_key.csv`:
 - Exact header match (`item_id`, `task`, `text`, `choose_one_of`, `label`).
 - No duplicate item IDs within any submission.
 - Complete canonical item ID coverage (no missing IDs, no foreign/extra IDs).
