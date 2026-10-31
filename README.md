@@ -130,6 +130,18 @@ unset SYNTHTEXT_DATA SYNTHTEXT_RESULTS SYNTHTEXT_EMBEDDER SYNTHTEXT_GENERATION_M
 
 Expected outputs: synthetic fixture JSONL files in `data/sample/synthetic-fixtures/`, plus `runs.csv` (12 configured task/condition/seed rows; fixture-only smoke evidence), `summary.md`, `f1_by_condition.png` and `gap.png` in `results/sample/`. The fake pipeline explicitly opts into fixture storage; real consumers default to `data/synthetic/`. Resume skips only compatible existing rows and run keys. Fake scores have no scientific meaning; sample sets intentionally do not meet the planned experimental sizes.
 
+### Freeze-bound twelve-key grid (issue #13)
+
+The real scope30-v1 seed-13 grid is trained only by `ws2_training.train_scope30`. Before it builds or fits anything, the accepted freeze (`docs/freeze/scope30-v1-seed13.freeze.json`) must verify. The legacy `ws2_training.train` refuses real C2/C3/C4/C5b. Point `SYNTHTEXT_DATA` at the accepted real data root, then run:
+
+```bash
+python -m ws2_training.train_scope30 --check-inputs                     # read-only; fits/writes nothing
+python -m ws2_training.train_scope30 --results-dir <fresh dir>          # trains; resumes exact matches only
+python -m ws2_training.train_scope30 --results-dir <fresh dir> --validate
+```
+
+Real runs need a clean checkout, `sentence-transformers` + `torch` and a locally cached MiniLM snapshot. `--dry-run` uses fake fixtures and is never evidence. See the #13 section of [contracts](docs/agents/CONTRACTS.md).
+
 ## Files and remaining setup confirmations
 
 - `config.yaml`, `common.py`: shared settings/helpers; config records ADR0012 scope.

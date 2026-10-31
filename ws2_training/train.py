@@ -5,6 +5,9 @@
 
 Classifier: frozen Sentence-BERT embeddings (all-MiniLM-L6-v2) + logistic regression.
 Appends to results/runs.csv: task, condition, seed, n_train, macro_f1, accuracy.
+
+Legacy/baseline trainer (#7 C1/C5a and fake-data pipeline). Real C2, C3, C4 and C5b are refused here:
+the scope30-v1 twelve-key grid is trained only on the accepted freeze by ws2_training.train_scope30 (#13).
 """
 
 import argparse
@@ -43,7 +46,20 @@ def approved_target_count(task: str, cond: str) -> int:
     raise ValueError(f"Unknown condition: {cond!r}")
 
 
+FROZEN_GRID_CONDITIONS = ("C2", "C3", "C4", "C5b")
+
+
+def refuse_legacy_synthetic(cond):
+    """Real synthetic conditions are trained only by the freeze-bound trainer (issue #13)."""
+    if cond in FROZEN_GRID_CONDITIONS and not is_sample_mode():
+        raise ValueError(
+            f"{cond}: the legacy trainer never reads real synthetic inputs (its default paths are not the "
+            "accepted freeze). Use: python -m ws2_training.train_scope30"
+        )
+
+
 def training_set(task, cond, seed, exact=None):
+    refuse_legacy_synthetic(cond)
     n = CFG["train_per_label"]
     task_labels = labels(task)
     if exact is None:
@@ -173,6 +189,8 @@ def main(argv=None):
     results_path.mkdir(parents=True, exist_ok=True)
     path = results_path / "runs.csv"
     conds = [c.strip() for c in args.conditions.split(",") if c.strip()]
+    for cond in conds:
+        refuse_legacy_synthetic(cond)          # before touching any results file
 
     old = []
     if path.exists():
