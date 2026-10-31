@@ -1,0 +1,564 @@
+{
+  "counts_toward_required_random_60": false,
+  "generation_mode": "real",
+  "input": {
+    "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+    "input": {
+      "bytes": 145876,
+      "path": "synthetic/emotion/auggpt_seed13.jsonl",
+      "rows": 360,
+      "sha256": "59b2a6fb414c51c43ffb922b85735a81d45eafd513e95feec962eb5a8f46f67d"
+    },
+    "model_identity": {
+      "configured_tag": "qwen3:4b",
+      "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+      "provider": "ollama",
+      "resolved_name": "qwen3:4b"
+    },
+    "provenance_sidecar": {
+      "bytes": 24537,
+      "path": "synthetic/emotion/auggpt_seed13.provenance.json",
+      "rows": 642,
+      "sha256": "315ba9ef47be14d5d88afbc73207e67345beefdea8410e19b278d85db52f7899"
+    },
+    "row_fingerprints": {
+      "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982": 19,
+      "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f": 341
+    },
+    "source_count": 60,
+    "verifier": "ws1_generation.generate.verify_auggpt"
+  },
+  "items": [
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "joy",
+      "order": 1,
+      "row_id": "emotion.train.03530.seed13.aug1",
+      "source_id": "emotion.train.03530",
+      "text_sha256": "4e86caa87570c7e2761257fdef766af124a246c80f32c114ca25438367f1e6a3",
+      "word_count": 29
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "joy",
+      "order": 2,
+      "row_id": "emotion.train.03530.seed13.aug2",
+      "source_id": "emotion.train.03530",
+      "text_sha256": "36ef0bc95a726218d1f806b759964f8b678e8b23f937c3f3c036380fc674fd70",
+      "word_count": 28
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "joy",
+      "order": 3,
+      "row_id": "emotion.train.03530.seed13.aug3",
+      "source_id": "emotion.train.03530",
+      "text_sha256": "8cb5ff282ae793a9357f9f769bbd2bfb7fd3296673ad1016c061a99888390656",
+      "word_count": 29
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "joy",
+      "order": 4,
+      "row_id": "emotion.train.03530.seed13.aug4",
+      "source_id": "emotion.train.03530",
+      "text_sha256": "c8585e302c58c39d38bab7be7dc16a7b418792804984a62158b9ae4c7b9efd51",
+      "word_count": 24
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "joy",
+      "order": 5,
+      "row_id": "emotion.train.03530.seed13.aug5",
+      "source_id": "emotion.train.03530",
+      "text_sha256": "8158ba1d5b7fcba29ff3bd11adb95584913a5d7d27bb77c12a3bf155973b8e54",
+      "word_count": 29
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "joy",
+      "order": 6,
+      "row_id": "emotion.train.03530.seed13.aug6",
+      "source_id": "emotion.train.03530",
+      "text_sha256": "5467bc0312d372695805b309745401809c6c6d76b2f0e592b763a0dca2e24478",
+      "word_count": 16
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 7,
+      "row_id": "emotion.train.07494.seed13.aug1",
+      "source_id": "emotion.train.07494",
+      "text_sha256": "fbb828ea92cd3ade79cd5dad1ec1b96bde68af29c25d2660b22e4f1cf951af95",
+      "word_count": 29
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 8,
+      "row_id": "emotion.train.07494.seed13.aug2",
+      "source_id": "emotion.train.07494",
+      "text_sha256": "4ed53b7fdef165d4eb214965f2f36f4a59d72aeaef75d8442e0b42ab28a40fb2",
+      "word_count": 27
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 9,
+      "row_id": "emotion.train.07494.seed13.aug3",
+      "source_id": "emotion.train.07494",
+      "text_sha256": "786d4bdcc43290a38415c35940154b64f2dd3b6195d3313ea587c0652733ab8d",
+      "word_count": 25
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 10,
+      "row_id": "emotion.train.07494.seed13.aug4",
+      "source_id": "emotion.train.07494",
+      "text_sha256": "75700d39bec393eda931b16b1ecfb48e8172536f0394d3344d9c16ec220b616a",
+      "word_count": 29
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 11,
+      "row_id": "emotion.train.07494.seed13.aug5",
+      "source_id": "emotion.train.07494",
+      "text_sha256": "d150d78ff2fa3a51869b16fafe689a86eb7566d090bd611a501a5bd401c76c5d",
+      "word_count": 26
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 12,
+      "row_id": "emotion.train.07494.seed13.aug6",
+      "source_id": "emotion.train.07494",
+      "text_sha256": "ff8aee46c3d2eca3130f07af3a2dfffb591887858bdf44feca12a3c121a271f5",
+      "word_count": 27
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "love",
+      "order": 13,
+      "row_id": "emotion.train.07681.seed13.aug1",
+      "source_id": "emotion.train.07681",
+      "text_sha256": "52582fc237a8ee1708367e8830659f0fafc930c4b4a4971a4c22b11e946473d6",
+      "word_count": 26
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "love",
+      "order": 14,
+      "row_id": "emotion.train.07681.seed13.aug2",
+      "source_id": "emotion.train.07681",
+      "text_sha256": "2a7a240ad70facdd3f87e41d89b3c3f133398befc36fcb5baabcdf35937c6292",
+      "word_count": 21
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "love",
+      "order": 15,
+      "row_id": "emotion.train.07681.seed13.aug3",
+      "source_id": "emotion.train.07681",
+      "text_sha256": "c53e0184af004baacdf1235b42e72511152c8df2a729dfe039ef19257f71a256",
+      "word_count": 20
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "love",
+      "order": 16,
+      "row_id": "emotion.train.07681.seed13.aug4",
+      "source_id": "emotion.train.07681",
+      "text_sha256": "558d7195d081c5e8d6500395843736975cdd200723b66ee9c395dc9961d55bbb",
+      "word_count": 21
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "love",
+      "order": 17,
+      "row_id": "emotion.train.07681.seed13.aug5",
+      "source_id": "emotion.train.07681",
+      "text_sha256": "30985d62e5e4c67edd5936c943935c9f91551bac62e02817ade926dc9b8ead6f",
+      "word_count": 20
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "love",
+      "order": 18,
+      "row_id": "emotion.train.07681.seed13.aug6",
+      "source_id": "emotion.train.07681",
+      "text_sha256": "1046b03c2d6fe76c40205456d7d688af377525e07f745922bf6b8139b9a54f67",
+      "word_count": 21
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 19,
+      "row_id": "emotion.train.07790.seed13.aug1",
+      "source_id": "emotion.train.07790",
+      "text_sha256": "7b6d5491320e53c43c702d18ad5d4ac0501af06b7b92cf8cfe9d6ef31b3ef03d",
+      "word_count": 28
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 20,
+      "row_id": "emotion.train.07790.seed13.aug2",
+      "source_id": "emotion.train.07790",
+      "text_sha256": "73475240ef6d9ed5c968930c9076951f7b2b6bb2058f5d941cff5aaaea25d226",
+      "word_count": 23
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 21,
+      "row_id": "emotion.train.07790.seed13.aug3",
+      "source_id": "emotion.train.07790",
+      "text_sha256": "b59a2af5405e12a1c98667a43b264de86f581ccdc1c4deb77a885836c97ebb3c",
+      "word_count": 28
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 22,
+      "row_id": "emotion.train.07790.seed13.aug4",
+      "source_id": "emotion.train.07790",
+      "text_sha256": "bf2f97a78da6dc9d868f264e46fea402fb341b7f11c26ed3917ff5ef714674ff",
+      "word_count": 28
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 23,
+      "row_id": "emotion.train.07790.seed13.aug5",
+      "source_id": "emotion.train.07790",
+      "text_sha256": "5497acbf435fe488d330d4e556f46281b8e457f89225b74b847e085d57c50c37",
+      "word_count": 27
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 24,
+      "row_id": "emotion.train.07790.seed13.aug6",
+      "source_id": "emotion.train.07790",
+      "text_sha256": "f01b3f7693806e2734c2f932696563e954e003d73b1946ade5bad135e805c369",
+      "word_count": 28
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 25,
+      "row_id": "emotion.train.09194.seed13.aug1",
+      "source_id": "emotion.train.09194",
+      "text_sha256": "d67492e7752c52c95b49c462b0e98fa4a4e4983e9582adca3a5051b3cbe4c588",
+      "word_count": 30
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 26,
+      "row_id": "emotion.train.09194.seed13.aug2",
+      "source_id": "emotion.train.09194",
+      "text_sha256": "df2e276bc3dfd3671f43e00cfad7c511981b680e3787daa5d23e0e9b10318f88",
+      "word_count": 30
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 27,
+      "row_id": "emotion.train.09194.seed13.aug3",
+      "source_id": "emotion.train.09194",
+      "text_sha256": "b04ec3d3ced3d27dc0897172e14b02b13fabbc80587b53a48ab563f168d286d9",
+      "word_count": 29
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 28,
+      "row_id": "emotion.train.09194.seed13.aug4",
+      "source_id": "emotion.train.09194",
+      "text_sha256": "a8e72430dbc6c0f397bee0572f1076a53078c571e5309481bd03ecde9845c62a",
+      "word_count": 26
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 29,
+      "row_id": "emotion.train.09194.seed13.aug5",
+      "source_id": "emotion.train.09194",
+      "text_sha256": "c1e28045180b6469d300a3106ee88b439e91b4f3a1d1e61be2ea962177477b45",
+      "word_count": 30
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "surprise",
+      "order": 30,
+      "row_id": "emotion.train.09194.seed13.aug6",
+      "source_id": "emotion.train.09194",
+      "text_sha256": "4d6e95f10667eb8dc3f06e267160f034008c40d5355e3a2ee656fdb6250f5f82",
+      "word_count": 26
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "love",
+      "order": 31,
+      "row_id": "emotion.train.10584.seed13.aug1",
+      "source_id": "emotion.train.10584",
+      "text_sha256": "cfb48714dc79ae2f5bc39a63dddee2172ace100db8f51a12983565ee9862e6eb",
+      "word_count": 30
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "love",
+      "order": 32,
+      "row_id": "emotion.train.10584.seed13.aug2",
+      "source_id": "emotion.train.10584",
+      "text_sha256": "9a793e00889b78abb1b8eadc4f007e49b32c1c41d738553dd794ef64d12d8f43",
+      "word_count": 30
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "love",
+      "order": 33,
+      "row_id": "emotion.train.10584.seed13.aug3",
+      "source_id": "emotion.train.10584",
+      "text_sha256": "d87308b06187c3fed49ed9394e511b412b1183c7b93a5856ce64c48c20d7b231",
+      "word_count": 29
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "love",
+      "order": 34,
+      "row_id": "emotion.train.10584.seed13.aug4",
+      "source_id": "emotion.train.10584",
+      "text_sha256": "4f0ca9a2595937154d94399a25e85f95918ebdcb49a27348b59d692e67e115f7",
+      "word_count": 29
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "love",
+      "order": 35,
+      "row_id": "emotion.train.10584.seed13.aug5",
+      "source_id": "emotion.train.10584",
+      "text_sha256": "33f5bad0cff4c672425e3d75b28be0604c99df486b8fa7e755498d9314de46e3",
+      "word_count": 30
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "love",
+      "order": 36,
+      "row_id": "emotion.train.10584.seed13.aug6",
+      "source_id": "emotion.train.10584",
+      "text_sha256": "91af024e65744f98790e0d1784e1865a3e826a715da51ec760d6d74343157ef1",
+      "word_count": 29
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "anger",
+      "order": 37,
+      "row_id": "emotion.train.13142.seed13.aug1",
+      "source_id": "emotion.train.13142",
+      "text_sha256": "37c1f1f54790512e6abf29dd025048b327fdeb98d1f6f56e5fdcdfecf135c688",
+      "word_count": 26
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "anger",
+      "order": 38,
+      "row_id": "emotion.train.13142.seed13.aug2",
+      "source_id": "emotion.train.13142",
+      "text_sha256": "bcc3e88bba94dcf4ae475732069826f284e798e6ca5ffe1ae2beac526280e335",
+      "word_count": 26
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "anger",
+      "order": 39,
+      "row_id": "emotion.train.13142.seed13.aug3",
+      "source_id": "emotion.train.13142",
+      "text_sha256": "e14021bdb2dc4c0012284c129e3c9caaf34c38875c91bfe40b93d1d119c5ea67",
+      "word_count": 26
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "anger",
+      "order": 40,
+      "row_id": "emotion.train.13142.seed13.aug4",
+      "source_id": "emotion.train.13142",
+      "text_sha256": "386765551deae896ba24c8f963ed6d05eed4cf49b22413a2433b67a3d8ad9a05",
+      "word_count": 29
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "anger",
+      "order": 41,
+      "row_id": "emotion.train.13142.seed13.aug5",
+      "source_id": "emotion.train.13142",
+      "text_sha256": "8224a56c9c143d3774266add8b1c0235d67bc4d2055308b1f34852207d3f06fc",
+      "word_count": 30
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "anger",
+      "order": 42,
+      "row_id": "emotion.train.13142.seed13.aug6",
+      "source_id": "emotion.train.13142",
+      "text_sha256": "de88ce8108688c36c9931ae8be088cb4067a94012968f501a5e642f27b2dde53",
+      "word_count": 26
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 43,
+      "row_id": "emotion.train.14287.seed13.aug1",
+      "source_id": "emotion.train.14287",
+      "text_sha256": "69782ecad4430ade96f3199d61759a5db7c8c51084e126ad9824749dba8045ba",
+      "word_count": 26
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 44,
+      "row_id": "emotion.train.14287.seed13.aug2",
+      "source_id": "emotion.train.14287",
+      "text_sha256": "97e9597a9b71b93828bb2f25ed30742fa810657fafef05ad24e43ea95fa9c4a4",
+      "word_count": 23
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 45,
+      "row_id": "emotion.train.14287.seed13.aug3",
+      "source_id": "emotion.train.14287",
+      "text_sha256": "bf6f896e57dfa11eceed7dcf858e3968decf1fe28cbd91d231958a06c51c2606",
+      "word_count": 25
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 46,
+      "row_id": "emotion.train.14287.seed13.aug4",
+      "source_id": "emotion.train.14287",
+      "text_sha256": "476312d8e5ff2c45e32f7de96ed1d7a2a6a2131a4a185ef69b30c8bd9c445e8b",
+      "word_count": 21
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 47,
+      "row_id": "emotion.train.14287.seed13.aug5",
+      "source_id": "emotion.train.14287",
+      "text_sha256": "2280beba57000131000c53f848649cc123f119765a6c59effabfa2d83c2c2797",
+      "word_count": 22
+    },
+    {
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "label": "surprise",
+      "order": 48,
+      "row_id": "emotion.train.14287.seed13.aug6",
+      "source_id": "emotion.train.14287",
+      "text_sha256": "b3c3bc2e3371575e0582ed8a27d56793623d3b5dc3dd8cd96518ccc26946e681",
+      "word_count": 25
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "sadness",
+      "order": 49,
+      "row_id": "emotion.train.15223.seed13.aug1",
+      "source_id": "emotion.train.15223",
+      "text_sha256": "1e00b94a81efcb5fa2eddcefe4b11c8cac7bffdd141897c67d95982c353b8172",
+      "word_count": 25
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "sadness",
+      "order": 50,
+      "row_id": "emotion.train.15223.seed13.aug2",
+      "source_id": "emotion.train.15223",
+      "text_sha256": "8c91856f97be7a36e6252c0b998608f8912a4804c4a8de4b66ff6173b43d7ca0",
+      "word_count": 26
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "sadness",
+      "order": 51,
+      "row_id": "emotion.train.15223.seed13.aug3",
+      "source_id": "emotion.train.15223",
+      "text_sha256": "bc6eeb6579bec7abcbd5775a04c41b56c4de1b472df04f1e2829f27502d87fe2",
+      "word_count": 28
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "sadness",
+      "order": 52,
+      "row_id": "emotion.train.15223.seed13.aug4",
+      "source_id": "emotion.train.15223",
+      "text_sha256": "ae551844fbc0fc12321659678de2e53d3713674e7a4715dc789a8b769bd05782",
+      "word_count": 25
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "sadness",
+      "order": 53,
+      "row_id": "emotion.train.15223.seed13.aug5",
+      "source_id": "emotion.train.15223",
+      "text_sha256": "44689a4f6c47bc281c8b59cd2b28c8a9be72b633bc290eef86e17bb99427442f",
+      "word_count": 25
+    },
+    {
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "label": "sadness",
+      "order": 54,
+      "row_id": "emotion.train.15223.seed13.aug6",
+      "source_id": "emotion.train.15223",
+      "text_sha256": "705cabc3f49e7bcb4bab30fd552dc5b9f6daa544099f60cb1295e3ac05ab5ab1",
+      "word_count": 27
+    }
+  ],
+  "long_sources": {
+    "emotion.train.03530": {
+      "label": "joy",
+      "word_count": 42
+    },
+    "emotion.train.07494": {
+      "label": "surprise",
+      "word_count": 34
+    },
+    "emotion.train.07681": {
+      "label": "love",
+      "word_count": 41
+    },
+    "emotion.train.07790": {
+      "label": "surprise",
+      "word_count": 46
+    },
+    "emotion.train.09194": {
+      "label": "surprise",
+      "word_count": 38
+    },
+    "emotion.train.10584": {
+      "label": "love",
+      "word_count": 34
+    },
+    "emotion.train.13142": {
+      "label": "anger",
+      "word_count": 33
+    },
+    "emotion.train.14287": {
+      "label": "surprise",
+      "word_count": 47
+    },
+    "emotion.train.15223": {
+      "label": "sadness",
+      "word_count": 34
+    }
+  },
+  "max_words": 30,
+  "real_run_evidence": true,
+  "review_id": "issue11-targeted-long-sources-v1",
+  "schema_version": 1,
+  "seed": 13,
+  "selection": "every emotion/auggpt row whose exact source exceeds max_words=30",
+  "task": "emotion"
+}

@@ -1,0 +1,123 @@
+{
+  "ambiguous": 35,
+  "by_source": {
+    "emotion.train.03530": {
+      "ambiguous": [],
+      "clear_errors": [],
+      "partially_changed": []
+    },
+    "emotion.train.07494": {
+      "ambiguous": [
+        "emotion.train.07494.seed13.aug2",
+        "emotion.train.07494.seed13.aug3"
+      ],
+      "clear_errors": [],
+      "partially_changed": [
+        "emotion.train.07494.seed13.aug2",
+        "emotion.train.07494.seed13.aug3"
+      ]
+    },
+    "emotion.train.07681": {
+      "ambiguous": [
+        "emotion.train.07681.seed13.aug1",
+        "emotion.train.07681.seed13.aug2",
+        "emotion.train.07681.seed13.aug3",
+        "emotion.train.07681.seed13.aug4",
+        "emotion.train.07681.seed13.aug5",
+        "emotion.train.07681.seed13.aug6"
+      ],
+      "clear_errors": [],
+      "partially_changed": []
+    },
+    "emotion.train.07790": {
+      "ambiguous": [
+        "emotion.train.07790.seed13.aug1",
+        "emotion.train.07790.seed13.aug2",
+        "emotion.train.07790.seed13.aug3",
+        "emotion.train.07790.seed13.aug4",
+        "emotion.train.07790.seed13.aug5",
+        "emotion.train.07790.seed13.aug6"
+      ],
+      "clear_errors": [],
+      "partially_changed": [
+        "emotion.train.07790.seed13.aug1",
+        "emotion.train.07790.seed13.aug2",
+        "emotion.train.07790.seed13.aug3",
+        "emotion.train.07790.seed13.aug4",
+        "emotion.train.07790.seed13.aug5",
+        "emotion.train.07790.seed13.aug6"
+      ]
+    },
+    "emotion.train.09194": {
+      "ambiguous": [
+        "emotion.train.09194.seed13.aug1",
+        "emotion.train.09194.seed13.aug2",
+        "emotion.train.09194.seed13.aug3",
+        "emotion.train.09194.seed13.aug4",
+        "emotion.train.09194.seed13.aug5",
+        "emotion.train.09194.seed13.aug6"
+      ],
+      "clear_errors": [],
+      "partially_changed": []
+    },
+    "emotion.train.10584": {
+      "ambiguous": [
+        "emotion.train.10584.seed13.aug6"
+      ],
+      "clear_errors": [],
+      "partially_changed": [
+        "emotion.train.10584.seed13.aug6"
+      ]
+    },
+    "emotion.train.13142": {
+      "ambiguous": [
+        "emotion.train.13142.seed13.aug4",
+        "emotion.train.13142.seed13.aug5"
+      ],
+      "clear_errors": [],
+      "partially_changed": [
+        "emotion.train.13142.seed13.aug4",
+        "emotion.train.13142.seed13.aug5"
+      ]
+    },
+    "emotion.train.14287": {
+      "ambiguous": [
+        "emotion.train.14287.seed13.aug1",
+        "emotion.train.14287.seed13.aug2",
+        "emotion.train.14287.seed13.aug3",
+        "emotion.train.14287.seed13.aug4",
+        "emotion.train.14287.seed13.aug5",
+        "emotion.train.14287.seed13.aug6"
+      ],
+      "clear_errors": [],
+      "partially_changed": [
+        "emotion.train.14287.seed13.aug5"
+      ]
+    },
+    "emotion.train.15223": {
+      "ambiguous": [
+        "emotion.train.15223.seed13.aug1",
+        "emotion.train.15223.seed13.aug2",
+        "emotion.train.15223.seed13.aug3",
+        "emotion.train.15223.seed13.aug4",
+        "emotion.train.15223.seed13.aug5",
+        "emotion.train.15223.seed13.aug6"
+      ],
+      "clear_errors": [],
+      "partially_changed": [
+        "emotion.train.15223.seed13.aug1",
+        "emotion.train.15223.seed13.aug2",
+        "emotion.train.15223.seed13.aug3",
+        "emotion.train.15223.seed13.aug4",
+        "emotion.train.15223.seed13.aug5",
+        "emotion.train.15223.seed13.aug6"
+      ]
+    }
+  },
+  "clear_errors": 0,
+  "counts_toward_required_random_60": false,
+  "judgments_sha256": "1a5102148bc84b013c3d3b154516f0cd096ed860b7f4be9fe37b386f247033ed",
+  "review_id": "issue11-targeted-long-sources-v1",
+  "reviewed": 54,
+  "sample_sha256": "8d61c9e8dd01a93c908611572b059037a2403270891d3f7d4b8c963513a7eec7"
+}

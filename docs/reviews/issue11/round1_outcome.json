@@ -1,0 +1,141 @@
+{
+  "batches": {
+    "emotion/auggpt": {
+      "ambiguous": 6,
+      "ambiguous_ids": [
+        "emotion.train.11021.seed13.aug6",
+        "emotion.train.07494.seed13.aug3",
+        "emotion.train.07681.seed13.aug1",
+        "emotion.train.13142.seed13.aug5",
+        "emotion.train.04317.seed13.aug1",
+        "emotion.train.05105.seed13.aug3"
+      ],
+      "clear_error_ids": [],
+      "clear_errors": 0,
+      "copied_demonstration_ids": [],
+      "outcome": "PASS",
+      "partially_changed_meaning_ids": [
+        "emotion.train.07494.seed13.aug3",
+        "emotion.train.13142.seed13.aug5",
+        "emotion.train.05105.seed13.aug3"
+      ],
+      "repeated_frame_ids": [],
+      "reviewed": 10,
+      "style_mismatch_ids": [
+        "emotion.train.11021.seed13.aug6",
+        "emotion.train.07494.seed13.aug3",
+        "emotion.train.07494.seed13.aug4",
+        "emotion.train.07681.seed13.aug1",
+        "emotion.train.12875.seed13.aug3",
+        "emotion.train.13142.seed13.aug5",
+        "emotion.train.04317.seed13.aug1",
+        "emotion.train.10520.seed13.aug4",
+        "emotion.train.05105.seed13.aug3"
+      ],
+      "unnatural_ids": []
+    },
+    "emotion/few_shot": {
+      "ambiguous": 1,
+      "ambiguous_ids": [
+        "emotion.few_shot.seed13.sadness.0027"
+      ],
+      "clear_error_ids": [],
+      "clear_errors": 0,
+      "copied_demonstration_ids": [],
+      "outcome": "PASS",
+      "partially_changed_meaning_ids": [],
+      "repeated_frame_ids": [],
+      "reviewed": 10,
+      "style_mismatch_ids": [],
+      "unnatural_ids": []
+    },
+    "emotion/zero_shot": {
+      "ambiguous": 0,
+      "ambiguous_ids": [],
+      "clear_error_ids": [],
+      "clear_errors": 0,
+      "copied_demonstration_ids": [],
+      "outcome": "PASS",
+      "partially_changed_meaning_ids": [],
+      "repeated_frame_ids": [
+        "emotion.zero_shot.seed13.anger.0011",
+        "emotion.zero_shot.seed13.love.0001",
+        "emotion.zero_shot.seed13.joy.0027",
+        "emotion.zero_shot.seed13.surprise.0025",
+        "emotion.zero_shot.seed13.sadness.0009"
+      ],
+      "reviewed": 10,
+      "style_mismatch_ids": [],
+      "unnatural_ids": []
+    },
+    "trec/auggpt": {
+      "ambiguous": 1,
+      "ambiguous_ids": [
+        "trec.train.04712.seed13.aug4"
+      ],
+      "clear_error_ids": [
+        "trec.train.04257.seed13.aug5",
+        "trec.train.00845.seed13.aug3"
+      ],
+      "clear_errors": 2,
+      "copied_demonstration_ids": [],
+      "outcome": "FLAGGED",
+      "partially_changed_meaning_ids": [],
+      "repeated_frame_ids": [],
+      "reviewed": 10,
+      "style_mismatch_ids": [],
+      "unnatural_ids": []
+    },
+    "trec/few_shot": {
+      "ambiguous": 0,
+      "ambiguous_ids": [],
+      "clear_error_ids": [],
+      "clear_errors": 0,
+      "copied_demonstration_ids": [],
+      "outcome": "PASS",
+      "partially_changed_meaning_ids": [],
+      "repeated_frame_ids": [],
+      "reviewed": 10,
+      "style_mismatch_ids": [],
+      "unnatural_ids": []
+    },
+    "trec/zero_shot": {
+      "ambiguous": 0,
+      "ambiguous_ids": [],
+      "clear_error_ids": [],
+      "clear_errors": 0,
+      "copied_demonstration_ids": [],
+      "outcome": "PASS",
+      "partially_changed_meaning_ids": [],
+      "repeated_frame_ids": [
+        "trec.zero_shot.seed13.abbreviation.0026"
+      ],
+      "reviewed": 10,
+      "style_mismatch_ids": [],
+      "unnatural_ids": []
+    }
+  },
+  "flagged_batches": [
+    "trec/auggpt"
+  ],
+  "generation_mode": "real",
+  "judgments_sha256": "5571bc4ebc2301eb8c32c0af85ff7674807793d2a6d785321f6f7c8bab0b29e4",
+  "note": "Model-assisted screen; not independent-human annotation, agreement or population accuracy.",
+  "real_run_evidence": true,
+  "review_id": "issue11-quality-v1",
+  "reviewer": {
+    "exact_version": "unavailable: no snapshot/version identifier beyond the model ID is exposed to the session",
+    "human_review": false,
+    "interface": "Claude Code CLI session operated by @kausthubabelagodbdes24-oss",
+    "kind": "model-assisted",
+    "method": "single model pass over the local text packet (generated text, intended label, the row's few-shot demonstrations or exact AugGPT source, lexical aids); judged against config.yaml label definitions; no self-consistency voting and no second reviewer",
+    "model": "Claude Opus 5.5",
+    "model_id": "claude-opus-5-5",
+    "provider": "Anthropic",
+    "reviewed_on": "2026-10-31"
+  },
+  "round": 1,
+  "sample_sha256": "cb0b933d0d8d108ba9d94101175beac13078bb7eace5fcee5ef0d11ab1f48359",
+  "schema_version": 1,
+  "trigger": ">= 2 clear errors among a batch's 10 -> FLAGGED"
+}

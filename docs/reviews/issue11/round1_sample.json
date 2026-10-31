@@ -1,0 +1,1031 @@
+{
+  "batches": {
+    "emotion/auggpt": {
+      "eligible_rows": 360,
+      "items": [
+        {
+          "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+          "label": "surprise",
+          "long_source": false,
+          "order": 1,
+          "row_id": "emotion.train.11021.seed13.aug6",
+          "sample_key": "0044cb53ba0db6fe0e3631304117346e047148aa3e4faf2718a895cde5ceb992",
+          "source_ids": [
+            "emotion.train.11021"
+          ],
+          "source_word_count": 7,
+          "text_sha256": "2f22684c54fbca0bfa653437712e9c7bd94b5c3927ab4169de0c185061d37428"
+        },
+        {
+          "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+          "label": "surprise",
+          "long_source": true,
+          "order": 2,
+          "row_id": "emotion.train.07494.seed13.aug3",
+          "sample_key": "01dda688cc8bbbdc381c60e6fbf21df19a6f0e9c63c3df376129215551aa5785",
+          "source_ids": [
+            "emotion.train.07494"
+          ],
+          "source_word_count": 34,
+          "text_sha256": "786d4bdcc43290a38415c35940154b64f2dd3b6195d3313ea587c0652733ab8d"
+        },
+        {
+          "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+          "label": "surprise",
+          "long_source": true,
+          "order": 3,
+          "row_id": "emotion.train.07494.seed13.aug4",
+          "sample_key": "02e5e8330fbb91dd180998fb2936f9e60adaf15b9ed7fa1bb577755e00c9bd51",
+          "source_ids": [
+            "emotion.train.07494"
+          ],
+          "source_word_count": 34,
+          "text_sha256": "75700d39bec393eda931b16b1ecfb48e8172536f0394d3344d9c16ec220b616a"
+        },
+        {
+          "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+          "label": "fear",
+          "long_source": false,
+          "order": 4,
+          "row_id": "emotion.train.06714.seed13.aug4",
+          "sample_key": "0480d467a32313becc33f4c1c5cf3063aaa4b0658a9ef29014ef021261410487",
+          "source_ids": [
+            "emotion.train.06714"
+          ],
+          "source_word_count": 5,
+          "text_sha256": "e7ccb42a9bdeda1a9bf20e21a38a8221afedb574d7e32ebde7ed615b53416650"
+        },
+        {
+          "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+          "label": "love",
+          "long_source": true,
+          "order": 5,
+          "row_id": "emotion.train.07681.seed13.aug1",
+          "sample_key": "061354fd87a65c651a7c8aa1a4ef867f638276fa953bb69904047d0e40ed3803",
+          "source_ids": [
+            "emotion.train.07681"
+          ],
+          "source_word_count": 41,
+          "text_sha256": "52582fc237a8ee1708367e8830659f0fafc930c4b4a4971a4c22b11e946473d6"
+        },
+        {
+          "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+          "label": "sadness",
+          "long_source": false,
+          "order": 6,
+          "row_id": "emotion.train.12875.seed13.aug3",
+          "sample_key": "06feaa3b3600e034f1c0ce755254ba10b8bf2eb442b000ba8abf42cecc9b6bb6",
+          "source_ids": [
+            "emotion.train.12875"
+          ],
+          "source_word_count": 17,
+          "text_sha256": "47a9ccc84873d961648fd71716ed02df7902118b0f13dddd333738049874592c"
+        },
+        {
+          "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+          "label": "anger",
+          "long_source": true,
+          "order": 7,
+          "row_id": "emotion.train.13142.seed13.aug5",
+          "sample_key": "070654278ff3a590fda765c177b64d2c4b7b369b892d0b20a7035f240dadbed3",
+          "source_ids": [
+            "emotion.train.13142"
+          ],
+          "source_word_count": 33,
+          "text_sha256": "8224a56c9c143d3774266add8b1c0235d67bc4d2055308b1f34852207d3f06fc"
+        },
+        {
+          "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+          "label": "anger",
+          "long_source": false,
+          "order": 8,
+          "row_id": "emotion.train.04317.seed13.aug1",
+          "sample_key": "0761d3d9470ac699fe6b8011a2b6f2b77e6cc5b6d72521bdb697d56e109021b8",
+          "source_ids": [
+            "emotion.train.04317"
+          ],
+          "source_word_count": 16,
+          "text_sha256": "aa4478e99fb90c18a9a561523f676b09e7c8b8454a93357f6709307364fa432d"
+        },
+        {
+          "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+          "label": "love",
+          "long_source": false,
+          "order": 9,
+          "row_id": "emotion.train.10520.seed13.aug4",
+          "sample_key": "091a1c6008ca7e86c61682bc9f18cc48f7fc8f5ecf197cbda6b78ce53b2f5ed8",
+          "source_ids": [
+            "emotion.train.10520"
+          ],
+          "source_word_count": 17,
+          "text_sha256": "357b5bbe434433636f0c9f97bf6619d174022bf8a5719c7ff820723bbf3849ec"
+        },
+        {
+          "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+          "label": "love",
+          "long_source": false,
+          "order": 10,
+          "row_id": "emotion.train.05105.seed13.aug3",
+          "sample_key": "0956cf25f1140715eaedf8897d80de617eb6aa4747db013b0b40777ced59f157",
+          "source_ids": [
+            "emotion.train.05105"
+          ],
+          "source_word_count": 18,
+          "text_sha256": "c1cb36554a7e7f4070a400420dfc74746e0b02880e607b444406fc2943dc0956"
+        }
+      ],
+      "population_rows": 360,
+      "sampled_label_counts": {
+        "anger": 2,
+        "fear": 1,
+        "love": 3,
+        "sadness": 1,
+        "surprise": 3
+      },
+      "selected_ids_in_order": [
+        "emotion.train.11021.seed13.aug6",
+        "emotion.train.07494.seed13.aug3",
+        "emotion.train.07494.seed13.aug4",
+        "emotion.train.06714.seed13.aug4",
+        "emotion.train.07681.seed13.aug1",
+        "emotion.train.12875.seed13.aug3",
+        "emotion.train.13142.seed13.aug5",
+        "emotion.train.04317.seed13.aug1",
+        "emotion.train.10520.seed13.aug4",
+        "emotion.train.05105.seed13.aug3"
+      ]
+    },
+    "emotion/few_shot": {
+      "eligible_rows": 180,
+      "items": [
+        {
+          "label": "joy",
+          "order": 1,
+          "row_id": "emotion.few_shot.seed13.joy.0027",
+          "sample_key": "00635c09597f9ca93f15c25f4f368b3fdbc35e1899a11035176cfd524ff65ae9",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "emotion.train.05067",
+            "emotion.train.01673",
+            "emotion.train.05047"
+          ],
+          "text_sha256": "7b9448943de12cab7b8a5c1e9f9fc1358fa7aeae4a9aad536d9eb7f08b4f53f6"
+        },
+        {
+          "label": "joy",
+          "order": 2,
+          "row_id": "emotion.few_shot.seed13.joy.0003",
+          "sample_key": "016faf1b230ac2f471f37cfda06da1ebf2d55a55770f628e263aff2a63c2c1d3",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "emotion.train.15374",
+            "emotion.train.15154",
+            "emotion.train.00752"
+          ],
+          "text_sha256": "53711f56741c5b1d69bdc9d8a73254906f77e5b25a56ba4bd93b5969fd478c08"
+        },
+        {
+          "label": "fear",
+          "order": 3,
+          "row_id": "emotion.few_shot.seed13.fear.0005",
+          "sample_key": "020e7a0fb836a9ca64680c238f770c539cf43ce70417e5b2280e609492ef3961",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "emotion.train.07920",
+            "emotion.train.03926",
+            "emotion.train.02571"
+          ],
+          "text_sha256": "3c828faf236b0081825a2f7e00c325962834617e475be8b80e4476dd5d257d06"
+        },
+        {
+          "label": "anger",
+          "order": 4,
+          "row_id": "emotion.few_shot.seed13.anger.0019",
+          "sample_key": "03f00ca80a0fd87393143e57405f34c8bcca96dd22164edd353382e11e5bd7b8",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "emotion.train.03691",
+            "emotion.train.08204",
+            "emotion.train.10029"
+          ],
+          "text_sha256": "d79199deca0893b25d18bb68ef21254ad85ec2d8d804b5c09ac906609d39076f"
+        },
+        {
+          "label": "anger",
+          "order": 5,
+          "row_id": "emotion.few_shot.seed13.anger.0016",
+          "sample_key": "04f73c8043dbb63f02545ef924f96840ca0307432a3a14b8faa4f0296eece16d",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "emotion.train.03691",
+            "emotion.train.08204",
+            "emotion.train.10029"
+          ],
+          "text_sha256": "290f4267f957d3084cdc010ff27b58d54dcae15286a4f9d4a2b462358496ac5d"
+        },
+        {
+          "label": "sadness",
+          "order": 6,
+          "row_id": "emotion.few_shot.seed13.sadness.0027",
+          "sample_key": "054579845031f3c49e16530503d76d4bdb03fbc61d0563f0a3205ccbe574f1e5",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "emotion.train.01210",
+            "emotion.train.08710",
+            "emotion.train.04030"
+          ],
+          "text_sha256": "fad5c1f805b51614d24cf1009b23f9d754903369e091e781f8167762c7e134d4"
+        },
+        {
+          "label": "joy",
+          "order": 7,
+          "row_id": "emotion.few_shot.seed13.joy.0009",
+          "sample_key": "072fee9fb57222669ecef5f2266b8b7ee7aab9cf6042e4d8b5aed8aa9272ddba",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "emotion.train.15374",
+            "emotion.train.15154",
+            "emotion.train.00752"
+          ],
+          "text_sha256": "0c4c360695367a51caa3221b6548a937fa3dbc124c08bbfac31355ed3309f1e6"
+        },
+        {
+          "label": "anger",
+          "order": 8,
+          "row_id": "emotion.few_shot.seed13.anger.0006",
+          "sample_key": "07dbc47d9417f4f6f1bb55bd4f9070bef3e94ef3c051008ea29cfd2fedc9f535",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "emotion.train.09296",
+            "emotion.train.05474",
+            "emotion.train.06129"
+          ],
+          "text_sha256": "c4762ba8d5be5bcb0d77c040a872e0fdfa2276c679561a1d03b803bf671b36c8"
+        },
+        {
+          "label": "sadness",
+          "order": 9,
+          "row_id": "emotion.few_shot.seed13.sadness.0012",
+          "sample_key": "0a65b88118af6904ffec932d7b84ed8fd0cc246623d2857429f3f6f4a6c768d9",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "emotion.train.09765",
+            "emotion.train.05045",
+            "emotion.train.15591"
+          ],
+          "text_sha256": "fc0c443ef3a7a9424ee331816df40846e4fd05321263134d21a189608222c54e"
+        },
+        {
+          "label": "love",
+          "order": 10,
+          "row_id": "emotion.few_shot.seed13.love.0015",
+          "sample_key": "0be4ea958ee2f8a4e8b436dd9fd5c2869011756c664d7be7e2744e349cb8e1f2",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "emotion.train.15426",
+            "emotion.train.01838",
+            "emotion.train.05092"
+          ],
+          "text_sha256": "77b007bfc3bdd63a61675d65afc55599d74ea323ca9100c8a62ad8e6eb8917a5"
+        }
+      ],
+      "population_rows": 180,
+      "sampled_label_counts": {
+        "anger": 3,
+        "fear": 1,
+        "joy": 3,
+        "love": 1,
+        "sadness": 2
+      },
+      "selected_ids_in_order": [
+        "emotion.few_shot.seed13.joy.0027",
+        "emotion.few_shot.seed13.joy.0003",
+        "emotion.few_shot.seed13.fear.0005",
+        "emotion.few_shot.seed13.anger.0019",
+        "emotion.few_shot.seed13.anger.0016",
+        "emotion.few_shot.seed13.sadness.0027",
+        "emotion.few_shot.seed13.joy.0009",
+        "emotion.few_shot.seed13.anger.0006",
+        "emotion.few_shot.seed13.sadness.0012",
+        "emotion.few_shot.seed13.love.0015"
+      ]
+    },
+    "emotion/zero_shot": {
+      "eligible_rows": 180,
+      "items": [
+        {
+          "label": "anger",
+          "order": 1,
+          "row_id": "emotion.zero_shot.seed13.anger.0011",
+          "sample_key": "00f9457ed8981b37cd6c512d723f551a077f43ec85c0e37ffb8ec3d769a56df4",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "7bd74cc6ff58fbbad8bdb93ae8251597d9ed112c51cc47691c61a44882ef1f45"
+        },
+        {
+          "label": "fear",
+          "order": 2,
+          "row_id": "emotion.zero_shot.seed13.fear.0026",
+          "sample_key": "0109dfef3843d5777160b901d7defe861bb1d8e12c83d2026b88ed75a417be84",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "0458f9591d81b86ea7a263c4578f86535cf082d989c232ef84c83ceb50c9923e"
+        },
+        {
+          "label": "love",
+          "order": 3,
+          "row_id": "emotion.zero_shot.seed13.love.0001",
+          "sample_key": "02719f38a5a6ce15c31dbda07cd9211baa79b2b6ce30c2d2095cb1d79428129f",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "ed578819ee6c0b6b1fb564ec37c2d3cb3e0d88d766fcab08e7175a4ed16ded35"
+        },
+        {
+          "label": "joy",
+          "order": 4,
+          "row_id": "emotion.zero_shot.seed13.joy.0027",
+          "sample_key": "03300c0a5fb6f80c272371999764a757ffee659ba6fc1a9b70d4a25420f9b0a2",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "6c1319c3fda51a43cb093a24be6c222bf85494284f106cc0ffd2c6a7c41d6c01"
+        },
+        {
+          "label": "surprise",
+          "order": 5,
+          "row_id": "emotion.zero_shot.seed13.surprise.0025",
+          "sample_key": "04d07b3028c85bb264247223c56af171d3ac434e6e77bbef5c9aca2a16f3920e",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "f4e7bc6ccc1adfb94161da3141fe6e1d1f9bd19f2c21720a50fbdcaa0a99056d"
+        },
+        {
+          "label": "anger",
+          "order": 6,
+          "row_id": "emotion.zero_shot.seed13.anger.0008",
+          "sample_key": "052113cc0713d9aa7d71ea8e025d0d3d65686b2d082452527e13957b82d263ee",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "e8ec7c320aa512c765e881a1bd6231c7068c9506e0ecc8cc6809b8d8e39498c4"
+        },
+        {
+          "label": "joy",
+          "order": 7,
+          "row_id": "emotion.zero_shot.seed13.joy.0004",
+          "sample_key": "062cfd7841de980e7f69b6ec5101f0b2992d47541750ef722f1b6708e7f5a78d",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "2099c3fd76c9b0712efdc4074df775f26c32dc2bc1b6a702c7bf8a9c4ef93954"
+        },
+        {
+          "label": "surprise",
+          "order": 8,
+          "row_id": "emotion.zero_shot.seed13.surprise.0026",
+          "sample_key": "064f1ca9c0cc61f3591f37595e0bf0f7dfb6c41ea19932377ed8a3d968153c38",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "5e06db45f3e1814ec0195817c3ff2b69593f22e5a5a3824ae6cdfd9a8337ea23"
+        },
+        {
+          "label": "joy",
+          "order": 9,
+          "row_id": "emotion.zero_shot.seed13.joy.0026",
+          "sample_key": "07124df8bba50acacb22c7224efb68422d6e4cdbdcd70a5b509da2cedec1c8e3",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "a585b245a37e0c4c99c85e3e17893b0e090a709644dc15300bada77a09bfab80"
+        },
+        {
+          "label": "sadness",
+          "order": 10,
+          "row_id": "emotion.zero_shot.seed13.sadness.0009",
+          "sample_key": "0b2610a9697bd83dc30a6a139412d49dc1261d0a150e01ef8f18ae17b07cdc2d",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "b984a458748db556c34ec9b5f2cf76e12d1e27893ead0c861b174e0e44652617"
+        }
+      ],
+      "population_rows": 180,
+      "sampled_label_counts": {
+        "anger": 2,
+        "fear": 1,
+        "joy": 3,
+        "love": 1,
+        "sadness": 1,
+        "surprise": 2
+      },
+      "selected_ids_in_order": [
+        "emotion.zero_shot.seed13.anger.0011",
+        "emotion.zero_shot.seed13.fear.0026",
+        "emotion.zero_shot.seed13.love.0001",
+        "emotion.zero_shot.seed13.joy.0027",
+        "emotion.zero_shot.seed13.surprise.0025",
+        "emotion.zero_shot.seed13.anger.0008",
+        "emotion.zero_shot.seed13.joy.0004",
+        "emotion.zero_shot.seed13.surprise.0026",
+        "emotion.zero_shot.seed13.joy.0026",
+        "emotion.zero_shot.seed13.sadness.0009"
+      ]
+    },
+    "trec/auggpt": {
+      "eligible_rows": 360,
+      "items": [
+        {
+          "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+          "label": "numeric",
+          "long_source": false,
+          "order": 1,
+          "row_id": "trec.train.01822.seed13.aug5",
+          "sample_key": "00997dc4e4c549b10ac1ad31622a1dd03ba57f081ab01c08ded7059697320ff5",
+          "source_ids": [
+            "trec.train.01822"
+          ],
+          "source_word_count": 10,
+          "text_sha256": "b1f3146c7eb8b0726c2132c3942b05e50b4e4d6d7bb4e560eaea37bad672c6ea"
+        },
+        {
+          "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+          "label": "location",
+          "long_source": false,
+          "order": 2,
+          "row_id": "trec.train.04712.seed13.aug4",
+          "sample_key": "014476c8e24825cd48d5b6dec2ab6bcbd0762efb944157dbfd9787fce55f784c",
+          "source_ids": [
+            "trec.train.04712"
+          ],
+          "source_word_count": 8,
+          "text_sha256": "9f7883513042840436a5fa6ecc7f489c2f1055621a55ac1227dfa8b3b054c324"
+        },
+        {
+          "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+          "label": "abbreviation",
+          "long_source": false,
+          "order": 3,
+          "row_id": "trec.train.04257.seed13.aug5",
+          "sample_key": "02203d34da0a1736f8a5232a3289e3b7d5587263fb3c751245c3f1edebd314fc",
+          "source_ids": [
+            "trec.train.04257"
+          ],
+          "source_word_count": 4,
+          "text_sha256": "9ee38251b558230af726a241f67b8988d964fbc925a7bc09b8751e8949e60739"
+        },
+        {
+          "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+          "label": "description",
+          "long_source": false,
+          "order": 4,
+          "row_id": "trec.train.04163.seed13.aug5",
+          "sample_key": "0260c344f50aac2daf4853e44c2b68599512ad81e6e6ae18c29cd46c09482b42",
+          "source_ids": [
+            "trec.train.04163"
+          ],
+          "source_word_count": 15,
+          "text_sha256": "e8b98480c82db1dd196ced44b990bfefa45123ef2df0ed64f926f7550ee96cc8"
+        },
+        {
+          "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+          "label": "entity",
+          "long_source": false,
+          "order": 5,
+          "row_id": "trec.train.01612.seed13.aug3",
+          "sample_key": "03a46a8b82172b4ef847d580ca1e0e4378bd597e3c5e56c24a74ac67463b1235",
+          "source_ids": [
+            "trec.train.01612"
+          ],
+          "source_word_count": 11,
+          "text_sha256": "7bf4ce12f4f0e8fa61330f06f2ccfddc465e883d494ae0e49a81782f284d935f"
+        },
+        {
+          "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+          "label": "numeric",
+          "long_source": false,
+          "order": 6,
+          "row_id": "trec.train.04706.seed13.aug3",
+          "sample_key": "04253c4ff95420d3b286561f52d95fa28543ca4574c4187cb19ff75963d0b82d",
+          "source_ids": [
+            "trec.train.04706"
+          ],
+          "source_word_count": 6,
+          "text_sha256": "9b90dc2e77bc3353c3a1cb4690c39dd8c8a6a40c4a377c65d51a1dcc04d1a8af"
+        },
+        {
+          "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+          "label": "description",
+          "long_source": false,
+          "order": 7,
+          "row_id": "trec.train.00845.seed13.aug3",
+          "sample_key": "05156db408d4a4e3480f4131f16eb18a214d6ce7400ae5f84716f1e44861b0f7",
+          "source_ids": [
+            "trec.train.00845"
+          ],
+          "source_word_count": 7,
+          "text_sha256": "54e1745cd5bfab323893806935c6677730aa64b47daeca19d77c56ebf7456060"
+        },
+        {
+          "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+          "label": "location",
+          "long_source": false,
+          "order": 8,
+          "row_id": "trec.train.03932.seed13.aug6",
+          "sample_key": "0538c40df6c47eb3976e23f0216f1dbe12650f21f703199f45758de60fd4b71b",
+          "source_ids": [
+            "trec.train.03932"
+          ],
+          "source_word_count": 11,
+          "text_sha256": "bfddb951dfbecbfba16fd845a96714121a382395fe5fa512e8dda5b40bb5cf75"
+        },
+        {
+          "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+          "label": "numeric",
+          "long_source": false,
+          "order": 9,
+          "row_id": "trec.train.02463.seed13.aug5",
+          "sample_key": "053959878958a600310158b4916bf0a49145ed687f6dbeb05984cefc72091f5d",
+          "source_ids": [
+            "trec.train.02463"
+          ],
+          "source_word_count": 14,
+          "text_sha256": "267147005b690454bef72852e6e97c27c03b20ac2aedb948018a92af7899e970"
+        },
+        {
+          "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+          "label": "abbreviation",
+          "long_source": false,
+          "order": 10,
+          "row_id": "trec.train.02067.seed13.aug1",
+          "sample_key": "05cc97f908da54bee68fca4c557a46c6d9c139617328149d4b3d52fe73478ccb",
+          "source_ids": [
+            "trec.train.02067"
+          ],
+          "source_word_count": 12,
+          "text_sha256": "9ca8229ab75e68327cdebbe81e8a0f9c72801949aea2c6499d9c05d665aaf8f3"
+        }
+      ],
+      "population_rows": 360,
+      "sampled_label_counts": {
+        "abbreviation": 2,
+        "description": 2,
+        "entity": 1,
+        "location": 2,
+        "numeric": 3
+      },
+      "selected_ids_in_order": [
+        "trec.train.01822.seed13.aug5",
+        "trec.train.04712.seed13.aug4",
+        "trec.train.04257.seed13.aug5",
+        "trec.train.04163.seed13.aug5",
+        "trec.train.01612.seed13.aug3",
+        "trec.train.04706.seed13.aug3",
+        "trec.train.00845.seed13.aug3",
+        "trec.train.03932.seed13.aug6",
+        "trec.train.02463.seed13.aug5",
+        "trec.train.02067.seed13.aug1"
+      ]
+    },
+    "trec/few_shot": {
+      "eligible_rows": 180,
+      "items": [
+        {
+          "label": "description",
+          "order": 1,
+          "row_id": "trec.few_shot.seed13.description.0006",
+          "sample_key": "01edadac0185297cf9e06fdb6565e957abfd382e28cd67e1880281c4690b6920",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "trec.train.02622",
+            "trec.train.04176",
+            "trec.train.03618"
+          ],
+          "text_sha256": "021a591852df04a43078958f435915d27736c69b95546953c84edaad898f97ef"
+        },
+        {
+          "label": "description",
+          "order": 2,
+          "row_id": "trec.few_shot.seed13.description.0028",
+          "sample_key": "0276651a91cd0f7d11c404b5694dce135bddeb680ad0922da351be930c98a9ae",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "trec.train.03011",
+            "trec.train.04731",
+            "trec.train.03200"
+          ],
+          "text_sha256": "336de781326d5b26c75cb359cdea7039aea9e7c332586f6e94da577e46030b75"
+        },
+        {
+          "label": "description",
+          "order": 3,
+          "row_id": "trec.few_shot.seed13.description.0009",
+          "sample_key": "02f09233b4cbe272c1820e2c05fbec3ac87dfd2aa53e6306ddedb07ff9339ed0",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "trec.train.02622",
+            "trec.train.04176",
+            "trec.train.03618"
+          ],
+          "text_sha256": "995831cef22380141be5af25cfe6c2e99688207663ac305cb4548b66326d2808"
+        },
+        {
+          "label": "numeric",
+          "order": 4,
+          "row_id": "trec.few_shot.seed13.numeric.0017",
+          "sample_key": "03f27100d6f44ff4d3384086411a15da05d1de3191d23cd514a0a7e80889a266",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "trec.train.02003",
+            "trec.train.02463",
+            "trec.train.04180"
+          ],
+          "text_sha256": "c985bc9d67560fd7dcfd6d4c295d33da1faa049479b4edb19b74481617318ed4"
+        },
+        {
+          "label": "entity",
+          "order": 5,
+          "row_id": "trec.few_shot.seed13.entity.0019",
+          "sample_key": "0b4fb3a8948b9eb2731c4646f27ae68fcb1edad8238c37f500d81e1572cffd25",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "trec.train.03899",
+            "trec.train.01376",
+            "trec.train.03156"
+          ],
+          "text_sha256": "312c9b8f5d563261d825b01f13a129fc12733faf620705c872311f95481ef80b"
+        },
+        {
+          "label": "location",
+          "order": 6,
+          "row_id": "trec.few_shot.seed13.location.0021",
+          "sample_key": "0ca7c7bbd8aaa27d3e2ee441a7bbf20a768d5f11ff6a9664018f1e34022feb65",
+          "shared_with_other_selected_setting": true,
+          "source_ids": [
+            "trec.train.04144",
+            "trec.train.03232",
+            "trec.train.02340"
+          ],
+          "text_sha256": "da9e4cb18094124b0515db91e523b9f8423aac29f011b7634d8b0ed097cb04d5"
+        },
+        {
+          "label": "numeric",
+          "order": 7,
+          "row_id": "trec.few_shot.seed13.numeric.0014",
+          "sample_key": "0d074a1269e7a882050f3f477e05bf504273e6d512ab5cb563feb305c59af9a3",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "trec.train.02003",
+            "trec.train.02463",
+            "trec.train.04180"
+          ],
+          "text_sha256": "016edba628db1598ca46ffeacad94e1614a547e2e1c32e00533ae3a4c39be5fc"
+        },
+        {
+          "label": "numeric",
+          "order": 8,
+          "row_id": "trec.few_shot.seed13.numeric.0029",
+          "sample_key": "0e78733ee13f776e0425460f0d7b7dcc7e1aab4da1fd81e4c5ff28ee02d6e43b",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "trec.train.00482",
+            "trec.train.02848",
+            "trec.train.02353"
+          ],
+          "text_sha256": "cd7657cedaa0a86046b4ec3f2fd72ec8b4be7f050f8340bd7f60792ecf597367"
+        },
+        {
+          "label": "human",
+          "order": 9,
+          "row_id": "trec.few_shot.seed13.human.0013",
+          "sample_key": "10ad4812be76e46ae4d38be936480741c8640219b6629aedf10e1df9f42d01f0",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "trec.train.03196",
+            "trec.train.03088",
+            "trec.train.03512"
+          ],
+          "text_sha256": "df4f1733e5e497b50b2ee532da34262882e3e5c4b15be80f01a2c39758440720"
+        },
+        {
+          "label": "human",
+          "order": 10,
+          "row_id": "trec.few_shot.seed13.human.0007",
+          "sample_key": "1234f75def305ab85e2a37bdbe546bd23386399347ad99115a06313f2e3ebb9f",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [
+            "trec.train.02985",
+            "trec.train.04797",
+            "trec.train.02842"
+          ],
+          "text_sha256": "62768a1b86819b5bd80341b5a00abdff05987ad354a8342848c1efaa6adb874f"
+        }
+      ],
+      "population_rows": 180,
+      "sampled_label_counts": {
+        "description": 3,
+        "entity": 1,
+        "human": 2,
+        "location": 1,
+        "numeric": 3
+      },
+      "selected_ids_in_order": [
+        "trec.few_shot.seed13.description.0006",
+        "trec.few_shot.seed13.description.0028",
+        "trec.few_shot.seed13.description.0009",
+        "trec.few_shot.seed13.numeric.0017",
+        "trec.few_shot.seed13.entity.0019",
+        "trec.few_shot.seed13.location.0021",
+        "trec.few_shot.seed13.numeric.0014",
+        "trec.few_shot.seed13.numeric.0029",
+        "trec.few_shot.seed13.human.0013",
+        "trec.few_shot.seed13.human.0007"
+      ]
+    },
+    "trec/zero_shot": {
+      "eligible_rows": 180,
+      "items": [
+        {
+          "label": "human",
+          "order": 1,
+          "row_id": "trec.zero_shot.seed13.human.0022",
+          "sample_key": "021251ca11e1a04407beacf64934c5239b28782647a2967a59da1824c801f43a",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "1e7164c146e9e55aeee82af2f24228e87768500c80d53a0b3fd67322caa41883"
+        },
+        {
+          "label": "human",
+          "order": 2,
+          "row_id": "trec.zero_shot.seed13.human.0029",
+          "sample_key": "05595c121c847da50422e4741e148b39d1c93799b0d6e3adb1e67bfd617c1d50",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "158a1fa030866cef1b5c2d20e321f4bf4f12b5163fe063e83bb79d131dd2b6d6"
+        },
+        {
+          "label": "human",
+          "order": 3,
+          "row_id": "trec.zero_shot.seed13.human.0013",
+          "sample_key": "067723c1d0360e28c9166e1d719d216e9fb9f23b202960f3b9cc966a5e0f5ae3",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "eb26f6d10740a7d7a14deb360a6acd0b3692853de9fa47b8e65258f7f50e214d"
+        },
+        {
+          "label": "abbreviation",
+          "order": 4,
+          "row_id": "trec.zero_shot.seed13.abbreviation.0026",
+          "sample_key": "071b0e6a6c30c13c867a5a314afbd5689260fe4207ca0886e8032094202194b8",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "44628e047102e5fd34292c4d97f0f0bfd84e78f16794a9471b7e79d90aad15e2"
+        },
+        {
+          "label": "human",
+          "order": 5,
+          "row_id": "trec.zero_shot.seed13.human.0004",
+          "sample_key": "08ff1ecd24f0fa7d4da5e9385b4ea7f34bb8d22c3dfdf0b7ef2d369163198767",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "328168ec34c0559533690645a54990a30fa548ee6b89a965b22e4ed9f241d3ae"
+        },
+        {
+          "label": "location",
+          "order": 6,
+          "row_id": "trec.zero_shot.seed13.location.0027",
+          "sample_key": "0991225682f3fce0cb6f1360a86df58d755325020757a6aa06d823eb61b1d509",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "cc120ed9d828503779e9f2096bfbc69c089c1721c3ca8e314af04bb007b9bcee"
+        },
+        {
+          "label": "entity",
+          "order": 7,
+          "row_id": "trec.zero_shot.seed13.entity.0013",
+          "sample_key": "09926e007129e00ca605d19fce13eb516939f37ca636da8146edf662af356a33",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "924a50a628dfe1a7cf92e653789ff9a8ca72ac72280ac67e4b375ebb915582c7"
+        },
+        {
+          "label": "entity",
+          "order": 8,
+          "row_id": "trec.zero_shot.seed13.entity.0002",
+          "sample_key": "0a717f6df77f03644398d15bbeeaefe6c394f464aee73f3da46fa4f78e197296",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "155afccec2018bed3194640973fe3dabdce9ce99ad159ff4fb65140fe91d5b89"
+        },
+        {
+          "label": "numeric",
+          "order": 9,
+          "row_id": "trec.zero_shot.seed13.numeric.0019",
+          "sample_key": "0b4d0e0f6504e427d492d45657d90e15154180fff9480edc52c38a3c6097086a",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "9f7630cb90dfa1d9827a62924a8a9af51dfa72bfbf9fdb189ae875f3926e19af"
+        },
+        {
+          "label": "human",
+          "order": 10,
+          "row_id": "trec.zero_shot.seed13.human.0024",
+          "sample_key": "0b608b61ad5bb9f206b2b88d3a1f6613a052ccdc1b83e86106179cb490305255",
+          "shared_with_other_selected_setting": false,
+          "source_ids": [],
+          "text_sha256": "5873569c0ee28173c3c4d1d4cec4cb426ee7add81efe17b8f0ccb3c635f48e41"
+        }
+      ],
+      "population_rows": 180,
+      "sampled_label_counts": {
+        "abbreviation": 1,
+        "entity": 2,
+        "human": 5,
+        "location": 1,
+        "numeric": 1
+      },
+      "selected_ids_in_order": [
+        "trec.zero_shot.seed13.human.0022",
+        "trec.zero_shot.seed13.human.0029",
+        "trec.zero_shot.seed13.human.0013",
+        "trec.zero_shot.seed13.abbreviation.0026",
+        "trec.zero_shot.seed13.human.0004",
+        "trec.zero_shot.seed13.location.0027",
+        "trec.zero_shot.seed13.entity.0013",
+        "trec.zero_shot.seed13.entity.0002",
+        "trec.zero_shot.seed13.numeric.0019",
+        "trec.zero_shot.seed13.human.0024"
+      ]
+    }
+  },
+  "excluded_prior_round_ids": {},
+  "generation_mode": "real",
+  "inputs": {
+    "batches": {
+      "emotion/auggpt": {
+        "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+        "input": {
+          "bytes": 145876,
+          "path": "synthetic/emotion/auggpt_seed13.jsonl",
+          "rows": 360,
+          "sha256": "59b2a6fb414c51c43ffb922b85735a81d45eafd513e95feec962eb5a8f46f67d"
+        },
+        "model_identity": {
+          "configured_tag": "qwen3:4b",
+          "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+          "provider": "ollama",
+          "resolved_name": "qwen3:4b"
+        },
+        "provenance_sidecar": {
+          "bytes": 24537,
+          "path": "synthetic/emotion/auggpt_seed13.provenance.json",
+          "rows": 642,
+          "sha256": "315ba9ef47be14d5d88afbc73207e67345beefdea8410e19b278d85db52f7899"
+        },
+        "row_fingerprints": {
+          "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982": 19,
+          "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f": 341
+        },
+        "source_count": 60,
+        "verifier": "ws1_generation.generate.verify_auggpt"
+      },
+      "emotion/few_shot": {
+        "generation_fingerprint": "cec310b818092931f94e1fad8c19745e4ced1d59e21392cc6abc6a73901a73d4",
+        "input": {
+          "bytes": 76055,
+          "path": "synthetic/emotion/few_shot_seed13.scope30-v1.selected.jsonl",
+          "rows": 180,
+          "sha256": "78948f67bef46675ec01ea68ec02c52527875814b7aca3b94dc381b7cf3e08ad"
+        },
+        "original_artifact_sha256": "78948f67bef46675ec01ea68ec02c52527875814b7aca3b94dc381b7cf3e08ad",
+        "original_provenance_sha256": "18984f2995b14819b878421217f616cc809d1e22dbe4c75e625f0cb557dc948a",
+        "original_rows": 180,
+        "selected_distinct_demonstrations": 54,
+        "selection_manifest": {
+          "bytes": 20363,
+          "path": "synthetic/emotion/few_shot_seed13.scope30-v1.selection.json",
+          "rows": 538,
+          "sha256": "c84fabc727213db5364b8f61605a8210eb8b659f7da6e723e4c0d8b81baa95ca"
+        },
+        "verifier": "ws1_generation.select_scope30.verify_selection"
+      },
+      "emotion/zero_shot": {
+        "generation_fingerprint": "4d2ab0f440733aa9d98b1107a776f528534d68318770d4c13652758ec17388f7",
+        "input": {
+          "bytes": 63430,
+          "path": "synthetic/emotion/zero_shot_seed13.scope30-v1.selected.jsonl",
+          "rows": 180,
+          "sha256": "a7458c204cc4317c0ea0d5b630174a008819107afa807546763871c8ae783285"
+        },
+        "original_artifact_sha256": "a7458c204cc4317c0ea0d5b630174a008819107afa807546763871c8ae783285",
+        "original_provenance_sha256": "3bad5867f439e8b3b5d85bfa94a65b6f60e0d9034fd863140b683cd70c317b4b",
+        "original_rows": 180,
+        "selected_distinct_demonstrations": 0,
+        "selection_manifest": {
+          "bytes": 19265,
+          "path": "synthetic/emotion/zero_shot_seed13.scope30-v1.selection.json",
+          "rows": 483,
+          "sha256": "839586defd790f288496beac67915479e8233cdab7f59152001496bfa2a6b90d"
+        },
+        "verifier": "ws1_generation.select_scope30.verify_selection"
+      },
+      "trec/auggpt": {
+        "generation_fingerprint": "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd",
+        "input": {
+          "bytes": 129087,
+          "path": "synthetic/trec/auggpt_seed13.jsonl",
+          "rows": 360,
+          "sha256": "4711ebe6e6918a99bb71a42d9987cfc37c9aa8596732746da95b35401336b76f"
+        },
+        "model_identity": {
+          "configured_tag": "qwen3:4b",
+          "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+          "provider": "ollama",
+          "resolved_name": "qwen3:4b"
+        },
+        "provenance_sidecar": {
+          "bytes": 20057,
+          "path": "synthetic/trec/auggpt_seed13.provenance.json",
+          "rows": 546,
+          "sha256": "a8153679f03789ef0c5da74b14c795e9e91eb62a6752ee59c8dc31590f327f75"
+        },
+        "row_fingerprints": {
+          "4f48db72c5345a00e9371c4734249a79afa49bb6339b3eef4b37df4d618687dd": 360
+        },
+        "source_count": 60,
+        "verifier": "ws1_generation.generate.verify_auggpt"
+      },
+      "trec/few_shot": {
+        "generation_fingerprint": "cce56ae121e55f4943553814460a1aaad00a0a372671d1618671bb7888d65e8e",
+        "input": {
+          "bytes": 70507,
+          "path": "synthetic/trec/few_shot_seed13.scope30-v1.selected.jsonl",
+          "rows": 180,
+          "sha256": "e803ddfe533d3b8685afabf477d22dcff7e44a6cdd3eca5e0988699bf8d48767"
+        },
+        "original_artifact_sha256": "e803ddfe533d3b8685afabf477d22dcff7e44a6cdd3eca5e0988699bf8d48767",
+        "original_provenance_sha256": "bdcaf9acb0529a476eafcbe252a6d432a83511bc1f8f1f7d0479ecdf9a6cf012",
+        "original_rows": 180,
+        "selected_distinct_demonstrations": 59,
+        "selection_manifest": {
+          "bytes": 20424,
+          "path": "synthetic/trec/few_shot_seed13.scope30-v1.selection.json",
+          "rows": 545,
+          "sha256": "99c9f2d83588d73996c61e9cb005966f2a685c8896b698b205faee91f7f79ae8"
+        },
+        "verifier": "ws1_generation.select_scope30.verify_selection"
+      },
+      "trec/zero_shot": {
+        "generation_fingerprint": "68a635f2a535ac66b7e4c78fce0e3e67b963b5a8e76ae5861b16504971ef0dda",
+        "input": {
+          "bytes": 59990,
+          "path": "synthetic/trec/zero_shot_seed13.scope30-v1.selected.jsonl",
+          "rows": 180,
+          "sha256": "de2ce33ae18b4dbc53f61e365758ef6a7e3e25d96cfcbcfc4884ac8c119fff79"
+        },
+        "original_artifact_sha256": "dc3aebb1b87899a7451454e7cab92febab7b030f053c79c3cfd90a3dea22e5c3",
+        "original_provenance_sha256": "d6b2bceffa3c798128c7f283a6de83b6bd299e9297252c10b4a1986a5a55783f",
+        "original_rows": 244,
+        "selected_distinct_demonstrations": 0,
+        "selection_manifest": {
+          "bytes": 19465,
+          "path": "synthetic/trec/zero_shot_seed13.scope30-v1.selection.json",
+          "rows": 491,
+          "sha256": "279c8c6c6ed4274bc32c3000bb0be9752557ec170541dbed4a8bd9df7183a312"
+        },
+        "verifier": "ws1_generation.select_scope30.verify_selection"
+      }
+    },
+    "reference_inputs": {
+      "emotion/lowres_seed13": {
+        "bytes": 9408,
+        "path": "real/emotion/lowres_seed13.jsonl",
+        "rows": 60,
+        "sha256": "7bec4826ca96fa056ec5defc13a051f1c2ac25ef0270164219af13e1471af27f"
+      },
+      "emotion/pool": {
+        "bytes": 253000,
+        "path": "real/emotion/pool.jsonl",
+        "rows": 1600,
+        "sha256": "dde4702b5f5168f5fad977ba6b659f9304ae02a3cb37c18281e208271f847d40"
+      },
+      "trec/lowres_seed13": {
+        "bytes": 6445,
+        "path": "real/trec/lowres_seed13.jsonl",
+        "rows": 60,
+        "sha256": "901c0596a42b6fd0fa128cb1dd05b26bb1dbdcbd0c1a0a3dca9011beb7a03a29"
+      },
+      "trec/pool": {
+        "bytes": 59283,
+        "path": "real/trec/pool.jsonl",
+        "rows": 545,
+        "sha256": "0a78fbe6e38b8b9eb4f7d9e24e619d63f855e073bffb1e00edb23508490d3a6e"
+      }
+    },
+    "selected_zero_few_shared_normalized_texts": {
+      "emotion": 0,
+      "trec": 18
+    }
+  },
+  "per_batch": 10,
+  "real_run_evidence": true,
+  "review_id": "issue11-quality-v1",
+  "round": 1,
+  "sampling_rule": "per task x setting, ascending SHA-256 hex of UTF-8 'issue11-quality-v1|round<R>|13|<task>|<setting>|<row-id>', row id as tie-breaker; first 10, excluding row ids sampled in earlier rounds of the same batch",
+  "schema_version": 1,
+  "seed": 13
+}
