@@ -101,7 +101,7 @@ The four seed-13 baseline classifiers were executed on verified real datasets us
 
 *Baseline observations & withdrawn scores:*
 - **Single-run scores without repetition SD:** Under ADR 0012, scores are reported as single-run metrics for seed 13 without cross-seed standard deviations, uncertainty bars, or statistical significance claims.
-- **Withdrawn scores:** Preliminary 100/60 target runs (including the withdrawn 576-example TREC C1 row with F1 0.751 and Emotion C1 600-example row with F1 0.461) were archived in `results/archive/runs_target100.csv` and are explicitly excluded from analysis.
+- **Historical and withdrawn scores:** `results/archive/runs_target100.csv` preserves nine earlier runs: Emotion C1 at 100/label and both tasks' C5a results across seeds 13, 42 and 7. It contains no TREC C1 row. Earlier undersized TREC C1 results and conclusions based on them were withdrawn. All superseded results are excluded from the current analysis.
 - **Baseline performance:** On TREC (objective), real baseline performance is 0.6009 macro-F1 at 30 examples per label and 0.5974 at 10 examples per label. On Emotion (subjective), baseline performance is 0.4082 macro-F1 at 30 examples per label and 0.3381 at 10 examples per label. Both benchmarks perform substantially above the 6-class random guessing reference ($\approx 0.167$).
 
 ### 5c. Upstream Dependencies and Blocked Comparisons
@@ -126,7 +126,7 @@ The remaining eight condition results require upstream synthetic data generation
 - **Scope constraints**: Exploratory single-seed comparison (seed 13) at 30 examples per label (C1–C4), compact local 4B generator (`qwen3:4b`), frozen Sentence-BERT embeddings, and logistic regression classifiers.
 - **Operating model**: Under sole-operator execution ([ADR 0012](adr/0012-eod-exploratory-30-seed13.md)), evaluation relies on benchmark metrics on held-out real test splits rather than multi-human annotator consensus.
 - **Statistical limits**: Single-repetition findings cannot establish statistical significance across seeds or prove that task differences are causally driven by subjectivity.
-- **Interim conclusion**: Accepted baseline models provide stable anchor points (0.6009 F1 on TREC, 0.4082 F1 on Emotion) at 30 examples per label. Synthetic data classifier performance will be evaluated once upstream generation and training complete under the quality audit and freeze gates.
+- **Interim conclusion**: Accepted baseline models provide reference baselines (0.6009 F1 on TREC, 0.4082 F1 on Emotion) at 30 examples per label. Synthetic data classifier performance will be evaluated once upstream generation and training complete under the quality audit and freeze gates.
 
 ---
 
