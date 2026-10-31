@@ -421,6 +421,106 @@ def test_verify_rejects_invalid_and_extra_sources(fake_env, monkeypatch):
         generate.verify_auggpt("trec", 13, mode="fake")
 
 
+LONG_SOURCE = ("why do so many of the people who live in the small towns along the river "
+               "still use the old wooden ferry to cross it every single morning ?")
+
+
+def test_long_source_prompt_asks_for_paraphrases_within_the_word_limit():
+    max_words = 20
+    assert len(LONG_SOURCE.split()) > max_words
+    short = "what is the capital of peru ?"
+
+    assert generate.auggpt_prompt(short, 6, max_words) == generate.prompt_auggpt(short, 6)
+    guarded = generate.auggpt_prompt(LONG_SOURCE, 6, max_words)
+    assert guarded.startswith("Please rephrase the following sentence 6 different ways")
+    assert json.dumps(LONG_SOURCE) in guarded
+    assert f"at most {max_words} words" in guarded
+
+
+def test_generation_sends_the_length_guard_only_for_long_sources(fake_env, monkeypatch):
+    rows = sorted(sources(13).values(), key=lambda r: r["id"])
+    short_row, long_row = rows[0], dict(rows[1], text=LONG_SOURCE)
+    prompts = {}
+
+    def recording(prompt, fake, max_words=None, retries=3, stats=None):
+        stats["calls"] += 1
+        source = short_row if json.dumps(short_row["text"]) in prompt else long_row
+        prompts[source["id"]] = prompt
+        return [f"{source['id']} paraphrase {i}" for i in range(K)]
+
+    monkeypatch.setattr(generate, "ask", recording)
+    monkeypatch.setattr(generate, "load_auggpt_sources",
+                        lambda task, seed: {short_row["id"]: short_row, long_row["id"]: long_row})
+    generate.generate_auggpt("trec", fake=True, seed=13)
+
+    max_words = CFG["tasks"]["trec"]["max_words"]
+    assert prompts[short_row["id"]] == generate.prompt_auggpt(short_row["text"], K)
+    assert prompts[long_row["id"]] == generate.auggpt_prompt(LONG_SOURCE, K, max_words)
+    assert prompts[long_row["id"]] != generate.prompt_auggpt(LONG_SOURCE, K)
+
+
+def pre_length_guard_identity(task, seed, mode, model_identity, sources_by_id):
+    """The AugGPT identity exactly as computed before the length guard existed."""
+    test_rows = read_jsonl(real_path(task, "test"))
+    identity, fingerprint = generate.build_generation_identity(
+        task, "auggpt", seed, mode, model_identity,
+        {"low_resource_sample": generate.rows_identity(list(sources_by_id.values())),
+         "held_out_test": generate.rows_identity(test_rows)},
+    )
+    return identity, fingerprint, test_rows
+
+
+def test_resume_carries_forward_rows_from_the_pre_length_guard_identity(fake_env, monkeypatch):
+    """Rows saved before the length guard keep their recorded fingerprint and still count."""
+    with monkeypatch.context() as old_code:
+        old_code.setattr(generate, "auggpt_generation_identity", pre_length_guard_identity)
+        scripted_model(old_code, per_call=1)
+        legacy_rows, legacy = generate.generate_auggpt("trec", fake=True, seed=13)
+    legacy_fp = legacy["generation_fingerprint"]
+    assert legacy["is_complete"] is False
+
+    scripted_model(monkeypatch, prefix="resumed")
+    rows, provenance = generate.generate_auggpt("trec", fake=True, seed=13)
+
+    assert rows[:len(legacy_rows)] == legacy_rows  # never rewritten
+    new_rows = rows[len(legacy_rows):]
+    assert new_rows and all(row["generation_fingerprint"] == provenance["generation_fingerprint"]
+                            for row in new_rows)
+    assert provenance["generation_fingerprint"] != legacy_fp
+    assert "auggpt_length_guard" in provenance["generation_identity"]["prompt_extensions"]
+    carried = provenance["carried_forward_identities"]
+    assert [c["generation_fingerprint"] for c in carried] == [legacy_fp]
+    assert carried[0]["generation_identity"] == legacy["generation_identity"]
+    assert carried[0]["row_count"] == len(legacy_rows)
+    assert provenance["is_complete"] is True
+    summary = generate.verify_auggpt("trec", 13, mode="fake")
+    assert summary["total_count"] == len(rows)
+
+
+def test_verify_accepts_a_complete_artifact_from_the_pre_length_guard_identity(fake_env, monkeypatch):
+    with monkeypatch.context() as old_code:
+        old_code.setattr(generate, "auggpt_generation_identity", pre_length_guard_identity)
+        scripted_model(old_code)
+        rows, _ = generate.generate_auggpt("trec", fake=True, seed=13)
+    assert generate.verify_auggpt("trec", 13, mode="fake")["total_count"] == len(rows)
+
+
+def test_resume_still_rejects_rows_from_any_other_identity(fake_env, monkeypatch):
+    with monkeypatch.context() as other:
+        other.setattr(generate, "PROMPT_PROTOCOL_VERSION", "some-other-protocol")
+        scripted_model(other, per_call=1)
+        generate.generate_auggpt("trec", fake=True, seed=13)
+    path = synth_path("trec", "auggpt", seed=13, mode="fake")
+    before = path.read_bytes()
+
+    calls = scripted_model(monkeypatch)
+    with pytest.raises(ValueError, match="generation identity does not match"):
+        generate.generate_auggpt("trec", fake=True, seed=13)
+    with pytest.raises(ValueError, match="generation identity does not match"):
+        generate.verify_auggpt("trec", 13, mode="fake")
+    assert calls["calls"] == 0 and path.read_bytes() == before
+
+
 def test_verify_cli_exit_status(fake_env, monkeypatch):
     scripted_model(monkeypatch)
     generate.generate_auggpt("trec", fake=True, seed=13)

@@ -107,6 +107,26 @@ def prompt_auggpt(text, k):
             'Reply only with JSON: {"examples": ["...", "..."]}')
 
 
+# prompt_auggpt stays byte-identical: its source hash is part of every saved row's fingerprint.
+# Sources longer than the task's word limit get this added instruction instead, because a model
+# paraphrasing them at their own length produces only candidates that parse() must reject.
+AUGGPT_LENGTH_GUARD_VERSION = "auggpt-length-guard-v1"
+
+
+def prompt_auggpt_length_guard(text, k, max_words):
+    return prompt_auggpt(text, k).replace(
+        "Reply only",
+        f"Each rephrasing must be at most {max_words} words, so shorten it: keep the main "
+        "meaning and the writer's feeling, and leave out minor details.\nReply only")
+
+
+def auggpt_prompt(text, k, max_words):
+    """The AugGPT prompt for one source: the length guard applies only above max_words."""
+    if len(text.split()) > max_words:
+        return prompt_auggpt_length_guard(text, k, max_words)
+    return prompt_auggpt(text, k)
+
+
 # ---------------- model & reply parsing ----------------
 
 def ask_ollama(prompt, timeout=120):
@@ -450,7 +470,9 @@ def validate_existing_rows(rows, path, task, setting, seed, mode, fingerprint, p
         seen_texts.add(norm(row["text"]))
 
 
-def read_existing_provenance(path, rows, generation_identity, fingerprint):
+def read_existing_provenance(path, rows, generation_identity, fingerprint, carried_forward=None):
+    """Load a sidecar recorded under this identity or an accepted carried-forward one."""
+    accepted = {fingerprint: generation_identity, **(carried_forward or {})}
     prov_path = path.with_suffix(".provenance.json")
     if not rows and not prov_path.exists():
         return None
@@ -460,8 +482,9 @@ def read_existing_provenance(path, rows, generation_identity, fingerprint):
         provenance = json.loads(prov_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"incompatible existing artifact {path}: invalid provenance sidecar") from exc
-    if provenance.get("generation_fingerprint") != fingerprint:
+    if provenance.get("generation_fingerprint") not in accepted:
         raise ValueError(f"incompatible existing artifact {path}: generation identity does not match")
+    generation_identity = accepted[provenance["generation_fingerprint"]]
     identity_fields_match = (
         provenance.get("task") == generation_identity["task"]
         and provenance.get("setting") == generation_identity["setting"]
@@ -535,8 +558,13 @@ def write_labelled_batch(path, existing_rows, new_rows, provenance_after, finger
     journal_path.unlink()
 
 
-def recover_labelled_journal(path, generation_identity, fingerprint):
-    """Reconcile a durable batch journal without accepting unrelated artifact rows."""
+def recover_labelled_journal(path, generation_identity, fingerprint, carried_forward=None):
+    """Reconcile a durable batch journal without accepting unrelated artifact rows.
+
+    carried_forward maps earlier fingerprints to their identities; a journal written under one of
+    them is recovered with that recorded identity unchanged.
+    """
+    accepted = {fingerprint: generation_identity, **(carried_forward or {})}
     journal_path = generation_journal_path(path)
     journal_temp = journal_path.with_suffix(journal_path.suffix + ".tmp")
     provenance_path = path.with_suffix(".provenance.json")
@@ -568,7 +596,7 @@ def recover_labelled_journal(path, generation_identity, fingerprint):
     if (
         journal["schema_version"] != 2
         or journal["artifact_name"] != path.name
-        or journal["generation_fingerprint"] != fingerprint
+        or journal["generation_fingerprint"] not in accepted
         or not isinstance(rows_before, int)
         or rows_before < 0
         or not isinstance(prefix_byte_count, int)
@@ -579,8 +607,8 @@ def recover_labelled_journal(path, generation_identity, fingerprint):
         or not isinstance(journal["batch_jsonl"], str)
         or journal["batch_jsonl"].encode("utf-8") != expected_batch_bytes
         or journal["batch_bytes_sha256"] != hashlib.sha256(expected_batch_bytes).hexdigest()
-        or provenance_after.get("generation_identity") != generation_identity
-        or provenance_after.get("generation_fingerprint") != fingerprint
+        or provenance_after.get("generation_fingerprint") != journal["generation_fingerprint"]
+        or provenance_after.get("generation_identity") != accepted[journal["generation_fingerprint"]]
         or provenance_after.get("total_count") != rows_before + len(batch_rows)
     ):
         raise ValueError(f"incompatible recovery journal for {path}: identity or counts do not match")
@@ -827,7 +855,9 @@ def load_auggpt_sources(task, seed):
     return sources
 
 
-def validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sources, test_rows):
+def validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sources, test_rows,
+                                  carried_forward=None):
+    accepted_fingerprints = {fingerprint, *(carried_forward or {})}
     required = {
         "id", "task", "text", "label", "setting", "repetition", "source_ids",
         "schema_version", "generation_mode", "generation_fingerprint",
@@ -861,7 +891,7 @@ def validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sou
             reason = f"schema_version is {row['schema_version']!r}"
         elif row["task"] != task or row["setting"] != "auggpt" or row["repetition"] != seed:
             reason = "task, setting, or repetition does not match the artifact path"
-        elif row["generation_mode"] != mode or row["generation_fingerprint"] != fingerprint:
+        elif row["generation_mode"] != mode or row["generation_fingerprint"] not in accepted_fingerprints:
             reason = "generation identity does not match this invocation"
         elif source_id not in sources:
             reason = "source identity is missing or outside the configured low-resource sample"
@@ -891,16 +921,39 @@ def validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sou
             raise ValueError(f"incompatible existing row {index} in {path}: too many paraphrases for {source_id}")
 
 
-def auggpt_generation_identity(task, seed, mode, model_identity, sources):
-    test_rows = read_jsonl(real_path(task, "test"))
+def _pre_length_guard_auggpt_identity(task, seed, mode, model_identity, sources, test_rows):
     source_identity = {
         "low_resource_sample": rows_identity(list(sources.values())),
         "held_out_test": rows_identity(test_rows),
     }
-    identity, fingerprint = build_generation_identity(
-        task, "auggpt", seed, mode, model_identity, source_identity
-    )
-    return identity, fingerprint, test_rows
+    return build_generation_identity(task, "auggpt", seed, mode, model_identity, source_identity)
+
+
+def auggpt_generation_identity(task, seed, mode, model_identity, sources):
+    """Current AugGPT identity: the base identity plus the recorded length-guard prompt."""
+    test_rows = read_jsonl(real_path(task, "test"))
+    base, _ = _pre_length_guard_auggpt_identity(task, seed, mode, model_identity, sources, test_rows)
+    guard = {
+        "version": AUGGPT_LENGTH_GUARD_VERSION,
+        "applies_when": "source word count > max_words",
+        "max_words": CFG["tasks"][task]["max_words"],
+        "template_sha256": hashlib.sha256(
+            inspect.getsource(prompt_auggpt_length_guard).encode("utf-8")).hexdigest(),
+        "selector_sha256": hashlib.sha256(inspect.getsource(auggpt_prompt).encode("utf-8")).hexdigest(),
+    }
+    identity = {**base, "prompt_extensions": {"auggpt_length_guard": guard}}
+    return identity, _identity_hash(identity), test_rows
+
+
+def auggpt_carried_forward_identities(task, seed, mode, model_identity, sources, test_rows, fingerprint):
+    """Earlier identities whose saved rows may count toward this one: {fingerprint: identity}.
+
+    Only the identity from before the length guard qualifies. It differs from the current one
+    solely by that guard, so every other mismatch (model, sources, prompt, options) still fails.
+    """
+    legacy, legacy_fp = _pre_length_guard_auggpt_identity(
+        task, seed, mode, model_identity, sources, test_rows)
+    return {} if legacy_fp == fingerprint else {legacy_fp: legacy}
 
 
 def generate_auggpt(task, fake, seed=None):
@@ -925,11 +978,16 @@ def generate_auggpt(task, fake, seed=None):
     generation_identity, fingerprint, test_rows = auggpt_generation_identity(
         task, seed, mode, model_identity, sources
     )
-    existing = recover_labelled_journal(path, generation_identity, fingerprint)
+    carried_forward = auggpt_carried_forward_identities(
+        task, seed, mode, model_identity, sources, test_rows, fingerprint
+    )
+    existing = recover_labelled_journal(path, generation_identity, fingerprint, carried_forward)
     rows_before = len(existing)
-    validate_existing_auggpt_rows(existing, path, task, seed, mode, fingerprint, sources, test_rows)
+    validate_existing_auggpt_rows(
+        existing, path, task, seed, mode, fingerprint, sources, test_rows, carried_forward
+    )
     previous_provenance = read_existing_provenance(
-        path, existing, generation_identity, fingerprint
+        path, existing, generation_identity, fingerprint, carried_forward
     )
 
     test_seen = {norm(row["text"]) for row in test_rows}
@@ -975,6 +1033,17 @@ def generate_auggpt(task, fake, seed=None):
             "generation_mode": mode,
             "generation_identity": generation_identity,
             "generation_fingerprint": fingerprint,
+            # Earlier identities whose rows are kept unchanged with their own recorded fingerprint.
+            "carried_forward_identities": [
+                {
+                    "generation_fingerprint": old_fp,
+                    "generation_identity": old_identity,
+                    "row_count": sum(row["generation_fingerprint"] == old_fp for row in rows_snapshot),
+                    "reason": f"identical except for {AUGGPT_LENGTH_GUARD_VERSION}",
+                }
+                for old_fp, old_identity in carried_forward.items()
+                if any(row["generation_fingerprint"] == old_fp for row in rows_snapshot)
+            ],
             "temperature": CFG.get("temperature") if not fake else None,
             "target_per_source": CFG["auggpt_k"],
             "source_count": len(sources),
@@ -996,7 +1065,8 @@ def generate_auggpt(task, fake, seed=None):
             attempts += 1
             try:
                 candidates = ask(
-                    prompt_auggpt(source_row["text"], CFG["auggpt_k"] - have),
+                    auggpt_prompt(source_row["text"], CFG["auggpt_k"] - have,
+                                  CFG["tasks"][task]["max_words"]),
                     fake,
                     max_words=CFG["tasks"][task]["max_words"],
                     stats=stats,
@@ -1087,9 +1157,14 @@ def verify_auggpt(task, seed, mode="real"):
         raise ValueError(f"{task} seed {seed}: low-resource sample is not exactly {expected} per label: {label_counts}")
 
     identity, fingerprint, test_rows = auggpt_generation_identity(task, seed, mode, model_identity, sources)
+    carried_forward = auggpt_carried_forward_identities(
+        task, seed, mode, model_identity, sources, test_rows, fingerprint
+    )
     rows = read_generation_rows(path)
-    validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sources, test_rows)
-    provenance = read_existing_provenance(path, rows, identity, fingerprint)
+    validate_existing_auggpt_rows(
+        rows, path, task, seed, mode, fingerprint, sources, test_rows, carried_forward
+    )
+    provenance = read_existing_provenance(path, rows, identity, fingerprint, carried_forward)
     counts = {sid: sum(row["source_ids"] == [sid] for row in rows) for sid in sorted(sources)}
     short = {sid: count for sid, count in counts.items() if count != CFG["auggpt_k"]}
     if short:
