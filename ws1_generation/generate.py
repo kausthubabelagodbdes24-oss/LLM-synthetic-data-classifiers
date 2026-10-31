@@ -1277,6 +1277,114 @@ def promotion_record_path(task, seed, mode="real"):
     return synth_path(task, "auggpt", seed=seed, mode=mode).with_suffix(".promotion.json")
 
 
+def auggpt_superseded_path(task, seed, mode="real"):
+    """Where promotion preserves the pre-correction original, byte-for-byte."""
+    correction = auggpt_correction(task, seed)
+    if correction is None:
+        raise ValueError(f"no approved AugGPT correction for {task} seed {seed}")
+    active = synth_path(task, "auggpt", seed=seed, mode=mode)
+    return active.parent / "superseded" / correction["version"] / active.name
+
+
+PROMOTION_RECORD_SCHEMA_VERSION = 1
+_SHA256_HEX = re.compile(r"[0-9a-f]{64}")
+
+
+def check_promotion_record(task, seed, mode="real", fingerprint=None):
+    """Fail closed unless a complete ADR 0013 promotion record matches every file it names.
+
+    Hash-level only: it never re-verifies artifacts, so verify_auggpt (active path) and
+    promote_auggpt.verify_promotion can both call it without recursion. Checks the record's schema,
+    status, task/repetition/mode and correction, then the active JSONL/sidecar, the preserved
+    original and the retained candidate against the recorded SHA-256 values. Read-only.
+    """
+    correction = auggpt_correction(task, seed)
+    if correction is None:
+        raise ValueError(f"no approved AugGPT correction for {task} seed {seed}")
+    active = synth_path(task, "auggpt", seed=seed, mode=mode)
+    record_path = promotion_record_path(task, seed, mode)
+    problem = f"{active}: promotion record {record_path.name}"
+    if not record_path.exists():
+        raise ValueError(f"{problem} is missing; corrected output at the active path must come from a "
+                         "completed, reviewed promotion (ws1_generation.promote_auggpt)")
+    raw = record_path.read_bytes()
+    try:
+        record = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"{problem} is malformed: not valid JSON") from exc
+
+    def field(*keys):
+        value = record
+        for key in keys:
+            if not isinstance(value, dict) or key not in value:
+                raise ValueError(f"{problem} is malformed: missing {'.'.join(keys)}")
+            value = value[key]
+        return value
+
+    def sha_field(*keys):
+        value = field(*keys)
+        if not isinstance(value, str) or not _SHA256_HEX.fullmatch(value):
+            raise ValueError(f"{problem} is malformed: {'.'.join(keys)} is not a SHA-256 hex digest")
+        return value
+
+    if not isinstance(record, dict) or record.get("schema_version") != PROMOTION_RECORD_SCHEMA_VERSION:
+        raise ValueError(f"{problem} is malformed: schema_version is not {PROMOTION_RECORD_SCHEMA_VERSION}")
+    if field("status") != "complete":
+        raise ValueError(f"{problem} has status {record['status']!r}, not 'complete'; rerun --promote")
+    if (field("task"), field("repetition"), field("generation_mode")) != (task, seed, mode):
+        raise ValueError(f"{problem} names another task, repetition or mode")
+    if field("correction") != correction["version"] or field("decision") != correction["decision"]:
+        raise ValueError(f"{problem} does not identify {correction['version']} ({correction['decision']})")
+    hashes = {
+        name: sha_field(*keys) for name, keys in {
+            "original artifact": ("original", "artifact", "sha256"),
+            "original provenance": ("original", "provenance", "sha256"),
+            "candidate artifact": ("candidate", "artifact", "sha256"),
+            "candidate provenance": ("candidate", "provenance", "sha256"),
+            "promoted artifact": ("promoted", "artifact", "sha256"),
+            "promoted provenance": ("promoted", "provenance", "sha256"),
+        }.items()
+    }
+    if (hashes["promoted artifact"], hashes["promoted provenance"]) != (
+            hashes["candidate artifact"], hashes["candidate provenance"]):
+        raise ValueError(f"{problem}: promoted hashes differ from the candidate hashes")
+    if hashes["original artifact"] == hashes["candidate artifact"]:
+        raise ValueError(f"{problem}: original and candidate hashes are identical")
+    recorded_fps = {field("candidate", "generation_fingerprint"), field("promoted", "generation_fingerprint")}
+    if len(recorded_fps) != 1 or (fingerprint is not None and recorded_fps != {fingerprint}):
+        raise ValueError(f"{problem}: recorded fingerprints do not match the corrected identity")
+    if field("original", "generation_fingerprint") in recorded_fps:
+        raise ValueError(f"{problem}: the original is recorded under the corrected identity")
+
+    archive = auggpt_superseded_path(task, seed, mode)
+    candidate = auggpt_candidate_path(task, seed, mode)
+    files = (
+        ("active artifact", active, hashes["promoted artifact"]),
+        ("active provenance", active.with_suffix(".provenance.json"), hashes["promoted provenance"]),
+        ("preserved original artifact", archive, hashes["original artifact"]),
+        ("preserved original provenance", archive.with_suffix(".provenance.json"), hashes["original provenance"]),
+        ("retained candidate artifact", candidate, hashes["candidate artifact"]),
+        ("retained candidate provenance", candidate.with_suffix(".provenance.json"), hashes["candidate provenance"]),
+    )
+    for name, file_path, expected in files:
+        if not file_path.exists():
+            raise ValueError(f"{problem}: {name} {file_path} is missing")
+        if hashlib.sha256(file_path.read_bytes()).hexdigest() != expected:
+            raise ValueError(f"{problem}: {name} {file_path} does not match the promotion record")
+    return {
+        "path": record_path.name,
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "status": "complete",
+        "correction": correction["version"],
+        "decision": correction["decision"],
+        "original_artifact_sha256": hashes["original artifact"],
+        "original_provenance_sha256": hashes["original provenance"],
+        "original_generation_fingerprint": field("original", "generation_fingerprint"),
+        "preserved_original_path": archive.relative_to(active.parent).as_posix(),
+        "candidate_artifact_sha256": hashes["candidate artifact"],
+    }
+
+
 def verify_auggpt(task, seed, mode="real", path=None, historical=False):
     """Fail-closed, read-only handoff check for one task x repetition AugGPT artifact.
 
@@ -1289,7 +1397,9 @@ def verify_auggpt(task, seed, mode="real", path=None, historical=False):
 
     path selects another copy of the artifact (a candidate or a preserved original). Where an ADR
     0013 correction applies, only the corrected identity passes unless historical=True, which reads
-    preserved pre-correction evidence and reports it as corrected_output=False.
+    preserved pre-correction evidence and reports it as corrected_output=False. Corrected output at
+    the active path additionally requires check_promotion_record; other paths (the isolated
+    candidate) need no record.
     """
     if seed is None:
         raise ValueError("AugGPT verification requires a repetition seed")
@@ -1342,11 +1452,10 @@ def verify_auggpt(task, seed, mode="real", path=None, historical=False):
         raise ValueError(f"{path}: rows from another identity in a corrected artifact")  # defensive
     applicable = auggpt_correction(task, seed)
     promotion = None
-    record_path = promotion_record_path(task, seed, mode)
-    if path == active_path and record_path.exists():
-        raw_record = record_path.read_bytes()
-        promotion = {"path": record_path.name, "sha256": hashlib.sha256(raw_record).hexdigest(),
-                     "status": json.loads(raw_record).get("status")}
+    if correction is not None and path.resolve() == active_path.resolve():
+        # Corrected output only counts at the active path after a complete, hash-consistent
+        # promotion; a copied candidate or a half-finished promotion fails here.
+        promotion = check_promotion_record(task, seed, mode, fingerprint)
     artifact_bytes = path.read_bytes()
     return {
         "task": task,

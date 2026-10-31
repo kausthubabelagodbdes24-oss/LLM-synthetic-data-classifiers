@@ -29,7 +29,7 @@ from pathlib import Path
 from common import data_dir, norm, read_jsonl, synth_path
 from ws1_generation import generate as gen
 
-RECORD_SCHEMA_VERSION = 1
+RECORD_SCHEMA_VERSION = gen.PROMOTION_RECORD_SCHEMA_VERSION
 
 
 class PromotionError(ValueError):
@@ -65,7 +65,7 @@ def locations(task, seed, mode="real"):
         "correction": correction,
         "active": active,
         "candidate": gen.auggpt_candidate_path(task, seed, mode),
-        "archive": active.parent / "superseded" / correction["version"] / active.name,
+        "archive": gen.auggpt_superseded_path(task, seed, mode),
         "record": gen.promotion_record_path(task, seed, mode),
     }
 
@@ -151,12 +151,18 @@ def promote(task, seed, candidate_sha256, original_sha256, mode="real"):
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     if record_path.exists():
-        record = json.loads(record_path.read_text(encoding="utf-8"))
-        if (record["candidate"]["artifact"]["sha256"] != candidate_sha256
-                or record["original"]["artifact"]["sha256"] != original_sha256):
+        try:
+            record = json.loads(record_path.read_text(encoding="utf-8"))
+            recorded = (record["candidate"]["artifact"]["sha256"], record["original"]["artifact"]["sha256"],
+                        record["status"])
+        except (ValueError, KeyError, TypeError) as exc:
+            raise PromotionError(f"{record_path} is malformed; inspect it before retrying") from exc
+        if recorded[:2] != (candidate_sha256, original_sha256):
             raise PromotionError(f"{record_path} records different hashes than the ones confirmed")
-        if record["status"] == "complete":
+        if recorded[2] == "complete":
             return verify_promotion(task, seed, mode)
+        if recorded[2] != "in_progress":
+            raise PromotionError(f"{record_path} has unexpected status {recorded[2]!r}")
     else:
         if not candidate.exists() or _sha(candidate) != candidate_sha256:
             raise PromotionError("candidate hash differs from --candidate-sha256; rerun --plan and review")
@@ -197,7 +203,11 @@ def promote(task, seed, candidate_sha256, original_sha256, mode="real"):
         if current != _sha(src):
             _replace(target, src.read_bytes())
 
-    summary = _verify(task, seed, mode, active, historical=False)
+    # The active files are now the candidate's exact bytes. Re-verify the candidate copy (record-free),
+    # mark the record complete, then run the full read-only check, which requires that record.
+    summary = _verify(task, seed, mode, candidate, historical=False)
+    if (_sha(active), _sha(_sidecar(active))) != (cand["artifact"]["sha256"], cand["provenance"]["sha256"]):
+        raise PromotionError(f"{active}: active files are not the candidate's bytes after replacement")
     record.update(status="complete", completed_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                   promoted={"artifact": _file(active), "provenance": _file(_sidecar(active)),
                             "generation_fingerprint": summary["generation_fingerprint"]})
@@ -208,30 +218,21 @@ def promote(task, seed, candidate_sha256, original_sha256, mode="real"):
 def verify_promotion(task, seed, mode="real"):
     """Read-only: the active artifact is the recorded candidate and the original is preserved."""
     loc = locations(task, seed, mode)
-    active, candidate, archive, record_path = loc["active"], loc["candidate"], loc["archive"], loc["record"]
-    if not record_path.exists():
-        raise PromotionError(f"{record_path}: no promotion record")
-    record = json.loads(record_path.read_text(encoding="utf-8"))
-    if record.get("status") != "complete":
-        raise PromotionError(f"{record_path}: promotion is {record.get('status')!r}; rerun --promote")
-    checks = (
-        (active, record["candidate"]["artifact"]["sha256"]),
-        (_sidecar(active), record["candidate"]["provenance"]["sha256"]),
-        (candidate, record["candidate"]["artifact"]["sha256"]),
-        (_sidecar(candidate), record["candidate"]["provenance"]["sha256"]),
-        (archive, record["original"]["artifact"]["sha256"]),
-        (_sidecar(archive), record["original"]["provenance"]["sha256"]),
-    )
-    for path, expected in checks:
-        if not path.exists() or _sha(path) != expected:
-            raise PromotionError(f"{path}: missing or does not match the promotion record")
-    promoted = _verify(task, seed, mode, active, historical=False)
+    archive, record_path = loc["archive"], loc["record"]
+    # Shared hash-level checks (same function plain active-path verify_auggpt uses).
+    try:
+        checked = gen.check_promotion_record(task, seed, mode)
+    except ValueError as exc:
+        raise PromotionError(str(exc)) from exc
+    promoted = _verify(task, seed, mode, loc["active"], historical=False)
+    if promoted["promotion_record"] != checked:
+        raise PromotionError(f"{record_path} changed during verification")
     preserved = _verify(task, seed, mode, archive, historical=True)
     if promoted["corrected_output"] is not True or preserved["corrected_output"] is not False:
         raise PromotionError("promoted/preserved identities are not corrected/superseded as required")
     return {
         "task": task, "repetition": seed, "generation_mode": mode,
-        "real_run_evidence": mode == "real", "correction": record["correction"],
+        "real_run_evidence": mode == "real", "correction": checked["correction"],
         "promotion_record": {"path": _rel(record_path), "sha256": _sha(record_path)},
         "active": {"artifact_sha256": promoted["artifact_sha256"],
                    "provenance_sha256": promoted["provenance_sha256"],

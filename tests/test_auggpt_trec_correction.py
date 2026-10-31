@@ -403,3 +403,146 @@ def test_cli_rejects_unscoped_candidate_use(fake_env):
         with pytest.raises(SystemExit) as exc:
             generate.main(argv)
         assert exc.value.code == 2
+
+
+# ---------------- active-path verification requires a complete, consistent promotion ----------------
+
+def promoted(monkeypatch):
+    """A completed fake promotion; returns its locations."""
+    path, cand = complete_candidate(monkeypatch)
+    promote_auggpt.promote("trec", 13, sha(cand), sha(path), mode="fake")
+    loc = promote_auggpt.locations("trec", 13, "fake")
+    generate.verify_auggpt("trec", 13, mode="fake")  # the genuine promotion passes
+    return loc
+
+
+def _edit_record(loc, change):
+    record = json.loads(loc["record"].read_text(encoding="utf-8"))
+    change(record)
+    loc["record"].write_text(json.dumps(record), encoding="utf-8")
+
+
+def _reorder_jsonl(path):
+    write_jsonl(path, read_jsonl(path)[::-1])  # rows stay valid; bytes differ
+
+
+def _compact_sidecar(path):
+    sidecar = path.with_suffix(".provenance.json")
+    sidecar.write_text(json.dumps(json.loads(sidecar.read_text(encoding="utf-8"))), encoding="utf-8")
+
+
+def _sidecar_of(key):
+    return lambda loc: loc[key].with_suffix(".provenance.json")
+
+
+BYPASSES = {
+    "no record": (
+        lambda loc: loc["record"].unlink(), "is missing; corrected output"),
+    "in_progress record": (
+        lambda loc: _edit_record(loc, lambda r: r.update(status="in_progress")), "'in_progress', not 'complete'"),
+    "invalid JSON record": (
+        lambda loc: loc["record"].write_text("{not json", encoding="utf-8"), "malformed: not valid JSON"),
+    "record missing a section": (
+        lambda loc: _edit_record(loc, lambda r: r.pop("original")), "malformed: missing original"),
+    "record wrong schema": (
+        lambda loc: _edit_record(loc, lambda r: r.update(schema_version=99)), "malformed: schema_version"),
+    "record non-hex hash": (
+        lambda loc: _edit_record(loc, lambda r: r["candidate"]["artifact"].update(sha256="not-a-hash")),
+        "not a SHA-256"),
+    "record not ADR 0013": (
+        lambda loc: _edit_record(loc, lambda r: r.update(correction="other-v1")), "does not identify"),
+    "record wrong decision": (
+        lambda loc: _edit_record(loc, lambda r: r.update(decision="docs/adr/9999.md")), "does not identify"),
+    "record other repetition": (
+        lambda loc: _edit_record(loc, lambda r: r.update(repetition=42)), "another task, repetition or mode"),
+    "tampered original hash": (
+        lambda loc: _edit_record(loc, lambda r: r["original"]["artifact"].update(sha256="0" * 64)),
+        "preserved original artifact .* does not match"),
+    "tampered promoted hash": (
+        lambda loc: _edit_record(loc, lambda r: r["promoted"]["artifact"].update(sha256="0" * 64)),
+        "promoted hashes differ"),
+    "tampered candidate and promoted hashes": (
+        lambda loc: _edit_record(loc, lambda r: (r["promoted"]["provenance"].update(sha256="1" * 64),
+                                                 r["candidate"]["provenance"].update(sha256="1" * 64))),
+        "active provenance .* does not match"),
+    "tampered fingerprints": (
+        lambda loc: _edit_record(loc, lambda r: (r["promoted"].update(generation_fingerprint="f" * 64),
+                                                 r["candidate"].update(generation_fingerprint="f" * 64))),
+        "fingerprints do not match"),
+    "missing preserved original": (
+        lambda loc: loc["archive"].unlink(), "preserved original artifact .* is missing"),
+    "modified preserved original": (
+        lambda loc: _reorder_jsonl(loc["archive"]), "preserved original artifact .* does not match"),
+    "missing preserved sidecar": (
+        lambda loc: _sidecar_of("archive")(loc).unlink(), "preserved original provenance .* is missing"),
+    "modified preserved sidecar": (
+        lambda loc: _compact_sidecar(loc["archive"]), "preserved original provenance .* does not match"),
+    "missing retained candidate": (
+        lambda loc: loc["candidate"].unlink(), "retained candidate artifact .* is missing"),
+    "modified retained candidate": (
+        lambda loc: _reorder_jsonl(loc["candidate"]), "retained candidate artifact .* does not match"),
+    "missing candidate sidecar": (
+        lambda loc: _sidecar_of("candidate")(loc).unlink(), "retained candidate provenance .* is missing"),
+    "modified candidate sidecar": (
+        lambda loc: _compact_sidecar(loc["candidate"]), "retained candidate provenance .* does not match"),
+    "active JSONL differs": (
+        lambda loc: _reorder_jsonl(loc["active"]), "active artifact .* does not match"),
+    "active sidecar differs": (
+        lambda loc: _compact_sidecar(loc["active"]), "active provenance .* does not match"),
+}
+
+
+@pytest.mark.parametrize("bypass", list(BYPASSES))
+def test_plain_verify_rejects_each_promotion_bypass_read_only(fake_env, monkeypatch, bypass):
+    tamper, message = BYPASSES[bypass]
+    loc = promoted(monkeypatch)
+    tamper(loc)
+    files = [p for p in loc["active"].parent.rglob("*") if p.is_file()]
+    before = {p: p.read_bytes() for p in files}
+
+    with pytest.raises(ValueError, match=message):
+        generate.verify_auggpt("trec", 13, mode="fake")
+    with pytest.raises(promote_auggpt.PromotionError):
+        promote_auggpt.verify_promotion("trec", 13, mode="fake")
+    with pytest.raises(SystemExit) as cli:
+        generate.main(["--setting", "auggpt", "--task", "trec", "--seed", "13", "--dry-run", "--verify"])
+    assert cli.value.code == 1
+    assert {p: p.read_bytes() for p in files} == before  # verification never repairs
+
+
+def test_candidate_copied_to_the_active_path_without_promotion_is_rejected(fake_env, monkeypatch):
+    """The reviewed bypass: corrected bytes placed at the active path by hand."""
+    path, cand = complete_candidate(monkeypatch)
+    shutil.copy(cand, path)
+    shutil.copy(cand.with_suffix(".provenance.json"), path.with_suffix(".provenance.json"))
+    with pytest.raises(ValueError, match="promotion record .* is missing"):
+        generate.verify_auggpt("trec", 13, mode="fake")
+    assert generate.verify_auggpt("trec", 13, mode="fake", path=cand)["corrected_output"] is True
+
+
+def test_fake_in_place_corrected_output_never_verifies_without_promotion(fake_env, monkeypatch):
+    scripted_model(monkeypatch)
+    generate.generate_auggpt("trec", fake=True, seed=13)  # fixtures only; real mode refuses this
+    with pytest.raises(ValueError, match="promotion record .* is missing"):
+        generate.verify_auggpt("trec", 13, mode="fake")
+
+
+def test_candidate_and_historical_checks_need_no_promotion_record(fake_env, monkeypatch):
+    path, cand = complete_candidate(monkeypatch)
+    assert not promote_auggpt.locations("trec", 13, "fake")["record"].exists()
+    assert generate.verify_auggpt("trec", 13, mode="fake", path=cand)["promotion_record"] is None
+    assert generate.verify_auggpt("trec", 13, mode="fake", historical=True)["corrected_output"] is False
+
+
+def test_completed_promotion_summary_binds_original_and_candidate(fake_env, monkeypatch):
+    loc = promoted(monkeypatch)
+    record = json.loads(loc["record"].read_text(encoding="utf-8"))
+    summary = generate.verify_auggpt("trec", 13, mode="fake")
+    prom = summary["promotion_record"]
+    assert prom["status"] == "complete" and prom["sha256"] == sha(loc["record"])
+    assert prom["original_artifact_sha256"] == record["original"]["artifact"]["sha256"] == sha(loc["archive"])
+    assert prom["candidate_artifact_sha256"] == summary["artifact_sha256"] == sha(loc["candidate"])
+    assert prom["decision"] == generate.AUGGPT_CORRECTIONS["trec"]["decision"]
+    # Historical evidence at the preserved path still reads, as superseded output.
+    hist = generate.verify_auggpt("trec", 13, mode="fake", path=loc["archive"], historical=True)
+    assert hist["corrected_output"] is False and hist["promotion_record"] is None
