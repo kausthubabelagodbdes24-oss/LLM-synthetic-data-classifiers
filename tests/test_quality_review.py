@@ -210,3 +210,13 @@ def test_targeted_check_is_separate_from_the_random_sample(env):
     result = qr.check_targeted("fake", env)
     assert result["reviewed"] == len(items) and result["clear_errors"] == 0 and result["ambiguous"] == len(items)
     assert not qr.sample_path(1, env).exists()                          # no effect on round files
+
+
+def test_crlf_checkout_of_committed_evidence_still_binds(env):
+    sample, sha = qr.write_sample(1, "fake", env)
+    write_judgments(env, 1, judge(sample, sha))
+    expected = qr.check_round(1, "fake", env)
+    for path in (qr.sample_path(1, env), qr.judgments_path(1, env)):
+        path.write_bytes(path.read_bytes().replace(b"\n", b"\r\n"))   # e.g. Windows core.autocrlf
+    assert qr.check_round(1, "fake", env) == expected
+    qr.write_sample(1, "fake", env)                                        # CRLF copy is not "different content"

@@ -90,8 +90,13 @@ def _sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def _sha256_file(path):
-    return _sha256_bytes(Path(path).read_bytes())
+def _evidence_sha256(raw):
+    """Hash committed evidence with LF line endings, so a CRLF checkout (core.autocrlf) still binds."""
+    return _sha256_bytes(_lf(raw))
+
+
+def _lf(raw):
+    return raw.replace(b"\r\n", b"\n")
 
 
 def _canonical_bytes(obj):
@@ -201,7 +206,7 @@ def packet_dir():
 def _write_new_or_same(path, data):
     path = Path(path)
     if path.exists():
-        if path.read_bytes() != data:
+        if _lf(path.read_bytes()) != data:
             raise ReviewError(f"{path}: exists with different content; earlier rounds are never overwritten")
         return False
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -346,7 +351,7 @@ def write_sample(round_no, mode="real", evidence_dir=None):
     out.mkdir(parents=True, exist_ok=True)
     (out / f"round{round_no}_packet.json").write_bytes(_canonical_bytes(packet))
     (out / f"round{round_no}_packet.md").write_text(_packet_markdown(packet), encoding="utf-8")
-    return json.loads(data), _sha256_bytes(data)
+    return json.loads(data), _evidence_sha256(data)
 
 
 def _derive(item, setting):
@@ -410,7 +415,7 @@ def check_round(round_no, mode="real", evidence_dir=None):
         raise ReviewError(f"{j_path}: judgments are missing; review incomplete")
     judged = json.loads(j_path.read_text(encoding="utf-8"))
     problems = []
-    if judged.get("sample_sha256") != _sha256_bytes(s_raw) or judged.get("round") != round_no:
+    if judged.get("sample_sha256") != _evidence_sha256(s_raw) or judged.get("round") != round_no:
         problems.append("judgments are not bound to this round's sample (sample_sha256/round)")
     _check_reviewer(judged.get("reviewer"), problems)
     expected = [(k, item["row_id"]) for k, b in sample["batches"].items() for item in b["items"]]
@@ -439,8 +444,8 @@ def check_round(round_no, mode="real", evidence_dir=None):
     return {
         "schema_version": SCHEMA_VERSION, "review_id": REVIEW_ID, "round": round_no,
         "generation_mode": mode, "real_run_evidence": mode == "real",
-        "sample_sha256": _sha256_bytes(s_raw),
-        "judgments_sha256": _sha256_file(j_path),
+        "sample_sha256": _evidence_sha256(s_raw),
+        "judgments_sha256": _evidence_sha256(j_path.read_bytes()),
         "reviewer": judged["reviewer"], "trigger": RUBRIC["trigger"], "batches": batches,
         "flagged_batches": [k for k, b in batches.items() if b["outcome"] == "FLAGGED"],
         "note": "Model-assisted screen; not independent-human annotation, agreement or population accuracy.",
@@ -492,7 +497,7 @@ def write_targeted(mode="real", evidence_dir=None, max_words=None):
     out = packet_dir()
     out.mkdir(parents=True, exist_ok=True)
     (out / "targeted_long_sources_packet.json").write_bytes(_canonical_bytes(packet))
-    return json.loads(data), _sha256_bytes(data)
+    return json.loads(data), _evidence_sha256(data)
 
 
 def check_targeted(mode="real", evidence_dir=None):
@@ -507,7 +512,7 @@ def check_targeted(mode="real", evidence_dir=None):
         raise ReviewError(f"{s_path}: targeted sample/inputs changed since it was recorded")
     judged = json.loads(j_path.read_text(encoding="utf-8"))
     problems = []
-    if judged.get("sample_sha256") != _sha256_bytes(s_raw):
+    if judged.get("sample_sha256") != _evidence_sha256(s_raw):
         problems.append("targeted judgments are not bound to the targeted sample")
     _check_reviewer(judged.get("reviewer"), problems)
     key = f"{sample['task']}/auggpt"
@@ -526,7 +531,7 @@ def check_targeted(mode="real", evidence_dir=None):
         if j["ambiguous"]:
             b["ambiguous"].append(j["row_id"])
     return {"review_id": TARGETED_ID, "counts_toward_required_random_60": False,
-            "sample_sha256": _sha256_bytes(s_raw), "judgments_sha256": _sha256_file(j_path),
+            "sample_sha256": _evidence_sha256(s_raw), "judgments_sha256": _evidence_sha256(j_path.read_bytes()),
             "reviewed": len(items), "clear_errors": sum(j["clear_error"] for j in items),
             "ambiguous": sum(j["ambiguous"] for j in items), "by_source": by_source}
 
