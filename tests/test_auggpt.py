@@ -392,6 +392,35 @@ def test_resume_rejects_held_out_overlap_in_loaded_rows(fake_env, monkeypatch):
     assert path.read_bytes() == before
 
 
+def test_verify_rejects_invalid_and_extra_sources(fake_env, monkeypatch):
+    scripted_model(monkeypatch)
+    rows, _ = generate.generate_auggpt("trec", fake=True, seed=13)
+    path = synth_path("trec", "auggpt", seed=13, mode="fake")
+    prov_path = path.with_suffix(".provenance.json")
+    original_rows, original_prov = path.read_bytes(), prov_path.read_bytes()
+
+    outside = [dict(row) for row in rows]
+    outside[0]["source_ids"] = ["trec.pool.99999"]
+    outside[0]["id"] = "trec.pool.99999.seed13.aug1"
+    write_jsonl(path, outside)
+    with pytest.raises(ValueError, match="outside the configured low-resource sample"):
+        generate.verify_auggpt("trec", 13, mode="fake")
+    path.write_bytes(original_rows)
+
+    provenance = json.loads(original_prov)
+    provenance["counts_by_source"]["trec.pool.99999"] = 0
+    prov_path.write_text(json.dumps(provenance), encoding="utf-8")
+    with pytest.raises(ValueError, match="completeness does not match"):
+        generate.verify_auggpt("trec", 13, mode="fake")
+    prov_path.write_bytes(original_prov)
+
+    lowres = read_jsonl(real_path("trec", "lowres_seed13"))
+    extra = dict(lowres[0], id="trec.pool.99998", text="an extra source question ?")
+    write_jsonl(real_path("trec", "lowres_seed13"), lowres + [extra])
+    with pytest.raises(ValueError, match="not exactly 2 per label"):
+        generate.verify_auggpt("trec", 13, mode="fake")
+
+
 def test_verify_cli_exit_status(fake_env, monkeypatch):
     scripted_model(monkeypatch)
     generate.generate_auggpt("trec", fake=True, seed=13)
@@ -400,8 +429,8 @@ def test_verify_cli_exit_status(fake_env, monkeypatch):
     with pytest.raises(SystemExit) as passed:
         generate.main(args + ["--seed", "13"])
     assert passed.value.code == 0
-    with pytest.raises(SystemExit) as failed:
-        generate.main(args + ["--seed", "all"])
+    with pytest.raises(SystemExit) as failed:  # emotion seed 13 is missing
+        generate.main(["--setting", "auggpt", "--task", "all", "--dry-run", "--verify", "--seed", "13"])
     assert failed.value.code == 1
     with pytest.raises(SystemExit):
         generate.main(["--setting", "zero_shot", "--seed", "13", "--verify"])
