@@ -256,6 +256,142 @@ def test_verify_rejects_tampering_and_inexact_source_samples(fake_env, monkeypat
         generate.verify_auggpt("trec", 13, mode="fake")
 
 
+APPROVED = {
+    "provider": "ollama",
+    "configured_tag": "qwen3:4b",
+    "resolved_name": "qwen3:4b",
+    "digest": generate.APPROVED_GENERATORS["qwen3:4b"],
+}
+UNAPPROVED = {
+    "provider": "ollama",
+    "configured_tag": "llama3.2:3b",
+    "resolved_name": "llama3.2:3b",
+    "digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+}
+
+
+def generate_real(monkeypatch, identity, seed=13, approve_anything=False):
+    """Run 'real' AugGPT with a stand-in model reporting the given Ollama identity."""
+    monkeypatch.setattr(generate, "resolve_model_identity", lambda: dict(identity))
+    scripted_model(monkeypatch, prefix=f"real {identity['configured_tag']}")
+    if approve_anything:
+        with monkeypatch.context() as patched:
+            patched.setattr(generate, "require_approved_model", lambda *args: None)
+            return generate.generate_auggpt("trec", fake=False, seed=seed)
+    return generate.generate_auggpt("trec", fake=False, seed=seed)
+
+
+def test_valid_real_artifact_from_approved_generator_passes(fake_env, monkeypatch):
+    rows, _ = generate_real(monkeypatch, APPROVED)
+    summary = generate.verify_auggpt("trec", 13, mode="real")
+    assert summary["real_run_evidence"] is True
+    assert summary["model_identity"] == APPROVED
+    assert summary["total_count"] == len(rows) == K * len(sources(13))
+
+    prefixed = dict(APPROVED, digest="sha256:" + APPROVED["digest"])
+    generate.require_approved_model(prefixed, "real")  # Ollama digest prefixes are equivalent
+
+
+def test_verify_rejects_self_consistent_unapproved_model(fake_env, monkeypatch):
+    """A complete, internally consistent artifact from another model is not acceptable."""
+    generate_real(monkeypatch, UNAPPROVED, approve_anything=True)
+    path = synth_path("trec", "auggpt", seed=13, mode="real")
+    before = path.read_bytes(), path.with_suffix(".provenance.json").read_bytes()
+
+    with pytest.raises(ValueError, match="not the approved generator qwen3:4b"):
+        generate.verify_auggpt("trec", 13, mode="real")
+    with pytest.raises(SystemExit) as cli:
+        generate.main(["--setting", "auggpt", "--task", "trec", "--seed", "13", "--verify"])
+    assert cli.value.code == 1
+    assert (path.read_bytes(), path.with_suffix(".provenance.json").read_bytes()) == before
+
+
+@pytest.mark.parametrize("field, value", [
+    ("digest", "0" * 64),
+    ("configured_tag", "qwen3:8b"),
+    ("resolved_name", "qwen3:latest"),
+    ("provider", "fixture"),
+])
+def test_verify_rejects_tampered_approved_identity(fake_env, monkeypatch, field, value):
+    generate_real(monkeypatch, dict(APPROVED, **{field: value}), approve_anything=True)
+    with pytest.raises(ValueError, match="not the approved generator"):
+        generate.verify_auggpt("trec", 13, mode="real")
+
+
+def test_real_generation_refuses_unapproved_model_before_calls(fake_env, monkeypatch):
+    monkeypatch.setattr(generate, "resolve_model_identity", lambda: dict(UNAPPROVED))
+    calls = scripted_model(monkeypatch)
+    with pytest.raises(ValueError, match="not the approved generator"):
+        generate.generate_auggpt("trec", fake=False, seed=13)
+    assert calls["calls"] == 0
+    assert not synth_path("trec", "auggpt", seed=13, mode="real").exists()
+
+
+def test_fake_artifacts_need_the_fixture_identity_and_never_count_as_real(fake_env, monkeypatch):
+    scripted_model(monkeypatch)
+    generate.generate_auggpt("trec", fake=True, seed=13)
+    assert generate.verify_auggpt("trec", 13, mode="fake")["real_run_evidence"] is False
+    with pytest.raises(ValueError, match="sidecar is missing"):
+        generate.verify_auggpt("trec", 13, mode="real")
+
+    prov_path = synth_path("trec", "auggpt", seed=13, mode="fake").with_suffix(".provenance.json")
+    provenance = json.loads(prov_path.read_text(encoding="utf-8"))
+    provenance["model_identity"] = APPROVED
+    prov_path.write_text(json.dumps(provenance), encoding="utf-8")
+    with pytest.raises(ValueError, match="non-fixture model identity"):
+        generate.verify_auggpt("trec", 13, mode="fake")
+
+
+def contaminate(path, rows, test_text):
+    """Replace one paraphrase with held-out text, keeping row count and sidecar self-consistent."""
+    altered = [dict(row) for row in rows]
+    altered[3]["text"] = "  " + test_text.upper() + "  "
+    write_jsonl(path, altered)
+    return altered[3]["id"]
+
+
+def unused_test_text(rows):
+    taken = {" ".join(r["text"].lower().split()) for r in rows}
+    taken |= {" ".join(r["text"].lower().split()) for r in sources(13).values()}
+    return next(r for r in read_jsonl(real_path("trec", "test"))
+                if " ".join(r["text"].lower().split()) not in taken)
+
+
+@pytest.mark.parametrize("real", [False, True])
+def test_verify_rejects_held_out_overlap_read_only(fake_env, monkeypatch, real):
+    if real:
+        rows, _ = generate_real(monkeypatch, APPROVED)
+    else:
+        scripted_model(monkeypatch)
+        rows, _ = generate.generate_auggpt("trec", fake=True, seed=13)
+    mode = "real" if real else "fake"
+    path = synth_path("trec", "auggpt", seed=13, mode=mode)
+    test_row = unused_test_text(rows)
+    bad_id = contaminate(path, rows, test_row["text"])
+    before = path.read_bytes(), path.with_suffix(".provenance.json").read_bytes()
+
+    with pytest.raises(ValueError) as error:
+        generate.verify_auggpt("trec", 13, mode=mode)
+    message = str(error.value)
+    assert "held-out test text" in message and bad_id in message and test_row["id"] in message
+    assert "regenerate" in message
+    assert (path.read_bytes(), path.with_suffix(".provenance.json").read_bytes()) == before
+
+
+def test_resume_rejects_held_out_overlap_in_loaded_rows(fake_env, monkeypatch):
+    scripted_model(monkeypatch, per_call=1)
+    rows, _ = generate.generate_auggpt("trec", fake=True, seed=13)  # incomplete: resumable
+    path = synth_path("trec", "auggpt", seed=13, mode="fake")
+    contaminate(path, rows, unused_test_text(rows)["text"])
+    before = path.read_bytes()
+
+    calls = scripted_model(monkeypatch)
+    with pytest.raises(ValueError, match="contaminated artifact"):
+        generate.generate_auggpt("trec", fake=True, seed=13)
+    assert calls["calls"] == 0
+    assert path.read_bytes() == before
+
+
 def test_verify_cli_exit_status(fake_env, monkeypatch):
     scripted_model(monkeypatch)
     generate.generate_auggpt("trec", fake=True, seed=13)

@@ -307,6 +307,42 @@ def resolve_model_identity():
     raise RuntimeError(f"Configured model {model!r} is not available in Ollama")
 
 
+# Generators approved for full generation, by configured tag. config.yaml names the tag; the
+# immutable digest is recorded only in ADR 0011 (31 Oct 2026), so it is pinned here. Adding or
+# changing an entry requires a recorded lead decision.
+APPROVED_GENERATORS = {
+    "qwen3:4b": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+}
+
+# The only identity fake (--dry-run) artifacts may carry; it can never satisfy a real target.
+FIXTURE_MODEL_IDENTITY = {
+    "provider": "fixture",
+    "configured_tag": None,
+    "resolved_name": "synthetic-fake-model",
+    "digest": "fixture-v1",
+}
+
+
+def require_approved_model(model_identity, mode):
+    """Raise ValueError unless the identity is the approved generator (real) or the fixture (fake)."""
+    if mode == "fake":
+        if model_identity != FIXTURE_MODEL_IDENTITY:
+            raise ValueError(f"fake artifact carries a non-fixture model identity {model_identity!r}")
+        return
+    tag = CFG["model"]
+    approved_digest = APPROVED_GENERATORS.get(tag)
+    if approved_digest is None:
+        raise ValueError(f"configured model {tag!r} has no approved digest; record a lead decision first")
+    identity = model_identity if isinstance(model_identity, dict) else {}
+    digest = str(identity.get("digest") or "").removeprefix("sha256:")
+    if (identity.get("provider") != "ollama" or identity.get("configured_tag") != tag
+            or identity.get("resolved_name") != tag or digest != approved_digest):
+        raise ValueError(
+            f"model identity {model_identity!r} is not the approved generator "
+            f"{tag} @ {approved_digest} (ADR 0011)"
+        )
+
+
 def _identity_hash(value):
     encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -791,11 +827,25 @@ def load_auggpt_sources(task, seed):
     return sources
 
 
-def validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sources):
+def validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sources, test_rows):
     required = {
         "id", "task", "text", "label", "setting", "repetition", "source_ids",
         "schema_version", "generation_mode", "generation_fingerprint",
     }
+    test_ids = {}
+    for row in test_rows:
+        test_ids.setdefault(norm(row["text"]), row.get("id"))
+    leaks = [
+        f"row {index} ({row.get('id')}) = held-out {test_ids[norm(row['text'])]}"
+        for index, row in enumerate(rows, 1)
+        if isinstance(row.get("text"), str) and norm(row["text"]) in test_ids
+    ]
+    if leaks:
+        raise ValueError(
+            f"contaminated artifact {path}: {len(leaks)} row(s) match held-out test text after "
+            f"normalization: {'; '.join(leaks[:10])}. Do not edit rows in place: move this artifact and "
+            "its sidecar out of the data root and regenerate this task x repetition before the freeze."
+        )
     source_texts = {norm(row["text"]) for row in sources.values()}
     seen_ids = set()
     seen_texts = set()
@@ -864,12 +914,9 @@ def generate_auggpt(task, fake, seed=None):
     started_clock = time.perf_counter()
     run_id = str(uuid.uuid4())
     mode = "fake" if fake else "real"
-    model_identity = ({
-        "provider": "fixture",
-        "configured_tag": None,
-        "resolved_name": "synthetic-fake-model",
-        "digest": "fixture-v1",
-    } if fake else resolve_model_identity())
+    model_identity = dict(FIXTURE_MODEL_IDENTITY) if fake else resolve_model_identity()
+    # Refuse an unapproved generator before any model call or write.
+    require_approved_model(model_identity, mode)
     path = synth_path(task, "auggpt", seed=seed, mode=mode)
 
     sources = load_auggpt_sources(task, seed)
@@ -880,7 +927,7 @@ def generate_auggpt(task, fake, seed=None):
     )
     existing = recover_labelled_journal(path, generation_identity, fingerprint)
     rows_before = len(existing)
-    validate_existing_auggpt_rows(existing, path, task, seed, mode, fingerprint, sources)
+    validate_existing_auggpt_rows(existing, path, task, seed, mode, fingerprint, sources, test_rows)
     previous_provenance = read_existing_provenance(
         path, existing, generation_identity, fingerprint
     )
@@ -1006,11 +1053,14 @@ def generate_auggpt(task, fake, seed=None):
 
 
 def verify_auggpt(task, seed, mode="real"):
-    """Fail-closed handoff check for one task x repetition AugGPT artifact.
+    """Fail-closed, read-only handoff check for one task x repetition AugGPT artifact.
 
-    Recomputes the generation identity from the sidecar's recorded model and the current exact
-    sources/prompts, revalidates every row, and requires auggpt_k paraphrases for every source of
-    an exact lowres_seed<seed> sample. Raises ValueError on any shortfall; never repairs data.
+    Requires the recorded model to be the approved generator (APPROVED_GENERATORS / ADR 0011) for
+    real artifacts, or the fixture identity for fake ones, then recomputes the fingerprint from that
+    identity and the current exact sources/prompts. Revalidates every row (including held-out test
+    overlap) and requires auggpt_k paraphrases for every source of an exact lowres_seed<seed> sample.
+    Raises ValueError on any problem; never writes or repairs data. Fake results are never
+    real-run evidence.
     """
     if seed is None:
         raise ValueError("AugGPT verification requires a repetition seed")
@@ -1025,10 +1075,10 @@ def verify_auggpt(task, seed, mode="real"):
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"{path}: invalid provenance sidecar") from exc
     model_identity = recorded.get("model_identity")
-    if mode == "real" and (not isinstance(model_identity, dict)
-                           or model_identity.get("provider") != "ollama"
-                           or not model_identity.get("digest")):
-        raise ValueError(f"{path}: real artifact lacks an Ollama model digest")
+    try:
+        require_approved_model(model_identity, mode)
+    except ValueError as exc:
+        raise ValueError(f"{path}: {exc}") from exc
 
     sources = load_auggpt_sources(task, seed)
     expected = CFG["lowres_per_label"]
@@ -1036,9 +1086,9 @@ def verify_auggpt(task, seed, mode="real"):
     if any(count != expected for count in label_counts.values()) or len(sources) != expected * len(labels(task)):
         raise ValueError(f"{task} seed {seed}: low-resource sample is not exactly {expected} per label: {label_counts}")
 
-    identity, fingerprint, _ = auggpt_generation_identity(task, seed, mode, model_identity, sources)
+    identity, fingerprint, test_rows = auggpt_generation_identity(task, seed, mode, model_identity, sources)
     rows = read_generation_rows(path)
-    validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sources)
+    validate_existing_auggpt_rows(rows, path, task, seed, mode, fingerprint, sources, test_rows)
     provenance = read_existing_provenance(path, rows, identity, fingerprint)
     counts = {sid: sum(row["source_ids"] == [sid] for row in rows) for sid in sorted(sources)}
     short = {sid: count for sid, count in counts.items() if count != CFG["auggpt_k"]}
@@ -1051,6 +1101,7 @@ def verify_auggpt(task, seed, mode="real"):
         "task": task,
         "repetition": seed,
         "generation_mode": mode,
+        "real_run_evidence": mode == "real",
         "path": str(path),
         "source_count": len(sources),
         "total_count": len(rows),
@@ -1123,7 +1174,8 @@ def main(argv=None):
             for task in TASKS if args.task == "all" else [args.task]:
                 try:
                     summary = verify_auggpt(task, seed, mode="fake" if args.dry_run else "real")
-                    print(f"PASS {task} auggpt seed {seed}: {json.dumps(summary)}")
+                    note = "" if summary["real_run_evidence"] else " (FAKE fixture; not real-run evidence)"
+                    print(f"PASS{note} {task} auggpt seed {seed}: {json.dumps(summary)}")
                 except ValueError as exc:
                     failures += 1
                     print(f"FAIL {task} auggpt seed {seed}: {exc}")
