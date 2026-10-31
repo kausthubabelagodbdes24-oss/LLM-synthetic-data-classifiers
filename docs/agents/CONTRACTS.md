@@ -179,3 +179,34 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 - **Verification**:
   - Unit tests in `tests/test_train.py` verify incomplete-class rejection, test-set presence validation, metric bounds [0, 1], resume skipping, `--force` targeted condition preservation, unrequested condition preservation despite discrepancies, fail-closed exact sampling, target-independent resume validation, and canonical LF CSV serialization.
   - End-to-end pipeline test in `tests/test_pipeline.py` passes offline.
+
+## Optional evaluation and annotation response tooling (historical)
+
+- **Authority & Status**: Historical optional response tooling preserved under ADR 0012. Independent human annotation, external distribution, and human-agreement completion gates are removed under sole-operator execution.
+- **Scope Distinction**: These optional 60-item held-out test annotation utilities (`make`, `combine`, `score`) are strictly distinct from the required 60 generated-text quality reviews conducted in Workstream 1/3 (#11/#12).
+- **Producer**: `ws3_evaluation/annotate.py` (Owner: @hem4456; operator: @kausthubabelagodbdes24-oss).
+- **Consumers**: Optional in-repository evaluation workflows.
+- **File format and schema**:
+  - `results/annotation_key.csv`:
+    - Headers: `item_id`, `task`, `text`, `gold_label`, `allowed_labels`
+    - Items: exactly 5 items per label per task (30 per task, 60 total items), deterministically selected from `data/real/<task>/test.jsonl` and deterministically shuffled per task using `seed=0` so row position does not leak gold labels.
+    - Private audit key; not exposed to evaluators during blind scoring.
+  - `results/annotation_<name>.csv` / evaluation templates:
+    - Headers: `item_id`, `task`, `text`, `choose_one_of`, `label`
+    - Identical item order and content as `annotation_key.csv`, but without `gold_label`.
+    - Initial `label` column is blank.
+  - `results/annotation_filled.csv`:
+    - Headers: `item_id`, `task`, `text`, `choose_one_of`, `kausthuba`, `harshita`, `hementh`
+    - Contains combined responses in canonical order matching `annotation_key.csv`.
+  - `results/subjectivity.csv`:
+    - Headers: `task`, `items`, `annotators`, `mean_agreement`, `alpha`
+- **Validation rules**:
+  - `make`: Protected against accidental overwrite; aborts with `FileExistsError` listing conflicting files unless `--force` (or `force=True`) is provided.
+  - `combine`: Strict validation against `results/annotation_key.csv`:
+    - Validates exact headers (`['item_id', 'task', 'text', 'choose_one_of', 'label']`).
+    - Validates no duplicate item IDs within any submission.
+    - Validates no missing item IDs and no extra item IDs.
+    - Validates that `task`, `text`, and `choose_one_of` metadata match canonical key exactly.
+    - Validates labels with `strip()` only (exact case match; no lowercase normalization). Blank labels accepted as incomplete.
+- **Verification**:
+  - Unit & behavioral tests in `tests/test_annotate.py` (18 tests) verify balanced counts, deterministic shuffle, non-grouped ordering, overwrite protection, strict schema validation, active annotator reporting, and majority agreement proportion calculation.
