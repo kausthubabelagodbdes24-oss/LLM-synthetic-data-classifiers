@@ -9,7 +9,9 @@ Appends to results/runs.csv: task, condition, seed, n_train, macro_f1, accuracy.
 
 import argparse
 import csv
+import os
 import random
+from pathlib import Path
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
@@ -19,32 +21,83 @@ from common import CFG, TASKS, embed, labels, per_label_sample, read_jsonl, real
 COLUMNS = ["task", "condition", "seed", "n_train", "macro_f1", "accuracy"]
 
 
-def training_set(task, cond, seed):
+def is_sample_mode() -> bool:
+    """Return True if executing in offline smoke or sample-data mode."""
+    mode = os.environ.get("SYNTHTEXT_GENERATION_MODE")
+    embedder = os.environ.get("SYNTHTEXT_EMBEDDER")
+    data_env = os.environ.get("SYNTHTEXT_DATA", "")
+    return mode == "fake" or embedder == "hashing" or "sample" in data_env.replace("\\", "/").split("/")
+
+
+def approved_target_count(task: str, cond: str) -> int:
+    """Return the approved total training count for a task and condition under CFG."""
+    n_labels = len(labels(task))
+    n = CFG["train_per_label"]
+    low = CFG["lowres_per_label"]
+    if cond in ("C1", "C2", "C3", "C4"):
+        return n_labels * n
+    if cond == "C5a":
+        return n_labels * low
+    if cond == "C5b":
+        return n_labels * low + n_labels * low * CFG.get("auggpt_k", 6)
+    raise ValueError(f"Unknown condition: {cond!r}")
+
+
+def training_set(task, cond, seed, exact=None):
     n = CFG["train_per_label"]
     task_labels = labels(task)
+    if exact is None:
+        exact = not is_sample_mode()
+
     real_rows = read_jsonl(real_path(task, "train"))
-    real = per_label_sample(real_rows, n, seed, required_labels=task_labels) if real_rows else []
+    if not real_rows:
+        real = []
+    else:
+        try:
+            real = per_label_sample(real_rows, n, seed, required_labels=task_labels, exact=exact)
+        except ValueError as exc:
+            raise ValueError(
+                f"Cannot sample approved target for {task} {cond} (seed {seed}): {exc}. "
+                f"The approved target requires {n} examples per label ({approved_target_count(task, cond)} total), "
+                f"but real training split {real_path(task, 'train')} has insufficient examples. "
+                f"Silently undersampling, borrowing from demonstration-pool or test splits, duplicating examples, "
+                f"or changing the target without explicit project lead approval is prohibited."
+            ) from exc
 
     if cond == "C1":
         return real
     if cond == "C2":
         s_path = synth_path(task, "zero_shot", seed=seed)
         rows = read_jsonl(s_path if s_path.exists() else synth_path(task, "zero_shot"))
-        return per_label_sample(rows, n, seed, required_labels=task_labels) if rows else []
+        return per_label_sample(rows, n, seed, required_labels=task_labels, exact=exact) if rows else []
     if cond == "C3":
         s_path = synth_path(task, "few_shot", seed=seed)
         rows = read_jsonl(s_path if s_path.exists() else synth_path(task, "few_shot"))
-        return per_label_sample(rows, n, seed, required_labels=task_labels) if rows else []
+        return per_label_sample(rows, n, seed, required_labels=task_labels, exact=exact) if rows else []
     if cond == "C4":
         half = n // 2
         s_path = synth_path(task, "few_shot", seed=seed)
         s_rows = read_jsonl(s_path if s_path.exists() else synth_path(task, "few_shot"))
-        if not real or not s_rows:
+        if not real_rows or not s_rows:
             return []
-        return (per_label_sample(real, half, seed, required_labels=task_labels)
-                + per_label_sample(s_rows, n - half, seed, required_labels=task_labels))
+        try:
+            real_half = per_label_sample(real_rows, half, seed, required_labels=task_labels, exact=exact)
+            synth_half = per_label_sample(s_rows, n - half, seed, required_labels=task_labels, exact=exact)
+        except ValueError as exc:
+            raise ValueError(
+                f"Cannot sample approved target for {task} {cond} (seed {seed}): {exc}."
+            ) from exc
+        return real_half + synth_half
+
     low = read_jsonl(real_path(task, f"lowres_seed{seed}"))
     if cond == "C5a":
+        if not is_sample_mode() and low:
+            expected_c5a = approved_target_count(task, "C5a")
+            if len(low) != expected_c5a:
+                raise ValueError(
+                    f"Low-resource sample {real_path(task, f'lowres_seed{seed}')} has {len(low)} rows, "
+                    f"expected approved target of {expected_c5a}."
+                )
         return low
     if cond == "C5b":
         s_path = synth_path(task, "auggpt", seed=seed)
@@ -69,6 +122,13 @@ def run(task, cond, seed):
         raise ValueError(
             f"{task} {cond} seed {seed}: incomplete class coverage, missing label(s): {missing}"
         )
+
+    if not is_sample_mode():
+        target = approved_target_count(task, cond)
+        if len(train) != target:
+            raise ValueError(
+                f"{task} {cond} seed {seed}: training count {len(train)} does not match approved target count {target}."
+            )
 
     test = read_jsonl(real_path(task, "test"))
     if not test:
@@ -118,15 +178,44 @@ def main(argv=None):
             for r in reader:
                 if not r or not r.get("task") or not r.get("condition") or not r.get("seed"):
                     continue
-                # Validate that existing row matches current expected n_train
-                t_set = training_set(r["task"], r["condition"], int(r["seed"]))
-                if t_set and int(r["n_train"]) != len(t_set):
-                    # Incompatible target or data count - discard and replace
-                    continue
-                old.append(r)
+                cond = r["condition"]
 
-    if args.force:  # drop the old rows of the chosen conditions, keep the rest
-        old = [r for r in old if r["condition"] not in conds]
+                # P2: Restrict replacement strictly to requested conditions.
+                # Unrelated rows must be preserved. If validity is uncertain, report it without deleting.
+                if cond not in conds:
+                    if not is_sample_mode():
+                        try:
+                            target = approved_target_count(r["task"], cond)
+                            if int(r["n_train"]) != target:
+                                print(
+                                    f"  Notice: Preserving unrequested {r['task']} {cond} seed {r['seed']} row "
+                                    f"(n_train={r['n_train']} != approved target {target}); not replacing because condition was not requested."
+                                )
+                        except Exception:
+                            pass
+                    old.append(r)
+                    continue
+
+                # The row's condition was requested.
+                # If --force is specified, discard it so it will be rerun.
+                if args.force:
+                    continue
+
+                # P1: Validate existing row against approved target count independently of sampler.
+                if not is_sample_mode():
+                    target = approved_target_count(r["task"], cond)
+                    if int(r["n_train"]) != target:
+                        print(
+                            f"  Discarding obsolete {r['task']} {cond} seed {r['seed']} result: "
+                            f"n_train={r['n_train']} does not match approved target count {target}."
+                        )
+                        continue
+                else:
+                    t_set = training_set(r["task"], cond, int(r["seed"]), exact=False)
+                    if t_set and int(r["n_train"]) != len(t_set):
+                        continue
+
+                old.append(r)
 
     # De-duplicate existing rows while preserving order
     unique_old = []

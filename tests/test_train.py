@@ -137,3 +137,94 @@ def test_runs_csv_canonical_lf_newlines(tmp_path):
     assert b"\r" not in raw_bytes, "Found CRLF in runs.csv output; canonical LF required"
     lines = [line for line in raw_bytes.split(b"\n") if line.strip()]
     assert len(lines) == 13, f"Expected header + 12 rows, got {len(lines)}"
+
+
+def test_exact_real_sampling_fails_closed_when_insufficient_examples(tmp_path, monkeypatch):
+    """P1 defect regression test: exact sampling must fail with clear explanation when target impossible."""
+    # Simulate real mode (not fake/sample mode)
+    monkeypatch.delenv("SYNTHTEXT_GENERATION_MODE", raising=False)
+    monkeypatch.delenv("SYNTHTEXT_EMBEDDER", raising=False)
+    monkeypatch.setenv("SYNTHTEXT_DATA", str(tmp_path / "real_data"))
+
+    # Create dataset where one label has 76 examples and others have 100
+    train_rows = []
+    for i in range(76):
+        train_rows.append({"id": f"trec.train.abbr.{i}", "text": f"abbr {i}", "label": "abbreviation"})
+    for lab in ["description", "entity", "human", "location", "numeric"]:
+        for i in range(100):
+            train_rows.append({"id": f"trec.train.{lab}.{i}", "text": f"{lab} {i}", "label": lab})
+    p = tmp_path / "real_data" / "real" / "trec" / "train.jsonl"
+    write_jsonl(p, train_rows)
+
+    with pytest.raises(ValueError, match="Cannot sample approved target for trec C1") as excinfo:
+        train.training_set("trec", "C1", 13, exact=True)
+    msg = str(excinfo.value)
+    assert "Insufficient examples for label 'abbreviation': requested 100, found 76" in msg
+    assert "approved target requires 100 examples per label (600 total)" in msg
+    assert "Borrowing from demonstration-pool or test splits" in msg or "Silently undersampling" in msg
+
+
+def test_resume_validation_enforces_approved_target_independently(tmp_path, monkeypatch):
+    """P1 defect regression test: resume must discard undersized rows (e.g. 576) in real mode."""
+    # Simulate real mode
+    monkeypatch.delenv("SYNTHTEXT_GENERATION_MODE", raising=False)
+    monkeypatch.delenv("SYNTHTEXT_EMBEDDER", raising=False)
+    monkeypatch.setenv("SYNTHTEXT_DATA", str(tmp_path / "real_data"))
+
+    path = tmp_path / "results" / "runs.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Seed runs.csv with an undersized C1 row (576) and a valid C5a row (60)
+    rows = [
+        {"task": "trec", "condition": "C1", "seed": "13", "n_train": "576", "macro_f1": "0.7471", "accuracy": "0.768"},
+        {"task": "trec", "condition": "C5a", "seed": "13", "n_train": "60", "macro_f1": "0.5974", "accuracy": "0.640"},
+    ]
+    with open(path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=train.COLUMNS, lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+
+    # When running with --conditions C1, the undersized row must be discarded
+    # Monkeypatch run to avoid real training and verify it was triggered
+    run_called = []
+    def mock_run(task, cond, seed):
+        run_called.append((task, cond, seed))
+        return None
+
+    monkeypatch.setattr(train, "run", mock_run)
+    train.main(["--conditions", "C1"])
+
+    # Verify mock_run was called for trec C1 13 because 576 was discarded
+    assert ("trec", "C1", 13) in run_called
+
+    # Verify that the unselected condition C5a was preserved untouched
+    after_rows = list(csv.DictReader(open(path, encoding="utf-8")))
+    assert any(r["condition"] == "C5a" and r["n_train"] == "60" for r in after_rows)
+
+
+def test_targeted_rerun_preserves_unrequested_conditions_despite_count_discrepancy(tmp_path, monkeypatch):
+    """P2 defect regression test: --conditions C1 --force must not delete C5a rows."""
+    path = tmp_path / "results" / "runs.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Create runs.csv with C1 and C5a rows
+    initial_rows = [
+        {"task": "emotion", "condition": "C1", "seed": "13", "n_train": "600", "macro_f1": "0.4629", "accuracy": "0.506"},
+        {"task": "trec", "condition": "C5a", "seed": "13", "n_train": "60", "macro_f1": "0.5974", "accuracy": "0.640"},
+        {"task": "emotion", "condition": "C5a", "seed": "13", "n_train": "60", "macro_f1": "0.3381", "accuracy": "0.373"},
+    ]
+    with open(path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=train.COLUMNS, lineterminator="\n")
+        w.writeheader()
+        w.writerows(initial_rows)
+
+    # In sample mode, C5a would normally produce 12 rows (not 60).
+    # Previous code evaluated C5a, saw 60 != 12, and deleted C5a during --conditions C1 --force!
+    # Run with --conditions C1 --force:
+    train.main(["--conditions", "C1", "--force"])
+
+    after_rows = list(csv.DictReader(open(path, encoding="utf-8")))
+    # Verify C5a rows are completely preserved!
+    c5a_rows = [r for r in after_rows if r["condition"] == "C5a"]
+    assert len(c5a_rows) == 2, f"Expected 2 C5a rows preserved, got {len(c5a_rows)}: {after_rows}"
+    assert any(r["task"] == "trec" and r["seed"] == "13" and r["n_train"] == "60" for r in c5a_rows)
+    assert any(r["task"] == "emotion" and r["seed"] == "13" and r["n_train"] == "60" for r in c5a_rows)
+
