@@ -579,24 +579,135 @@ def test_parse_keys_rejects_unknown_and_duplicate_keys():
             grid.parse_keys(bad)
 
 
-def test_model_identity_binds_the_cached_snapshot(tmp_path, monkeypatch):
-    monkeypatch.setenv("HF_HUB_CACHE", str(tmp_path))
+MODEL_FILES = ("modules.json", "config.json", "tokenizer.json", "config_sentence_transformers.json",
+               "model.safetensors")
+
+
+def _fake_hub(root, revision, weights=b"approved weights", main=None):
+    repo = root / "models--sentence-transformers--all-MiniLM-L6-v2"
+    snap = repo / "snapshots" / revision
+    snap.mkdir(parents=True, exist_ok=True)
+    for name in MODEL_FILES:
+        (snap / name).write_bytes(weights if name == "model.safetensors" else name.encode())
+    (repo / "refs").mkdir(parents=True, exist_ok=True)
+    (repo / "refs" / "main").write_text(main or revision, encoding="utf-8")
+    return snap
+
+
+class _FakeSentenceTransformer:
+    """Stands in for sentence_transformers.SentenceTransformer; records what was loaded."""
+    loaded = []
+    on_load = None
+
+    def __init__(self, path, device=None):
+        type(self).loaded.append((Path(path), device))
+        if type(self).on_load:
+            type(self).on_load(Path(path))
+
+    def encode(self, texts, **kw):
+        import numpy as np
+        return np.ones((len(texts), 4))
+
+
+@pytest.fixture
+def hub(tmp_path, monkeypatch):
+    import sys
+    import types
+    monkeypatch.setenv("HF_HUB_CACHE", str(tmp_path / "hub"))
+    module = types.ModuleType("sentence_transformers")
+    module.SentenceTransformer = _FakeSentenceTransformer
+    monkeypatch.setitem(sys.modules, "sentence_transformers", module)
+    _FakeSentenceTransformer.loaded, _FakeSentenceTransformer.on_load = [], None
+    return tmp_path / "hub"
+
+
+def test_model_identity_pins_the_approved_snapshot(hub):
     with pytest.raises(grid.GridError, match="not in the local Hugging Face cache"):
         grid.model_identity("real")
-    repo = tmp_path / "models--sentence-transformers--all-MiniLM-L6-v2"
-    (repo / "refs").mkdir(parents=True)
-    (repo / "refs" / "main").write_text("f" * 40, encoding="utf-8")
-    snap = repo / "snapshots" / ("f" * 40)
-    snap.mkdir(parents=True)
-    for name in ("modules.json", "config.json", "tokenizer.json", "config_sentence_transformers.json",
-                 "model.safetensors"):
-        (snap / name).write_bytes(name.encode())
+    snap = _fake_hub(hub, grid.APPROVED_MINILM_REVISION)
     ident = grid.model_identity("real")
-    assert ident["revision"] == "f" * 40 and ident["name"] == grid.EMBEDDING_MODEL
-    assert ident["files_sha256"]["model.safetensors"] == grid._sha(b"model.safetensors")
+    assert ident["revision"] == grid.APPROVED_MINILM_REVISION == "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+    assert ident["files_sha256"]["model.safetensors"] == grid._sha(b"approved weights")
     assert ident["fine_tuned"] is False and ident["normalize_embeddings"] is True
-    (snap / "model.safetensors").write_bytes(b"other weights")
-    assert grid.model_identity("real")["identity_sha256"] != ident["identity_sha256"]
+    with pytest.raises(grid.GridError, match="not the approved"):
+        grid.model_identity("real", "f" * 40)
+    (snap / "tokenizer.json").unlink()
+    with pytest.raises(grid.GridError, match="incomplete"):
+        grid.model_identity("real")
+
+
+def test_loader_uses_the_recorded_snapshot_even_if_refs_main_moves(hub):
+    approved = _fake_hub(hub, grid.APPROVED_MINILM_REVISION)
+    ident = grid.model_identity("real")
+    _fake_hub(hub, "e" * 40, weights=b"newer weights")              # refs/main now points elsewhere
+    assert (hub / "models--sentence-transformers--all-MiniLM-L6-v2" / "refs" / "main").read_text() == "e" * 40
+    grid.Embedder("real", ident)(["a", "b"])
+    assert _FakeSentenceTransformer.loaded == [(approved, "cpu")]
+
+
+@pytest.mark.parametrize("change", ["weights", "added_file", "removed_file", "snapshot_gone"])
+def test_loader_fails_closed_if_snapshot_changes_after_recording(hub, change):
+    snap = _fake_hub(hub, grid.APPROVED_MINILM_REVISION)
+    ident = grid.model_identity("real")                                 # recorded during preparation
+    if change == "weights":
+        (snap / "model.safetensors").write_bytes(b"swapped weights")
+    elif change == "added_file":
+        (snap / "pytorch_model.bin").write_bytes(b"extra")
+    elif change == "removed_file":
+        (snap / "config.json").unlink()
+    else:
+        shutil.rmtree(snap)
+    with pytest.raises(grid.GridError):
+        grid.Embedder("real", ident)(["a"])
+    assert _FakeSentenceTransformer.loaded == []                         # never loaded
+
+
+def test_loader_fails_closed_if_snapshot_changes_while_loading(hub):
+    snap = _fake_hub(hub, grid.APPROVED_MINILM_REVISION)
+    ident = grid.model_identity("real")
+    _FakeSentenceTransformer.on_load = lambda path: (path / "model.safetensors").write_bytes(b"raced")
+    with pytest.raises(grid.GridError, match="changed since it was recorded"):
+        grid.Embedder("real", ident)(["a"])
+
+
+def test_loader_refuses_missing_or_unapproved_identity(hub):
+    _fake_hub(hub, grid.APPROVED_MINILM_REVISION)
+    ident = grid.model_identity("real")
+    with pytest.raises(grid.GridError, match="needs the recorded model identity"):
+        grid.Embedder("real")
+    for bad in (dict(ident, revision="e" * 40), dict(ident, name="other/model"), {"kind": "hashing-fixture"}):
+        with pytest.raises(grid.GridError, match="not the approved"):
+            grid.Embedder("real", bad)(["a"])
+    forged = dict(ident, files_sha256=dict(ident["files_sha256"], **{"model.safetensors": "0" * 64}))
+    with pytest.raises(grid.GridError, match="changed since it was recorded"):
+        grid.Embedder("real", forged)(["a"])
+    assert _FakeSentenceTransformer.loaded == []
+
+
+def test_run_grid_passes_the_recorded_identity_to_the_loader(env, hub, monkeypatch):
+    """Real-mode wiring: the embedder built by run_grid receives exactly ctx['model']."""
+    _fake_hub(hub, grid.APPROVED_MINILM_REVISION)
+    seen = []
+
+    class Spy(grid.Embedder):
+        def __init__(self, mode, identity=None):
+            seen.append((mode, identity))
+            super().__init__("fake")
+
+    monkeypatch.setattr(grid, "Embedder", Spy)
+    real_prepare = grid.prepare
+
+    def prepare_as_real(*a, **k):
+        ctx = real_prepare(*a, **k)
+        ctx["mode"] = "real"
+        ctx["model"] = grid.model_identity("real")
+        return ctx
+
+    monkeypatch.setattr(grid, "prepare", prepare_as_real)
+    monkeypatch.setattr(grid, "fit_and_score", lambda ctx, task, cond, emb: (
+        {"macro_f1": 0.5, "accuracy": 0.5}, {"n_iter": 1, "converged": True, "test_rows": 1}))
+    grid.run_grid(env.results, keys=grid.parse_keys("trec/C1"), log=env.log.append, **env.kw())
+    assert seen == [("real", grid.model_identity("real"))]
 
 
 def test_cli_dry_run_end_to_end_and_validate(env, capsys):

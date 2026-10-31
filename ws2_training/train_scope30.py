@@ -73,6 +73,8 @@ ACCEPTED_FREEZE_MERGE = "ef53a60e195b29c5562f16315785936eb8f09ddf"   # PR #32 me
 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_SETTINGS = {"normalize_embeddings": True, "batch_size": 64, "device": "cpu", "fine_tuned": False}
+# Lead approval, PR #33 review 5724732904 (1 November 2026): this exact cached snapshot, pinned and re-verified.
+APPROVED_MINILM_REVISION = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
 CLASSIFIER = {"type": "sklearn.linear_model.LogisticRegression", "C": 1.0, "max_iter": 2000, "random_state": SEED}
 SHUFFLE = "random.Random(13).shuffle of the construction order before fitting (as #7)"
 HASHING_FIXTURE = "HashingVectorizer(n_features=1024, ngram_range=(1, 2), alternate_sign=False)"
@@ -267,25 +269,50 @@ def hub_cache():
     return home / "hub"
 
 
-def model_identity(mode):
-    """Identity of the exact embedder used. Real: the cached MiniLM snapshot (commit + every file hash)."""
-    if mode == "fake":
-        return {"kind": "hashing-fixture", "name": HASHING_FIXTURE, "real_model": False}
-    repo = hub_cache() / ("models--" + EMBEDDING_MODEL.replace("/", "--"))
-    ref = repo / "refs" / "main"
-    if not ref.exists():
-        raise GridError(f"{EMBEDDING_MODEL} is not in the local Hugging Face cache ({repo}); "
-                        "download it once before training")
-    commit = ref.read_text(encoding="utf-8").strip()
-    snapshot = repo / "snapshots" / commit
+def snapshot_dir(revision):
+    """The cache snapshot of one exact revision; never resolved through the mutable refs/main pointer."""
+    if not isinstance(revision, str) or len(revision) != 40 or any(c not in "0123456789abcdef" for c in revision):
+        raise GridError(f"invalid {EMBEDDING_MODEL} revision {revision!r}")
+    return hub_cache() / ("models--" + EMBEDDING_MODEL.replace("/", "--")) / "snapshots" / revision
+
+
+def snapshot_files(revision):
+    """{relative path: sha256} of every file in the exact snapshot, or GridError if missing/incomplete."""
+    snapshot = snapshot_dir(revision)
+    if not snapshot.is_dir():
+        raise GridError(f"{EMBEDDING_MODEL} revision {revision} is not in the local Hugging Face cache "
+                        f"({snapshot}); download that exact revision before training")
     files = {p.relative_to(snapshot).as_posix(): _sha(p.read_bytes())
              for p in sorted(snapshot.rglob("*")) if p.is_file()}
     required = {"modules.json", "config.json", "tokenizer.json", "config_sentence_transformers.json"}
-    if not snapshot.is_dir() or required - set(files) or not ({"model.safetensors", "pytorch_model.bin"} & set(files)):
+    if required - set(files) or not ({"model.safetensors", "pytorch_model.bin"} & set(files)):
         raise GridError(f"{snapshot}: incomplete {EMBEDDING_MODEL} snapshot")
-    return {"kind": "sentence-transformers", "name": EMBEDDING_MODEL, "revision": commit,
+    return files
+
+
+def model_identity(mode, revision=APPROVED_MINILM_REVISION):
+    """Identity of the exact embedder used. Real: the approved pinned MiniLM snapshot and every file hash."""
+    if mode == "fake":
+        return {"kind": "hashing-fixture", "name": HASHING_FIXTURE, "real_model": False}
+    if revision != APPROVED_MINILM_REVISION:
+        raise GridError(f"{EMBEDDING_MODEL} revision {revision} is not the approved {APPROVED_MINILM_REVISION}")
+    files = snapshot_files(revision)
+    return {"kind": "sentence-transformers", "name": EMBEDDING_MODEL, "revision": revision,
             "files_sha256": files, "identity_sha256": _sha(_canonical(files)), "real_model": True,
             **EMBEDDING_SETTINGS}
+
+
+def verify_model_identity(identity):
+    """Fail closed unless the cached snapshot still has exactly the recorded files and hashes."""
+    if not isinstance(identity, dict) or identity.get("kind") != "sentence-transformers" \
+            or identity.get("name") != EMBEDDING_MODEL or identity.get("revision") != APPROVED_MINILM_REVISION:
+        raise GridError(f"recorded embedder identity is not the approved {EMBEDDING_MODEL} @ {APPROVED_MINILM_REVISION}")
+    current = snapshot_files(identity["revision"])
+    if current != identity.get("files_sha256") or _sha(_canonical(current)) != identity.get("identity_sha256"):
+        changed = sorted(k for k in set(current) | set(identity.get("files_sha256") or {})
+                         if current.get(k) != (identity.get("files_sha256") or {}).get(k))
+        raise GridError(f"{EMBEDDING_MODEL} snapshot {identity['revision']} changed since it was recorded "
+                        f"(files {changed}); refusing to train with an unrecorded model")
 
 
 def require_real_dependencies():
@@ -301,9 +328,23 @@ def _missing(module):
 
 
 class Embedder:
-    def __init__(self, mode):
+    """Real mode loads only the snapshot named by the recorded identity, re-verified just before and after loading."""
+
+    def __init__(self, mode, identity=None):
+        if mode == "real" and identity is None:
+            raise GridError("the real embedder needs the recorded model identity")
         self.mode = mode
+        self.identity = identity
         self._model = None
+
+    def _load(self):
+        os.environ.setdefault("HF_HUB_OFFLINE", "1")
+        os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+        verify_model_identity(self.identity)                    # immediately before use
+        from sentence_transformers import SentenceTransformer
+        model = SentenceTransformer(str(snapshot_dir(self.identity["revision"])), device=EMBEDDING_SETTINGS["device"])
+        verify_model_identity(self.identity)                    # the files read while loading were the recorded ones
+        return model
 
     def __call__(self, texts):
         import numpy as np
@@ -312,12 +353,7 @@ class Embedder:
             vec = HashingVectorizer(n_features=1024, ngram_range=(1, 2), alternate_sign=False)
             return vec.transform(texts).toarray()
         if self._model is None:
-            os.environ.setdefault("HF_HUB_OFFLINE", "1")
-            os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
-            from sentence_transformers import SentenceTransformer
-            ident = model_identity("real")
-            snapshot = hub_cache() / ("models--" + EMBEDDING_MODEL.replace("/", "--")) / "snapshots" / ident["revision"]
-            self._model = SentenceTransformer(str(snapshot), device=EMBEDDING_SETTINGS["device"])
+            self._model = self._load()
         return np.asarray(self._model.encode(list(texts), batch_size=EMBEDDING_SETTINGS["batch_size"],
                                              normalize_embeddings=EMBEDDING_SETTINGS["normalize_embeddings"],
                                              show_progress_bar=False))
@@ -834,7 +870,8 @@ def run_grid(results_dir, keys=None, replace=(), mode="real", manifest_path=None
                         "--replace to retrain (old records are preserved in superseded/):\n  " + "\n  ".join(blocked))
     for key in [k for k in all_keys() if k not in keys and k in found]:
         log(f"  {key_name(*key)}: not requested; left untouched")
-    embedder = embedder or Embedder(mode)
+    # The loader receives the identity recorded in every binding; it never re-resolves the cache itself.
+    embedder = embedder or Embedder(ctx["mode"], ctx["model"] if ctx["mode"] == "real" else None)
     note = "" if mode == "real" else " [FAKE fixture - not real evidence]"
     for key, why in plan:
         task, cond, _ = key

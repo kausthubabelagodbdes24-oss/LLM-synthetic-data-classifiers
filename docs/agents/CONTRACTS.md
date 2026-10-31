@@ -262,7 +262,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 
 ## Freeze-bound twelve-key training grid (Issue #13, ADR 0012)
 
-- **Status**: implemented in the #13 PR; awaiting lead review. Merging does not run the experiment, and no real twelve-key result exists yet.
+- **Status**: implemented in PR #33. Review 5724732904 approved the C4 rule and the MiniLM revision. Merging does not run the experiment, and no real twelve-key result exists yet.
 - **Producer**: `ws2_training/train_scope30.py`. Commands:
   - `--check-inputs`: read-only. Verifies the freeze and builds all twelve training sets, without fitting or writing anything.
   - `--results-dir DIR [--keys K] [--replace K]`: trains the grid.
@@ -278,7 +278,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - C1 (180): `per_label_sample(train, 30, 13, exact)`, the same sampler as the #7 baselines.
   - C2 (180): the frozen selected zero-shot corpus.
   - C3 (180): the frozen selected few-shot corpus.
-  - C4 (180): `per_label_sample(train, 15, 13, exact)` plus 15 per label from the C3 corpus. The few-shot half takes the first 15 per label in ascending `sha256("scope30-v1|13|<task>|few_shot|<row-id>")` (row ID tie-break), i.e. the first half of the same ADR 0012 rank order that selected the 30. No test data or performance is used.
+  - C4 (180): `per_label_sample(train, 15, 13, exact)` plus 15 per label from the C3 corpus. The few-shot half takes the first 15 per label in ascending `sha256("scope30-v1|13|<task>|few_shot|<row-id>")` (row ID tie-break), i.e. the first half of the same ADR 0012 rank order that selected the 30. No test data or performance is used. The lead approved this rule in PR #33 review 5724732904.
   - C5a (60): the exact frozen `lowres_seed13` rows, 10 per label, all from the pool.
   - C5b (420): those rows plus the frozen AugGPT artifact. Every source has exactly six paraphrases with distinct normalized texts, none equal to its source, all with the source's label.
 - **Rejected inputs**: wrong counts, missing labels, duplicate IDs or normalized texts, real rows from the pool, reordered corpora, extra rows, and any test-ID overlap. Any normalized test-text overlap is also rejected, with one exception (next item).
@@ -287,7 +287,9 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - It is allowed only in TREC C1/C4 real rows, matched by both IDs and the text hash. It is recorded in `training.disclosed_test_text_overlap` of each affected result.
   - The #7 TREC C1 baseline was trained with it. Sampling is unchanged.
   - Every other overlap fails closed.
-- **Classifier**: `sentence-transformers/all-MiniLM-L6-v2`, loaded on CPU from the locally cached snapshot. Its identity (`refs/main` commit plus the SHA-256 of every snapshot file) is recorded and bound. Embeddings are normalized, batch size 64, never fine-tuned. The classifier is `LogisticRegression(C=1.0, max_iter=2000, random_state=13)`, fitted after `random.Random(13).shuffle`, as in #7.
+- **Classifier**: `sentence-transformers/all-MiniLM-L6-v2`, pinned to the lead-approved revision `1110a243fdf4706b3f48f1d95db1a4f5529b4d41` (PR #33 review 5724732904).
+  - The approved snapshot is read directly, never through `refs/main`. Its identity (the revision plus the SHA-256 of every snapshot file) is recorded in every binding.
+  - The loader receives that recorded identity and loads only `snapshots/<revision>`, on CPU. It re-hashes every file immediately before and immediately after loading. Any change, missing file, extra file or other revision fails closed before training. Embeddings are normalized, batch size 64, never fine-tuned. The classifier is `LogisticRegression(C=1.0, max_iter=2000, random_state=13)`, fitted after `random.Random(13).shuffle`, as in #7.
 - **Results directory**:
   - A fresh, scope-specific directory (default `results/scope30-v1-seed13-freeze-v1`). `results/`, `results/scope30-seed13` and `results/archive` are refused, as is any non-empty directory without its `grid.json` identity. Real and fake results never share a directory.
   - `grid.json`: the scope, seed, mode, freeze ID and hash, and the twelve keys.
@@ -310,7 +312,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - wrong seed, legacy/unsafe paths, and the legacy trainer's refusal;
   - fake end-to-end with full provenance, and refusal of fake results as real;
   - exact-match resume, partial records, stale provenance (six fields), tampered or misplaced records, targeted replacement, unrequested stale rows left untouched, missing keys, duplicate `runs.csv` rows, wrong-seed files, incomplete grids, and protected or unrelated directories;
-  - key parsing, model-snapshot identity and the CLI.
+  - key parsing, the approved model-snapshot pin, and the loader using only the recorded snapshot even if `refs/main` moves; fail-closed loading when weights or files change after recording or during loading, or when the identity is missing, unapproved or forged; `run_grid` passing the recorded identity to the loader; and the CLI.
 
 ## Optional evaluation and annotation response tooling (historical)
 
