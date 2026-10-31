@@ -16,7 +16,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
 | Repetition-specific generation | Accepted Qwen pilot for Issue #6; current scope30/seed13 under ADR0012; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
-| Run records and paired analysis | Preserve unique task/condition/repetition keys and exact matching baselines. Agree precision, provenance and schema changes before changing writer/reader. ADR0012 defines current single-seed/zero-baseline policy; no SD/alpha required. | Training + evaluation |
+| Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion); fresh results/scope30-seed13 storage. ADR0012 defines current single-seed exploratory scope; 12 total keys. | Training (@kausthubabelagodbdes24-oss) + evaluation |
 | Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
@@ -142,3 +142,40 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 - **Verification**:
   - Unit tests: `tests/test_generation.py` verifies repetition isolation, fake-to-real isolation, model-call interruption, crash recovery across initial and resumed JSONL/provenance writes, partial first-row and split-UTF-8 recovery, stale temporary checkpoint handling, fail-closed corrupt/legacy/misplaced rows, model/prompt dependency incompatibility, no-op history preservation, demonstration source tracking, AugGPT fixture isolation, non-example/malformed reply filtering, and mock connection recovery. `tests/test_auggpt.py` (fake model only) verifies partial-source resume to exactly six, interruption checkpoints, journal crash recovery, separate generation of sources shared across repetitions, rejection of empty/duplicate/test-leak/source-copy candidates, `--verify` rejection of missing, inexact, tampered or incomplete artifacts, read-only rejection of held-out overlap in verified and resumed rows, rejection of self-consistent unapproved or altered model identities, refusal to start real generation with an unapproved model, and a passing approved-identity artifact. It also verifies that the length guard is sent only for sources over `max_words` (short sources get the byte-identical base prompt), that rows from the pre-guard identity resume and verify unchanged alongside new current-identity rows with the carried identity recorded, and that rows from any other identity are still rejected without model calls. Carry-forward record checks reject seven tamperings of a mixed artifact read-only, reject a missing record on resume before model calls, reject a legacy sidecar that claims carried identities or holds current-identity rows, and confirm the summary reports recorded fingerprints for legacy and mixed artifacts.
   - Full pipeline test: `tests/test_pipeline.py` uses fake-only storage and offline embeddings. Passing it is smoke validation, not Ollama or experimental evidence.
+
+## Real-data baseline run records (Checkpoint 1)
+
+- **Approving issue & lead decision**: Issue #7 ([Training and project lead] Publish four seed-13 real-data baselines at 30 per label), approved by @kausthubabelagodbdes24-oss under ADR 0012.
+- **Producer**: `ws2_training/train.py` (Owner: @kausthubabelagodbdes24-oss).
+- **Consumer**: `ws3_evaluation/analyze.py` (Owner: @hem4456).
+- **File path**: `results/scope30-seed13/runs.csv` (and compatibility mirror at `results/runs.csv`); historical 100/60 target runs archived at `results/archive/runs_target100.csv`.
+- **Serialization**: Canonical UTF-8 CSV with explicit LF (`\n`, byte `0x0A`, no OS-specific CRLF translation) using `csv.DictWriter(..., lineterminator="\n")`.
+- **Schema**:
+  - `task`: task identifier string (`trec` or `emotion`).
+  - `condition`: training condition string (`C1` for full real data, `C5a` for low-resource 10-per-label real data).
+  - `seed`: integer sampling seed (`13`).
+  - `n_train`: integer number of training examples used.
+  - `macro_f1`: float macro-F1 score on the held-out real test set, rounded to 4 decimal places.
+  - `accuracy`: float accuracy score on the held-out real test set, rounded to 4 decimal places.
+- **Planned training counts (scope30-v1 under ADR 0012)**:
+  - `trec C1`: exactly 180 rows across all 6 labels (30 per label). The former 76-abbreviation constraint under the 100 target is resolved by the approved 30/label target.
+  - `trec C5a`: exactly 60 rows across all 6 labels (10 per label from `trec/lowres_seed13.jsonl`).
+  - `emotion C1`: exactly 180 rows across all 6 labels (30 per label for sadness, joy, love, anger, fear, surprise).
+  - `emotion C5a`: exactly 60 rows across all 6 labels (10 per label from `emotion/lowres_seed13.jsonl`).
+  - Total: exactly 4 unique baseline result keys for seed 13.
+- **Observed Checkpoint 1 baseline values (scope30-v1 recorded in results/scope30-seed13/runs.csv)**:
+  - `trec,C1,13`: n_train=180, macro_f1=0.6009, accuracy=0.6520
+  - `trec,C5a,13`: n_train=60, macro_f1=0.5974, accuracy=0.6400
+  - `emotion,C1,13`: n_train=180, macro_f1=0.4082, accuracy=0.4420
+  - `emotion,C5a,13`: n_train=60, macro_f1=0.3381, accuracy=0.3730
+- **Historical Archived Runs (ADR 0011 100/60 target in results/archive/runs_target100.csv)**:
+  - Preserved 9 historical rows (Emotion C1=600; Emotion C5a=60; TREC C5a=60 across seeds 13, 42, 7).
+- **Provenance Sidecar**:
+  - `results/scope30-seed13/baseline_provenance.json` (and `results/baseline_provenance.json`) records `scope30-v1` identity, embedding model (`sentence-transformers/all-MiniLM-L6-v2`), classifier hyperparameters (`LogisticRegression(C=1.0, max_iter=2000, random_state=13)`), input SHA-256 hashes, exact counts, and baseline run metrics.
+- **Resume & Replacement Policy**:
+  - Target-independent resume validation: in real mode, resume verifies existing rows against `approved_target_count(task, cond)` independently of sampler output. Rows with obsolete counts (e.g. 600 or 576) are discarded when validating requested conditions.
+  - Targeted rerun isolation: replacement is strictly restricted to conditions specified in `--conditions`. Unrequested condition rows are preserved untouched without deletion; any count discrepancies for unrequested conditions are reported as informational notices without deleting rows.
+  - Fail-closed data validation: missing labels or incomplete class coverage fail closed with `ValueError` rather than producing partial-class runs. Exact per-label sampling (`exact=True`) prevents silent undersampling.
+- **Verification**:
+  - Unit tests in `tests/test_train.py` verify incomplete-class rejection, test-set presence validation, metric bounds [0, 1], resume skipping, `--force` targeted condition preservation, unrequested condition preservation despite discrepancies, fail-closed exact sampling, target-independent resume validation, and canonical LF CSV serialization.
+  - End-to-end pipeline test in `tests/test_pipeline.py` passes offline.

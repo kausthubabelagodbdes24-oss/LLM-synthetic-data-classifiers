@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "scope": "scope30-v1",
+  "authority": "ADR 0012: EOD exploratory comparison, 30 per label, seed 13 only",
+  "date": "2026-10-31T08:07:20.725413+00:00",
+  "model_settings": {
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "normalize_embeddings": true,
+    "classifier": "LogisticRegression(C=1.0, max_iter=2000, random_state=13)"
+  },
+  "experiment_grid": {
+    "tasks": [
+      "trec",
+      "emotion"
+    ],
+    "conditions": [
+      "C1",
+      "C5a"
+    ],
+    "seeds": [
+      13
+    ],
+    "total_baseline_keys": 4,
+    "planned_counts": {
+      "C1": 180,
+      "C5a": 60
+    }
+  },
+  "input_checksums": {
+    "trec/train": {
+      "path": "data/real/trec/train.jsonl",
+      "sha256": "b587c84d26b361bbe6f4126aff136e9d737c6c349059e89d2a3ce79e226f4331",
+      "line_count": 4907
+    },
+    "trec/lowres_seed13": {
+      "path": "data/real/trec/lowres_seed13.jsonl",
+      "sha256": "901c0596a42b6fd0fa128cb1dd05b26bb1dbdcbd0c1a0a3dca9011beb7a03a29",
+      "line_count": 60
+    },
+    "trec/test": {
+      "path": "data/real/trec/test.jsonl",
+      "sha256": "415f526277d0f23f9bfe903a2a6d994529ec183820b6d9d0d55d47c3195aa0c0",
+      "line_count": 500
+    },
+    "emotion/train": {
+      "path": "data/real/emotion/train.jsonl",
+      "sha256": "4c6e92df9649661ab1c6fefe06f83206382322e6997fcb70ca53d22d302fac57",
+      "line_count": 14400
+    },
+    "emotion/lowres_seed13": {
+      "path": "data/real/emotion/lowres_seed13.jsonl",
+      "sha256": "7bec4826ca96fa056ec5defc13a051f1c2ac25ef0270164219af13e1471af27f",
+      "line_count": 60
+    },
+    "emotion/test": {
+      "path": "data/real/emotion/test.jsonl",
+      "sha256": "d3b7176e8ab6be052151511a3e9843fa633c5747d0dae73980a2e52a4fb6cd88",
+      "line_count": 2000
+    }
+  },
+  "baseline_runs": [
+    {
+      "task": "trec",
+      "condition": "C1",
+      "seed": 13,
+      "n_train": 180,
+      "macro_f1": 0.6009,
+      "accuracy": 0.652
+    },
+    {
+      "task": "trec",
+      "condition": "C5a",
+      "seed": 13,
+      "n_train": 60,
+      "macro_f1": 0.5974,
+      "accuracy": 0.64
+    },
+    {
+      "task": "emotion",
+      "condition": "C1",
+      "seed": 13,
+      "n_train": 180,
+      "macro_f1": 0.4082,
+      "accuracy": 0.442
+    },
+    {
+      "task": "emotion",
+      "condition": "C5a",
+      "seed": 13,
+      "n_train": 60,
+      "macro_f1": 0.3381,
+      "accuracy": 0.373
+    }
+  ]
+}

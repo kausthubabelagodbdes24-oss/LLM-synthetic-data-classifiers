@@ -1,0 +1,5 @@
+task,condition,seed,n_train,macro_f1,accuracy
+trec,C1,13,180,0.6009,0.652
+trec,C5a,13,60,0.5974,0.64
+emotion,C1,13,180,0.4082,0.442
+emotion,C5a,13,60,0.3381,0.373
