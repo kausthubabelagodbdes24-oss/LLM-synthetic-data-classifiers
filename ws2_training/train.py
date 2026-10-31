@@ -167,8 +167,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--conditions", default=",".join(CFG["conditions"]))
     ap.add_argument("--force", action="store_true", help="re-run the chosen conditions, replacing their old rows")
+    ap.add_argument("--results-dir", default=None, help="directory for runs.csv (defaults to SYNTHTEXT_RESULTS or results/)")
     args = ap.parse_args(argv)
-    path = results_dir() / "runs.csv"
+    results_path = Path(args.results_dir) if args.results_dir else results_dir()
+    results_path.mkdir(parents=True, exist_ok=True)
+    path = results_path / "runs.csv"
     conds = [c.strip() for c in args.conditions.split(",") if c.strip()]
 
     old = []

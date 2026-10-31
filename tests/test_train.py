@@ -63,17 +63,18 @@ def test_resume_skips_existing_rows(tmp_path, monkeypatch):
     train.main(["--conditions", "C1,C5a"])
     assert path.exists()
     rows1 = list(csv.DictReader(open(path, encoding="utf-8")))
-    assert len(rows1) == 12
+    expected_rows = len(train.TASKS) * 2 * len(CFG["seeds"])
+    assert len(rows1) == expected_rows
 
     # Monkeypatch run to fail if called again
     def fail_run(*args, **kwargs):
         raise RuntimeError("run should not be called on resume")
 
     monkeypatch.setattr(train, "run", fail_run)
-    # Running without --force should skip all 12 rows
+    # Running without --force should skip all rows
     train.main(["--conditions", "C1,C5a"])
     rows2 = list(csv.DictReader(open(path, encoding="utf-8")))
-    assert len(rows2) == 12
+    assert len(rows2) == expected_rows
     assert rows1 == rows2
 
 
@@ -81,7 +82,8 @@ def test_force_rerun_preserves_unaffected_conditions(tmp_path):
     path = tmp_path / "results" / "runs.csv"
     train.main(["--conditions", "C1,C5a"])
     rows_initial = list(csv.DictReader(open(path, encoding="utf-8")))
-    assert len(rows_initial) == 12
+    expected_rows = len(train.TASKS) * 2 * len(CFG["seeds"])
+    assert len(rows_initial) == expected_rows
 
     # Modify macro_f1 of C5a rows in runs.csv to verify they are preserved
     modified_rows = []
@@ -97,16 +99,17 @@ def test_force_rerun_preserves_unaffected_conditions(tmp_path):
     # Rerun C1 with --force
     train.main(["--conditions", "C1", "--force"])
     rows_after = list(csv.DictReader(open(path, encoding="utf-8")))
-    assert len(rows_after) == 12
+    assert len(rows_after) == expected_rows
 
     # C5a rows must still have the preserved value 0.9999
     c5a_rows = [r for r in rows_after if r["condition"] == "C5a"]
-    assert len(c5a_rows) == 6
+    expected_cond_rows = len(train.TASKS) * len(CFG["seeds"])
+    assert len(c5a_rows) == expected_cond_rows
     assert all(r["macro_f1"] == "0.9999" for r in c5a_rows)
 
     # C1 rows must have been recalculated
     c1_rows = [r for r in rows_after if r["condition"] == "C1"]
-    assert len(c1_rows) == 6
+    assert len(c1_rows) == expected_cond_rows
     assert all(r["macro_f1"] != "0.9999" for r in c1_rows)
 
 
@@ -114,7 +117,8 @@ def test_incompatible_n_train_row_is_replaced(tmp_path):
     path = tmp_path / "results" / "runs.csv"
     train.main(["--conditions", "C1"])
     rows_initial = list(csv.DictReader(open(path, encoding="utf-8")))
-    assert len(rows_initial) == 6
+    expected_rows = len(train.TASKS) * len(CFG["seeds"])
+    assert len(rows_initial) == expected_rows
 
     # Tamper with one row's n_train to simulate an old target
     rows_initial[0]["n_train"] = "999"
@@ -126,7 +130,7 @@ def test_incompatible_n_train_row_is_replaced(tmp_path):
     # Run without --force: the row with 999 must be replaced with the actual n_train
     train.main(["--conditions", "C1"])
     rows_after = list(csv.DictReader(open(path, encoding="utf-8")))
-    assert len(rows_after) == 6
+    assert len(rows_after) == expected_rows
     assert all(r["n_train"] != "999" for r in rows_after)
 
 
@@ -136,7 +140,8 @@ def test_runs_csv_canonical_lf_newlines(tmp_path):
     raw_bytes = path.read_bytes()
     assert b"\r" not in raw_bytes, "Found CRLF in runs.csv output; canonical LF required"
     lines = [line for line in raw_bytes.split(b"\n") if line.strip()]
-    assert len(lines) == 13, f"Expected header + 12 rows, got {len(lines)}"
+    expected_lines = 1 + len(train.TASKS) * 2 * len(CFG["seeds"])
+    assert len(lines) == expected_lines, f"Expected header + {expected_lines - 1} rows, got {len(lines)}"
 
 
 def test_exact_real_sampling_fails_closed_when_insufficient_examples(tmp_path, monkeypatch):
@@ -146,12 +151,13 @@ def test_exact_real_sampling_fails_closed_when_insufficient_examples(tmp_path, m
     monkeypatch.delenv("SYNTHTEXT_EMBEDDER", raising=False)
     monkeypatch.setenv("SYNTHTEXT_DATA", str(tmp_path / "real_data"))
 
-    # Create dataset where one label has 76 examples and others have 100
+    target_per_label = CFG["train_per_label"]
+    found_abbr = target_per_label - 10
     train_rows = []
-    for i in range(76):
+    for i in range(found_abbr):
         train_rows.append({"id": f"trec.train.abbr.{i}", "text": f"abbr {i}", "label": "abbreviation"})
     for lab in ["description", "entity", "human", "location", "numeric"]:
-        for i in range(100):
+        for i in range(target_per_label):
             train_rows.append({"id": f"trec.train.{lab}.{i}", "text": f"{lab} {i}", "label": lab})
     p = tmp_path / "real_data" / "real" / "trec" / "train.jsonl"
     write_jsonl(p, train_rows)
@@ -159,8 +165,8 @@ def test_exact_real_sampling_fails_closed_when_insufficient_examples(tmp_path, m
     with pytest.raises(ValueError, match="Cannot sample approved target for trec C1") as excinfo:
         train.training_set("trec", "C1", 13, exact=True)
     msg = str(excinfo.value)
-    assert "Insufficient examples for label 'abbreviation': requested 100, found 76" in msg
-    assert "approved target requires 100 examples per label (600 total)" in msg
+    assert f"Insufficient examples for label 'abbreviation': requested {target_per_label}, found {found_abbr}" in msg
+    assert f"approved target requires {target_per_label} examples per label" in msg
     assert "Borrowing from demonstration-pool or test splits" in msg or "Silently undersampling" in msg
 
 

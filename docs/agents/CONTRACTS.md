@@ -134,37 +134,37 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 
 ## Real-data baseline run records (Checkpoint 1)
 
-- **Approving issue & lead decision**: Issue #7 ([Training and project lead] Publish the twelve real-data baseline results at the chosen target), approved by @kausthubabelagodbdes24-oss.
+- **Approving issue & lead decision**: Issue #7 ([Training and project lead] Publish four seed-13 real-data baselines at 30 per label), approved by @kausthubabelagodbdes24-oss under ADR 0012.
 - **Producer**: `ws2_training/train.py` (Owner: @kausthubabelagodbdes24-oss).
 - **Consumer**: `ws3_evaluation/analyze.py` (Owner: @hem4456).
-- **File path**: `results/runs.csv`.
+- **File path**: `results/scope30-seed13/runs.csv` (and compatibility mirror at `results/runs.csv`); historical 100/60 target runs archived at `results/archive/runs_target100.csv`.
 - **Serialization**: Canonical UTF-8 CSV with explicit LF (`\n`, byte `0x0A`, no OS-specific CRLF translation) using `csv.DictWriter(..., lineterminator="\n")`.
 - **Schema**:
   - `task`: task identifier string (`trec` or `emotion`).
   - `condition`: training condition string (`C1` for full real data, `C5a` for low-resource 10-per-label real data).
-  - `seed`: integer sampling seed (`13`, `42`, or `7`).
+  - `seed`: integer sampling seed (`13`).
   - `n_train`: integer number of training examples used.
   - `macro_f1`: float macro-F1 score on the held-out real test set, rounded to 4 decimal places.
   - `accuracy`: float accuracy score on the held-out real test set, rounded to 4 decimal places.
-- **Planned training counts**:
-  - `emotion C1`: exactly 600 rows across all 6 labels (100 per label for sadness, joy, love, anger, fear, surprise).
-  - `emotion C5a`: exactly 60 rows across all 6 labels (10 per label from `emotion/lowres_seed<S>.jsonl`).
-  - `trec C5a`: exactly 60 rows across all 6 labels (10 per label from `trec/lowres_seed<S>.jsonl`).
-  - `trec C1`: **Blocked / Unresolved project decision**: The approved target is 100 per label (600 total). However, the official 90% training split `trec/train.jsonl` contains only 76 examples of `abbreviation`. Exact per-label sampling fails closed with an explicit `ValueError`. Silently undersampling to 576, borrowing pool or test examples, duplicating examples, or changing splits without explicit lead approval is forbidden. TREC C1 is not complete until an explicitly approved, feasible design decision is made and executed.
-- **Observed Checkpoint 1 baseline values (9 valid runs recorded in results/runs.csv)**:
+- **Planned training counts (scope30-v1 under ADR 0012)**:
+  - `trec C1`: exactly 180 rows across all 6 labels (30 per label). The former 76-abbreviation constraint under the 100 target is resolved by the approved 30/label target.
+  - `trec C5a`: exactly 60 rows across all 6 labels (10 per label from `trec/lowres_seed13.jsonl`).
+  - `emotion C1`: exactly 180 rows across all 6 labels (30 per label for sadness, joy, love, anger, fear, surprise).
+  - `emotion C5a`: exactly 60 rows across all 6 labels (10 per label from `emotion/lowres_seed13.jsonl`).
+  - Total: exactly 4 unique baseline result keys for seed 13.
+- **Observed Checkpoint 1 baseline values (scope30-v1 recorded in results/scope30-seed13/runs.csv)**:
+  - `trec,C1,13`: n_train=180, macro_f1=0.6009, accuracy=0.6520
   - `trec,C5a,13`: n_train=60, macro_f1=0.5974, accuracy=0.6400
-  - `trec,C5a,42`: n_train=60, macro_f1=0.5375, accuracy=0.5900
-  - `trec,C5a,7`: n_train=60, macro_f1=0.4921, accuracy=0.5180
-  - `emotion,C1,13`: n_train=600, macro_f1=0.4629, accuracy=0.5060
-  - `emotion,C1,42`: n_train=600, macro_f1=0.4587, accuracy=0.4960
-  - `emotion,C1,7`: n_train=600, macro_f1=0.4623, accuracy=0.4990
+  - `emotion,C1,13`: n_train=180, macro_f1=0.4082, accuracy=0.4420
   - `emotion,C5a,13`: n_train=60, macro_f1=0.3381, accuracy=0.3730
-  - `emotion,C5a,42`: n_train=60, macro_f1=0.3243, accuracy=0.3570
-  - `emotion,C5a,7`: n_train=60, macro_f1=0.3085, accuracy=0.3155
+- **Historical Archived Runs (ADR 0011 100/60 target in results/archive/runs_target100.csv)**:
+  - Preserved 9 historical rows (Emotion C1=600; Emotion C5a=60; TREC C5a=60 across seeds 13, 42, 7).
+- **Provenance Sidecar**:
+  - `results/scope30-seed13/baseline_provenance.json` (and `results/baseline_provenance.json`) records `scope30-v1` identity, embedding model (`sentence-transformers/all-MiniLM-L6-v2`), classifier hyperparameters (`LogisticRegression(C=1.0, max_iter=2000, random_state=13)`), input SHA-256 hashes, exact counts, and baseline run metrics.
 - **Resume & Replacement Policy**:
-  - Target-independent resume validation: in real mode, resume verifies existing rows against `approved_target_count(task, cond)` rather than whatever an undersized sampler returns. Rows with obsolete or incompatible counts are discarded for requested conditions.
+  - Target-independent resume validation: in real mode, resume verifies existing rows against `approved_target_count(task, cond)` independently of sampler output. Rows with obsolete counts (e.g. 600 or 576) are discarded when validating requested conditions.
   - Targeted rerun isolation: replacement is strictly restricted to conditions specified in `--conditions`. Unrequested condition rows are preserved untouched without deletion; any count discrepancies for unrequested conditions are reported as informational notices without deleting rows.
-  - Fail-closed data validation: missing labels or incomplete class coverage fail closed with `ValueError` rather than producing partial-class runs.
+  - Fail-closed data validation: missing labels or incomplete class coverage fail closed with `ValueError` rather than producing partial-class runs. Exact per-label sampling (`exact=True`) prevents silent undersampling.
 - **Verification**:
   - Unit tests in `tests/test_train.py` verify incomplete-class rejection, test-set presence validation, metric bounds [0, 1], resume skipping, `--force` targeted condition preservation, unrequested condition preservation despite discrepancies, fail-closed exact sampling, target-independent resume validation, and canonical LF CSV serialization.
   - End-to-end pipeline test in `tests/test_pipeline.py` passes offline.
