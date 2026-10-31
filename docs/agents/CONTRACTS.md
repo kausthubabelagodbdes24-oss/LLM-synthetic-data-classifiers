@@ -231,6 +231,35 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - Model-assisted only; no acceptance or freeze is implied.
 - **Tests**: `tests/test_quality_review.py` (fake fixtures only) covers the hash rule, IDs-only evidence, demonstration/source packets, fresh later rounds, no overwrite, changed/missing input blocking (including edits producer verifiers tolerate), the two-error trigger, judgment validation and CLI exit codes, and separation of the targeted check. It also covers a promoted ADR 0013 fixture, flagged-batch round 2 with prior-ID exclusion and preserved round-1 files, exact-binding rejection per field, the re-check (outside the denominator, superseded text rejected), and adjudication binding and tamper rejection.
 
+## Frozen seed-13 synthetic handoff (Issue #12, ADR 0012, lead Option A)
+
+- **Approving decision**: lead Option A on issue #12 ([comment 6547818106](https://github.com/kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers/issues/12#issuecomment-6547818106), 31 Oct 2026). The current verified corpora are accepted without regeneration, relabelling or row deletion, and known problems are disclosed. The freeze takes effect when the lead accepts the PR that adds the manifest.
+- **Producer**: `ws1_generation/freeze_scope30.py`.
+  - `--audit`: read-only.
+  - `--write`: writes `docs/freeze/scope30-v1-seed13.freeze.json`. It requires a clean tracked tree, records `git rev-parse HEAD`, and never overwrites different content.
+  - `--verify`: read-only and fail-closed.
+- **Consumers**:
+  - `ws2_training/train.py` (#13): must train C2–C5b only on the frozen files. Consumer enforcement belongs to #13.
+  - Evaluation and reporting (#14–#17).
+- **Manifest** (deterministic, no timestamps, no corpus text):
+  - For each of the six batches (`trec`/`emotion` × `zero_shot`/`few_shot`/`auggpt`), the consumed file's path, SHA-256, bytes, rows, IDs in file order and per-label counts.
+  - For zero/few-shot, the selection manifest and original artifact.
+  - The provenance sidecar's hash, `updated_at`, session count and last status.
+  - The generation fingerprint and per-row fingerprints.
+  - The model identity, plus prompt/options/prompt-extension/sources identity hashes, options and temperature.
+  - For TREC AugGPT, the ADR 0013 correction and the promotion record, preserved original and retained candidate (all with hashes).
+  - Real `pool`/`lowres_seed13`/`test` hashes.
+  - Every `docs/reviews/issue11/` file (LF-normalized SHA-256), with each batch's latest round, outcome and clear-error IDs, the re-check, the Emotion adjudication and the curated scope-scan IDs.
+  - The decision, the limitations and `repository_revision`.
+- **Fail-closed rules**:
+  - Every producer verifier must pass (`verify_selection` ×4, `verify_auggpt` ×2, `verify_promotion` for TREC).
+  - Independent re-read checks: exact counts, 6-label coverage, unique IDs and normalized texts, selected IDs equal to the selection manifest, zero held-out test overlap, zero-shot without sources, few-shot with 3 same-label pool demonstrations, AugGPT sources equal to the exact 60 `lowres_seed13` rows with 6 distinct paraphrases each and inherited labels, and one model identity.
+  - For each batch, the latest #11 round must be PASS and must have reviewed the exact frozen file hash. Each outcome must be bound to its sample and judgments, and the scope scan must name the frozen AugGPT hashes.
+  - For a real freeze, all 16 #11 evidence files are required. The manifest may not contain any `text` key or any normalized real or generated corpus text.
+  - `--verify` rebuilds the manifest and requires byte equality (CRLF tolerated), and requires the recorded revision to be an ancestor of HEAD. So a missing, replaced, reordered, reformatted, tampered or incompatible artifact, sidecar, reference or evidence file fails, as does an edited manifest.
+- **Limitations (Option A)**: see [docs/freeze/README.md](../freeze/README.md). Retained TREC v2 and Emotion errors are disclosed, not corrected. All findings are model-assisted or heuristic and are not population error rates.
+- **Tests**: `tests/test_freeze_scope30.py` (fake fixtures only). It covers deterministic reruns, identical-rewrite no-op, no overwrite, all-six binding without text, and 16 tamper cases. It also covers post-review reorder, a flagged latest round, unbound outcomes, missing required evidence, corpus-text rejection, revision checks, CRLF tolerance and CLI exit codes.
+
 ## Optional evaluation and annotation response tooling (historical)
 
 - **Authority & Status**: Historical optional response tooling preserved under ADR 0012. Independent human annotation, external distribution, and human-agreement completion gates are removed under sole-operator execution.

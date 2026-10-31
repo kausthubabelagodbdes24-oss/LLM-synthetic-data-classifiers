@@ -126,6 +126,12 @@ The remaining eight condition results require upstream synthetic data generation
 - **Scope constraints**: Exploratory single-seed comparison (seed 13) at 30 examples per label (C1–C4), compact local 4B generator (`qwen3:4b`), frozen Sentence-BERT embeddings, and logistic regression classifiers.
 - **Operating model**: Under sole-operator execution ([ADR 0012](adr/0012-eod-exploratory-30-seed13.md)), evaluation relies on benchmark metrics on held-out real test splits rather than multi-human annotator consensus.
 - **Statistical limits**: Single-repetition findings cannot establish statistical significance across seeds or prove that task differences are causally driven by subjectivity.
+- **Synthetic data quality (issue #12 freeze, lead Option A)**: The frozen seed-13 corpora are accepted with known errors. They were disclosed, not removed or corrected; details are in [docs/freeze/README.md](freeze/README.md).
+  - **TREC AugGPT** (ADR 0013 v2, 360 rows): the random review passed with 1 clear error in 10 (`04163.aug4`, where "Hot Wheels" becomes "Hot and Wheels") and 3 ambiguous rows.
+    - A targeted re-check found `00845.aug3` still changes the expected answer type.
+    - A heuristic scan found about 13 likely problematic rows plus 6 borderline ones: answer-type changes, corrupted names (seen only in the v2 output), one reversed relation, and abbreviation questions drifting toward definitions. Around 3–4 of these may change the intended label.
+  - **Emotion AugGPT**: all 12 paraphrases of two long sources change the source meaning while keeping their label.
+  - These findings come from model-assisted review (one model, one judgment per item) and heuristics. They are not independent-human judgments or population error rates, and the retained errors are not claimed to be harmless. The acceptance holds only for this exploratory scope30-v1, seed-13 study. It does not establish corpus correctness, robustness, stability or generalization.
 - **Interim conclusion**: Accepted baseline models provide reference baselines (0.6009 F1 on TREC, 0.4082 F1 on Emotion) at 30 examples per label. Synthetic data classifier performance will be evaluated once upstream generation and training complete under the quality audit and freeze gates.
 
 ---
