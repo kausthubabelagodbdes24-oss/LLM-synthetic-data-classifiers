@@ -1,5 +1,7 @@
 # Generation pilot report and target decision
 
+**Current lead-approved scope (31 October 2026):** 30 examples/label, seed 13 only, both tasks and all six conditions; twelve result keys. Independent-human annotation, distribution and external report-sharing gates are removed. Read [ADR 0012](adr/0012-eod-exploratory-30-seed13.md) and scope migration before resuming old work. Conflicting earlier requirements are historical. Pilot timings/judgments below remain historical evidence, not current full-run estimates or acceptance.
+
 - **Operator and lead:** Kausthuba (@kausthubabelagodbdes24-oss), now executing all workstreams personally in separate workspaces.
 - **Status:** Kausthuba accepted the Qwen pilot with disclosed limitations and uniform 100 examples per label on 31 October 2026. Final standards/specification review is clear and 50 local tests pass. PR #22 records the required current-head CI and integration state. Downstream full-data implementation, exact completeness, audit and freeze requirements still apply.
 - **Last updated:** 31 October 2026.

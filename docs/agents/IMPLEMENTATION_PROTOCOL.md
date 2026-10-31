@@ -24,7 +24,7 @@ Check existing active claims and PRs before starting. Post a context receipt on 
 
 Do not implement blocked work or silently take another owner's prerequisite. Read-only investigation and provisional drafts may proceed; record what is missing. The issue assignee remains the accountable human even when another authorized account runs a model.
 
-Generation belongs to Harshita: generation module, synthetic artifacts and generation report/slides. Preparation/training, run records and coordination belong to Kausthuba. Evaluation, annotation/analysis artifacts and report assembly belong to Hementh. Tests/docs needed for a scoped change can accompany it. Production edits in another workstream need owner/lead coordination. CODEOWNERS is reviewer guidance, not proof of branch protection or approval.
+Kausthuba is sole accountable operator for generation, training and evaluation. Keep workspaces separate and one implementer per issue. Historical teammate ownership does not block execution.
 
 Shared configuration/helpers need explicit lead approval and the required group heads-up. Shared output/schema, CLI, repetition-layout or provenance changes need an agreed producer/consumer contract before dependent implementations land. Record approval, migration and verification in the contract register. Do not invent incompatible private formats.
 
@@ -38,13 +38,15 @@ Map acceptance criteria to observable outcomes and evidence before editing. Buil
 
 ## 4. Preserve scientific meaning
 
-Consult the specification for details. Core invariants are two tasks, six labels, three repetitions 13/42/7, six conditions and 36 unique result keys on fixed real test sets. Each repetition separately generates zero-shot, few-shot and AugGPT data; reshuffling one corpus is insufficient. Record actual generation provenance; setting seeds alone does not prove statistical independence.
+Read ADR0012, the current specification and docs/SCOPE_MIGRATION.md. Current invariants: two tasks, six labels, seed13 only, six conditions, twelve result keys on fixed official tests.
 
-Target 100 per label; the pilot-timed uniform fallback is 60 before full generation. C4 is half real/half few-shot. C5a has ten real examples per label; C5b uses six valid distinct paraphrases of each exact source. Exact completeness, identity and source checks precede training. Apply the recorded 180-example audit and two-clear-errors investigation trigger. Frozen data changes need explicit approval and affected-result reruns.
+C1–C4=30/label (180/task), C4=15 real+15 few-shot/label; C5a=60 exact sources; C5b=420, six valid distinct paraphrases/source. Use the exact scope30-v1 selection rule/derived manifests for excess output; never truncate originals or falsify sidecars. Use fresh results storage to avoid stale-key skipping. Counts, identity, test exclusion and quality gates precede acceptance/training.
 
-Collect human annotation separately; Hementh finishes his own before combining others. Never auto-fill or alter judgments to improve agreement. Calculate C2/C3 gaps against matching C1 within repetitions, then mean/std. Equal classifier input sizes do not mean equal labeling cost. Findings compare tasks; they cannot establish subjectivity as the cause.
+Review ten examples/task/setting: six batches/60 total with the retained two-clear-errors investigation trigger. Model-assisted review must disclose identity/method/limitations. No independent-human annotation, distribution, external sharing or alpha gate remains; never fabricate humans or model-as-human agreement.
 
-Never invent model IDs, accepted counts, measured failure rates, approvals, human setup confirmations, experiment results or submission evidence. Ask for unresolved scientific choices such as zero-baseline handling rather than silently choosing a convenient value.
+C2/C3 gaps match same-task seed13 C1. Single-run values only, no repetition SD, zero uncertainty bars or significance claims. Missing C1 blocks analysis; C1=0 gives undefined relative gap plus absolute difference. Equal C1–C4 input counts do not imply equal labeling costs. Task comparison does not establish subjectivity as cause.
+
+Never invent model IDs, accepted counts, measured failure rates, approvals, human setup confirmations, experiment results or submission evidence. Apply recorded scientific decisions and ask only about unresolved choices.
 
 ## 5. Verify and review
 
@@ -60,7 +62,7 @@ Open a PR using the repository template. Include the issue, owner, behavior, acc
 
 The lead or explicitly authorized integrator checks acceptance evidence and required approvals, verifies CI at the current head, and merges with a merge commit. Agents leave PRs open unless explicitly authorized to integrate. Do not bypass branch protection or claim it exists without checking. A model's own approval and CI are not substitutes for required human approval.
 
-After merge, verify main and issue state. Leave an issue open if tests on teammates' computers, real runs, audits or submission evidence remain missing. Merged code does not establish that an experiment ran.
+After merge, verify main and issue state. Leave an issue open while revised acceptance criteria, real runs, quality checks or required submission evidence remain missing. Removed teammate/annotation/sharing gates do not block completion. Merged code does not establish that an experiment ran.
 
 Post a durable handoff on the issue: PR/commit, acceptance evidence, tests, data/contract versions, limitations, newly unblocked work and next owner. Update affected spec, glossary, decisions and contracts. Do not rewrite the parent specification issue merely to record child progress. GitHub issues, PRs and repository documents must allow a different model to continue without this chat.
 
