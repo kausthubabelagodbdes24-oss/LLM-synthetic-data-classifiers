@@ -10,7 +10,7 @@ Authority: [ADR0012](adr/0012-eod-exploratory-30-seed13.md), explicitly approved
 |#6 closed|Reuse accepted Qwen identity/prompts/pilot;100 target superseded, full quality gate still needed.|
 |#7|Four baseline keys; C1=180,C5a=60; rerun affected old baselines in fresh results.|
 |#8|Repository report skeleton/optional tools; no distribution/external-document gate.|
-|#9|Two seed13 AugGPT artifacts;360 paraphrases/task, six per each of60 sources.|
+|#9|Two seed13 AugGPT artifacts;360 paraphrases/task, six per each of60 sources. TREC is regenerated under [ADR0013](adr/0013-trec-auggpt-answer-type.md) (candidate, then reviewed promotion; original preserved).|
 |#10|Four selected seed13 zero/few-shot artifacts;30/label, derived selection manifests.|
 |#11|Disclosed model-assisted content review:ten/task/setting,60 total; no alpha/humans.|
 |#12|Resolve review flags, validate exact selected counts/provenance and freeze manifests.|

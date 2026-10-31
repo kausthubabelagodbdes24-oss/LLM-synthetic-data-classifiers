@@ -9,6 +9,9 @@ After that everything runs offline.
     python -m ws1_generation.generate --setting zero_shot --dry-run          # fake model, for testing
     python -m ws1_generation.generate --setting auggpt --seed all            # six paraphrases per exact source
     python -m ws1_generation.generate --setting auggpt --seed all --verify   # fail-closed AugGPT handoff check
+    python -m ws1_generation.generate --setting auggpt --task trec --seed 13 --candidate           # ADR 0013
+    python -m ws1_generation.generate --setting auggpt --task trec --seed 13 --candidate --verify
+    python -m ws1_generation.generate --setting auggpt --task trec --seed 13 --verify --historical
 
 Resumable: stop it any time and run the same command again; resume is isolated to task x setting x repetition.
 Writes real output under data/synthetic/ and --dry-run fixtures under data/synthetic-fixtures/.
@@ -125,6 +128,65 @@ def auggpt_prompt(text, k, max_words):
     if len(text.split()) > max_words:
         return prompt_auggpt_length_guard(text, k, max_words)
     return prompt_auggpt(text, k)
+
+
+# TREC answer-type correction (ADR 0013, lead decision 31 Oct 2026). The issue #11 round-1 review
+# found TREC paraphrases that changed the question's expected answer type, i.e. its label. For the
+# listed task and repetitions this prompt replaces prompt_auggpt and the length guard for every
+# source. auggpt_prompt and prompt_auggpt above stay byte-identical so Emotion's identity is unchanged.
+TREC_ANSWER_TYPE_VERSION = "auggpt-trec-answer-type-v1"
+AUGGPT_CORRECTIONS = {
+    "trec": {"version": TREC_ANSWER_TYPE_VERSION, "seeds": (13,), "decision": "docs/adr/0013-trec-auggpt-answer-type.md"},
+}
+
+
+def prompt_auggpt_trec_answer_type(text, k, label, definition, max_words):
+    label_rule = {
+        "abbreviation": "If it asks what an abbreviation or acronym stands for, every rephrasing must still "
+                        "ask what it stands for (its expansion), not for a definition, meaning or explanation "
+                        "of the thing. If it asks for the abbreviation of something, every rephrasing must "
+                        "still ask for that abbreviation.",
+        "description": "Every rephrasing must remain a question asking for an explanation, definition, "
+                       "reason or how something is done, never one whose answer is a name, person, place, "
+                       "number or event.",
+    }.get(label, f"Every rephrasing must still expect this kind of answer: {definition}.")
+    return (f"Please rephrase the following question {k} different ways:\n"
+            f"{json.dumps(text)}\n"
+            f'Its answer-type label is "{label}", meaning: {definition}.\n'
+            "Every rephrasing must keep the same expected answer type, so it keeps this label. "
+            f"{label_rule}\n"
+            "Keep the same facts and relationships between them, the same entities and participants "
+            "(who did what to whom), any negation, and the same intent.\n"
+            "Each rephrasing must be a question or request for information. Do not answer the question, "
+            "and do not add facts, names, dates or details that are not in it.\n"
+            f"Each rephrasing must be at most {max_words} words; if the question is longer, word it more "
+            "concisely without dropping any of its facts.\n"
+            'Reply only with JSON: {"examples": ["...", "..."]}')
+
+
+def auggpt_correction(task, seed):
+    """The approved prompt correction for this task x repetition, or None."""
+    correction = AUGGPT_CORRECTIONS.get(task)
+    return correction if correction and seed in correction["seeds"] else None
+
+
+def auggpt_prompt_for(task, seed, source_row, k):
+    """Route one source to its AugGPT prompt: the corrected TREC prompt, else auggpt_prompt."""
+    max_words = CFG["tasks"][task]["max_words"]
+    if auggpt_correction(task, seed):
+        label = source_row["label"]
+        return prompt_auggpt_trec_answer_type(
+            source_row["text"], k, label, CFG["tasks"][task]["labels"][label], max_words)
+    return auggpt_prompt(source_row["text"], k, max_words)
+
+
+def auggpt_candidate_path(task, seed, mode="real"):
+    """Isolated location for a corrected artifact before promotion; the active file is untouched."""
+    correction = auggpt_correction(task, seed)
+    if correction is None:
+        raise ValueError(f"no approved AugGPT correction for {task} seed {seed}")
+    active = synth_path(task, "auggpt", seed=seed, mode=mode)
+    return active.parent / "candidates" / correction["version"] / active.name
 
 
 # ---------------- model & reply parsing ----------------
@@ -956,6 +1018,37 @@ def auggpt_carried_forward_identities(task, seed, mode, model_identity, sources,
     return {} if legacy_fp == fingerprint else {legacy_fp: legacy}
 
 
+def auggpt_identity(task, seed, mode, model_identity, sources, historical=False):
+    """Resolve (identity, fingerprint, test_rows, carried_forward, correction) for one artifact.
+
+    Without a correction this is the length-guard identity with its pre-guard predecessor carried
+    forward. With a correction (ADR 0013) the identity adds the corrected prompt and carries nothing
+    forward, so rows made under either earlier identity are rejected. historical=True resolves the
+    superseded identities, for reading preserved evidence; such an artifact is never corrected output.
+    """
+    identity, fingerprint, test_rows = auggpt_generation_identity(task, seed, mode, model_identity, sources)
+    correction = None if historical else auggpt_correction(task, seed)
+    if correction is None:
+        carried = auggpt_carried_forward_identities(
+            task, seed, mode, model_identity, sources, test_rows, fingerprint)
+        return identity, fingerprint, test_rows, carried, None
+    task_cfg = CFG["tasks"][task]
+    extension = {
+        "version": correction["version"],
+        "decision": correction["decision"],
+        "applies_when": "every source of this task and repetition",
+        "replaces": ["prompt_auggpt", AUGGPT_LENGTH_GUARD_VERSION],
+        "label_definitions": task_cfg["labels"],
+        "max_words": task_cfg["max_words"],
+        "template_sha256": hashlib.sha256(
+            inspect.getsource(prompt_auggpt_trec_answer_type).encode("utf-8")).hexdigest(),
+        "selector_sha256": hashlib.sha256(inspect.getsource(auggpt_prompt_for).encode("utf-8")).hexdigest(),
+        "carry_forward": "none",
+    }
+    corrected = {**identity, "prompt_extensions": {"trec_answer_type": extension}}
+    return corrected, _identity_hash(corrected), test_rows, {}, correction
+
+
 def check_carried_forward_record(path, provenance, rows, fingerprint, carried_forward):
     """Require the sidecar's carried_forward_identities to describe exactly the rows' identities.
 
@@ -995,30 +1088,41 @@ def check_carried_forward_record(path, provenance, rows, fingerprint, carried_fo
         raise ValueError(f"{problem} does not match the rows: recorded {listed}, rows have {expected}")
 
 
-def generate_auggpt(task, fake, seed=None):
+def generate_auggpt(task, fake, seed=None, candidate=False):
     """Generate provenance-checked AugGPT paraphrases for this repetition's exact sources.
 
     Each source resumes until it has auggpt_k valid paraphrases; a partially populated source
     is never treated as complete. Batches use the same write-ahead journal and atomic sidecar
     checkpoint as zero/few-shot generation, so interruption cannot inflate counts.
+
+    candidate=True writes a corrected artifact (ADR 0013) to auggpt_candidate_path and never
+    touches the active artifact; promote_auggpt replaces the active artifact after review.
     """
     started_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
     started_clock = time.perf_counter()
     run_id = str(uuid.uuid4())
     mode = "fake" if fake else "real"
+    correction = auggpt_correction(task, seed)
+    as_candidate = bool(candidate)  # the loop below reuses the name "candidate"
+    # Fail on the wrong location before resolving the model or touching any file.
+    if as_candidate:
+        path = auggpt_candidate_path(task, seed, mode)
+    elif correction is not None and mode == "real":
+        raise ValueError(
+            f"{task} auggpt seed {seed} has the approved correction {correction['version']}: generate it with "
+            "--candidate and promote it with ws1_generation.promote_auggpt; the active artifact is not "
+            "generated in place")
+    else:
+        path = synth_path(task, "auggpt", seed=seed, mode=mode)
     model_identity = dict(FIXTURE_MODEL_IDENTITY) if fake else resolve_model_identity()
     # Refuse an unapproved generator before any model call or write.
     require_approved_model(model_identity, mode)
-    path = synth_path(task, "auggpt", seed=seed, mode=mode)
 
     sources = load_auggpt_sources(task, seed)
     if not sources:
         raise SystemExit(f"No lowres_seed*.jsonl for {task}: run ws2_training.prepare_data first.")
-    generation_identity, fingerprint, test_rows = auggpt_generation_identity(
+    generation_identity, fingerprint, test_rows, carried_forward, correction = auggpt_identity(
         task, seed, mode, model_identity, sources
-    )
-    carried_forward = auggpt_carried_forward_identities(
-        task, seed, mode, model_identity, sources, test_rows, fingerprint
     )
     existing = recover_labelled_journal(path, generation_identity, fingerprint, carried_forward)
     rows_before = len(existing)
@@ -1085,6 +1189,12 @@ def generate_auggpt(task, fake, seed=None):
                 for old_fp, old_identity in carried_forward.items()
                 if any(row["generation_fingerprint"] == old_fp for row in rows_snapshot)
             ],
+            **({"prompt_correction": {
+                "version": correction["version"],
+                "decision": correction["decision"],
+                "generated_as": "candidate" if as_candidate else "active",
+                "supersedes_active_artifact": synth_path(task, "auggpt", seed=seed, mode=mode).name,
+            }} if correction else {}),
             "temperature": CFG.get("temperature") if not fake else None,
             "target_per_source": CFG["auggpt_k"],
             "source_count": len(sources),
@@ -1106,8 +1216,7 @@ def generate_auggpt(task, fake, seed=None):
             attempts += 1
             try:
                 candidates = ask(
-                    auggpt_prompt(source_row["text"], CFG["auggpt_k"] - have,
-                                  CFG["tasks"][task]["max_words"]),
+                    auggpt_prompt_for(task, seed, source_row, CFG["auggpt_k"] - have),
                     fake,
                     max_words=CFG["tasks"][task]["max_words"],
                     stats=stats,
@@ -1156,14 +1265,133 @@ def generate_auggpt(task, fake, seed=None):
     status = "no_op" if stats["accepted_new"] == 0 and complete else ("complete" if complete else "incomplete")
     provenance["sessions"][-1]["status"] = status
     atomic_write_json(prov_path, provenance)
-    print(f"  {task} auggpt (seed={seed}): {len(sources)} source examples, {len(existing)} paraphrases; "
+    where = f" CANDIDATE {correction['version']} at {path}" if as_candidate else ""
+    print(f"  {task} auggpt (seed={seed}){where}: {len(sources)} source examples, {len(existing)} paraphrases; "
           f"complete={complete}")
     if not complete:
         print(f"    {len(provenance['incomplete_source_ids'])} incomplete sources: rerun the same command to resume")
     return existing, provenance
 
 
-def verify_auggpt(task, seed, mode="real"):
+def promotion_record_path(task, seed, mode="real"):
+    return synth_path(task, "auggpt", seed=seed, mode=mode).with_suffix(".promotion.json")
+
+
+def auggpt_superseded_path(task, seed, mode="real"):
+    """Where promotion preserves the pre-correction original, byte-for-byte."""
+    correction = auggpt_correction(task, seed)
+    if correction is None:
+        raise ValueError(f"no approved AugGPT correction for {task} seed {seed}")
+    active = synth_path(task, "auggpt", seed=seed, mode=mode)
+    return active.parent / "superseded" / correction["version"] / active.name
+
+
+PROMOTION_RECORD_SCHEMA_VERSION = 1
+_SHA256_HEX = re.compile(r"[0-9a-f]{64}")
+
+
+def check_promotion_record(task, seed, mode="real", fingerprint=None):
+    """Fail closed unless a complete ADR 0013 promotion record matches every file it names.
+
+    Hash-level only: it never re-verifies artifacts, so verify_auggpt (active path) and
+    promote_auggpt.verify_promotion can both call it without recursion. Checks the record's schema,
+    status, task/repetition/mode and correction, then the active JSONL/sidecar, the preserved
+    original and the retained candidate against the recorded SHA-256 values. Read-only.
+    """
+    correction = auggpt_correction(task, seed)
+    if correction is None:
+        raise ValueError(f"no approved AugGPT correction for {task} seed {seed}")
+    active = synth_path(task, "auggpt", seed=seed, mode=mode)
+    record_path = promotion_record_path(task, seed, mode)
+    problem = f"{active}: promotion record {record_path.name}"
+    if not record_path.exists():
+        raise ValueError(f"{problem} is missing; corrected output at the active path must come from a "
+                         "completed, reviewed promotion (ws1_generation.promote_auggpt)")
+    raw = record_path.read_bytes()
+    try:
+        record = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"{problem} is malformed: not valid JSON") from exc
+
+    def field(*keys):
+        value = record
+        for key in keys:
+            if not isinstance(value, dict) or key not in value:
+                raise ValueError(f"{problem} is malformed: missing {'.'.join(keys)}")
+            value = value[key]
+        return value
+
+    def sha_field(*keys):
+        """Shared validator for file hashes and generation fingerprints (both SHA-256 hex)."""
+        value = field(*keys)
+        if not isinstance(value, str) or not _SHA256_HEX.fullmatch(value):
+            raise ValueError(f"{problem} is malformed: {'.'.join(keys)} is not a SHA-256 hex digest "
+                             f"(lowercase, 64 hex characters); got {type(value).__name__}")
+        return value
+
+    if not isinstance(record, dict) or record.get("schema_version") != PROMOTION_RECORD_SCHEMA_VERSION:
+        raise ValueError(f"{problem} is malformed: schema_version is not {PROMOTION_RECORD_SCHEMA_VERSION}")
+    if field("status") != "complete":
+        raise ValueError(f"{problem} has status {record['status']!r}, not 'complete'; rerun --promote")
+    if (field("task"), field("repetition"), field("generation_mode")) != (task, seed, mode):
+        raise ValueError(f"{problem} names another task, repetition or mode")
+    if field("correction") != correction["version"] or field("decision") != correction["decision"]:
+        raise ValueError(f"{problem} does not identify {correction['version']} ({correction['decision']})")
+    hashes = {
+        name: sha_field(*keys) for name, keys in {
+            "original artifact": ("original", "artifact", "sha256"),
+            "original provenance": ("original", "provenance", "sha256"),
+            "candidate artifact": ("candidate", "artifact", "sha256"),
+            "candidate provenance": ("candidate", "provenance", "sha256"),
+            "promoted artifact": ("promoted", "artifact", "sha256"),
+            "promoted provenance": ("promoted", "provenance", "sha256"),
+        }.items()
+    }
+    if (hashes["promoted artifact"], hashes["promoted provenance"]) != (
+            hashes["candidate artifact"], hashes["candidate provenance"]):
+        raise ValueError(f"{problem}: promoted hashes differ from the candidate hashes")
+    if hashes["original artifact"] == hashes["candidate artifact"]:
+        raise ValueError(f"{problem}: original and candidate hashes are identical")
+    # Validate every fingerprint's type and form before any comparison, so a malformed record
+    # (list, object, null, ...) fails as a controlled ValueError rather than a TypeError.
+    fps = {part: sha_field(part, "generation_fingerprint") for part in ("original", "candidate", "promoted")}
+    if fps["candidate"] != fps["promoted"]:
+        raise ValueError(f"{problem}: candidate and promoted fingerprints differ")
+    if fingerprint is not None and fps["promoted"] != fingerprint:
+        raise ValueError(f"{problem}: recorded fingerprints do not match the corrected identity")
+    if fps["original"] == fps["promoted"]:
+        raise ValueError(f"{problem}: the original is recorded under the corrected identity")
+
+    archive = auggpt_superseded_path(task, seed, mode)
+    candidate = auggpt_candidate_path(task, seed, mode)
+    files = (
+        ("active artifact", active, hashes["promoted artifact"]),
+        ("active provenance", active.with_suffix(".provenance.json"), hashes["promoted provenance"]),
+        ("preserved original artifact", archive, hashes["original artifact"]),
+        ("preserved original provenance", archive.with_suffix(".provenance.json"), hashes["original provenance"]),
+        ("retained candidate artifact", candidate, hashes["candidate artifact"]),
+        ("retained candidate provenance", candidate.with_suffix(".provenance.json"), hashes["candidate provenance"]),
+    )
+    for name, file_path, expected in files:
+        if not file_path.exists():
+            raise ValueError(f"{problem}: {name} {file_path} is missing")
+        if hashlib.sha256(file_path.read_bytes()).hexdigest() != expected:
+            raise ValueError(f"{problem}: {name} {file_path} does not match the promotion record")
+    return {
+        "path": record_path.name,
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "status": "complete",
+        "correction": correction["version"],
+        "decision": correction["decision"],
+        "original_artifact_sha256": hashes["original artifact"],
+        "original_provenance_sha256": hashes["original provenance"],
+        "original_generation_fingerprint": fps["original"],
+        "preserved_original_path": archive.relative_to(active.parent).as_posix(),
+        "candidate_artifact_sha256": hashes["candidate artifact"],
+    }
+
+
+def verify_auggpt(task, seed, mode="real", path=None, historical=False):
     """Fail-closed, read-only handoff check for one task x repetition AugGPT artifact.
 
     Requires the recorded model to be the approved generator (APPROVED_GENERATORS / ADR 0011) for
@@ -1172,10 +1400,17 @@ def verify_auggpt(task, seed, mode="real"):
     overlap) and requires auggpt_k paraphrases for every source of an exact lowres_seed<seed> sample.
     Raises ValueError on any problem; never writes or repairs data. Fake results are never
     real-run evidence.
+
+    path selects another copy of the artifact (a candidate or a preserved original). Where an ADR
+    0013 correction applies, only the corrected identity passes unless historical=True, which reads
+    preserved pre-correction evidence and reports it as corrected_output=False. Corrected output at
+    the active path additionally requires check_promotion_record; other paths (the isolated
+    candidate) need no record.
     """
     if seed is None:
         raise ValueError("AugGPT verification requires a repetition seed")
-    path = synth_path(task, "auggpt", seed=seed, mode=mode)
+    active_path = synth_path(task, "auggpt", seed=seed, mode=mode)
+    path = Path(path) if path is not None else active_path
     prov_path = path.with_suffix(".provenance.json")
     if generation_journal_path(path).exists():
         raise ValueError(f"{path}: unrecovered interrupted batch; rerun generation to recover it")
@@ -1197,10 +1432,15 @@ def verify_auggpt(task, seed, mode="real"):
     if any(count != expected for count in label_counts.values()) or len(sources) != expected * len(labels(task)):
         raise ValueError(f"{task} seed {seed}: low-resource sample is not exactly {expected} per label: {label_counts}")
 
-    identity, fingerprint, test_rows = auggpt_generation_identity(task, seed, mode, model_identity, sources)
-    carried_forward = auggpt_carried_forward_identities(
-        task, seed, mode, model_identity, sources, test_rows, fingerprint
-    )
+    identity, fingerprint, test_rows, carried_forward, correction = auggpt_identity(
+        task, seed, mode, model_identity, sources, historical=historical)
+    if correction is not None and recorded.get("generation_fingerprint") != fingerprint:
+        superseded = auggpt_identity(task, seed, mode, model_identity, sources, historical=True)
+        if recorded.get("generation_fingerprint") in {superseded[1], *superseded[3]}:
+            raise ValueError(
+                f"{path}: recorded under an identity superseded by {correction['version']} "
+                f"({correction['decision']}); it is not corrected output. Read it with --historical; "
+                "generate a --candidate and promote it with ws1_generation.promote_auggpt")
     rows = read_generation_rows(path)
     validate_existing_auggpt_rows(
         rows, path, task, seed, mode, fingerprint, sources, test_rows, carried_forward
@@ -1214,12 +1454,29 @@ def verify_auggpt(task, seed, mode="real"):
                          f"{dict(list(short.items())[:5])}")
     if provenance.get("counts_by_source") != counts or provenance.get("is_complete") is not True:
         raise ValueError(f"{path}: provenance completeness does not match the rows")
+    if correction is not None and any(row["generation_fingerprint"] != fingerprint for row in rows):
+        raise ValueError(f"{path}: rows from another identity in a corrected artifact")  # defensive
+    applicable = auggpt_correction(task, seed)
+    promotion = None
+    if correction is not None and path.resolve() == active_path.resolve():
+        # Corrected output only counts at the active path after a complete, hash-consistent
+        # promotion; a copied candidate or a half-finished promotion fails here.
+        promotion = check_promotion_record(task, seed, mode, fingerprint)
+    artifact_bytes = path.read_bytes()
     return {
         "task": task,
         "repetition": seed,
         "generation_mode": mode,
         "real_run_evidence": mode == "real",
         "path": str(path),
+        "artifact_sha256": hashlib.sha256(artifact_bytes).hexdigest(),
+        "artifact_bytes": len(artifact_bytes),
+        "provenance_sha256": hashlib.sha256(prov_path.read_bytes()).hexdigest(),
+        # Which prompt correction (ADR 0013) the rows were made under, if any.
+        "prompt_correction": correction["version"] if correction else None,
+        "historical_identity": bool(historical and applicable),
+        "corrected_output": None if applicable is None else correction is not None,
+        "promotion_record": promotion,
         "source_count": len(sources),
         "total_count": len(rows),
         "model_identity": model_identity,
@@ -1263,7 +1520,21 @@ def main(argv=None):
     ap.add_argument("--inspect", action="store_true", help="inspect sample pilot rows across tasks/settings")
     ap.add_argument("--verify", action="store_true",
                     help="fail-closed AugGPT completeness/provenance check (with --setting auggpt --seed)")
+    ap.add_argument("--candidate", action="store_true",
+                    help="AugGPT with an approved correction (ADR 0013): generate or verify the isolated "
+                         "candidate artifact instead of the active one")
+    ap.add_argument("--historical", action="store_true",
+                    help="with --verify: read a pre-correction artifact under its superseded identity "
+                         "(evidence only; never corrected output)")
     args = ap.parse_args(argv)
+
+    if args.candidate or args.historical:
+        if args.setting != "auggpt" or args.task == "all" or args.seed in (None, "all"):
+            ap.error("--candidate/--historical need --setting auggpt with one --task and one --seed")
+        if auggpt_correction(args.task, int(args.seed)) is None:
+            ap.error(f"no approved AugGPT correction for {args.task} seed {args.seed}")
+        if args.historical and (args.candidate or not args.verify):
+            ap.error("--historical is a read-only --verify mode for the active artifact")
 
     if args.smoke_ollama:
         print("Checking Ollama service and model status...")
@@ -1294,9 +1565,16 @@ def main(argv=None):
         failures = 0
         for seed in verify_seeds:
             for task in TASKS if args.task == "all" else [args.task]:
+                mode = "fake" if args.dry_run else "real"
                 try:
-                    summary = verify_auggpt(task, seed, mode="fake" if args.dry_run else "real")
+                    summary = verify_auggpt(
+                        task, seed, mode=mode, historical=args.historical,
+                        path=auggpt_candidate_path(task, seed, mode) if args.candidate else None)
                     note = "" if summary["real_run_evidence"] else " (FAKE fixture; not real-run evidence)"
+                    if args.candidate:
+                        note += " CANDIDATE (not promoted by this check)"
+                    if summary["historical_identity"]:
+                        note += " HISTORICAL superseded identity (not corrected output)"
                     print(f"PASS{note} {task} auggpt seed {seed}: {json.dumps(summary)}")
                 except ValueError as exc:
                     failures += 1
@@ -1326,7 +1604,7 @@ def main(argv=None):
         for task in tasks_to_run:
             for setting in settings_to_run:
                 if setting == "auggpt":
-                    generate_auggpt(task, args.dry_run, seed=seed)
+                    generate_auggpt(task, args.dry_run, seed=seed, candidate=args.candidate)
                 else:
                     generate_labelled(task, setting, target, args.dry_run, seed=seed)
 
