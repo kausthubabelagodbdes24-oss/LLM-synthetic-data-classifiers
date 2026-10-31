@@ -1,0 +1,51 @@
+{
+  "adjudicated_rows": 12,
+  "adjudication_file": "targeted_long_sources_adjudication_2026-11-01.json",
+  "adjudication_sha256": "558d862b87159dc94bd06b8c59a12fbd4dafe82f6ef93e8da51bc029f89133aa",
+  "by_source": {
+    "emotion.train.07790": {
+      "changed_from_original": [
+        "emotion.train.07790.seed13.aug1",
+        "emotion.train.07790.seed13.aug2",
+        "emotion.train.07790.seed13.aug3",
+        "emotion.train.07790.seed13.aug4",
+        "emotion.train.07790.seed13.aug5",
+        "emotion.train.07790.seed13.aug6"
+      ],
+      "clear_errors": [
+        "emotion.train.07790.seed13.aug1",
+        "emotion.train.07790.seed13.aug2",
+        "emotion.train.07790.seed13.aug3",
+        "emotion.train.07790.seed13.aug4",
+        "emotion.train.07790.seed13.aug5",
+        "emotion.train.07790.seed13.aug6"
+      ],
+      "rows": 6
+    },
+    "emotion.train.15223": {
+      "changed_from_original": [
+        "emotion.train.15223.seed13.aug1",
+        "emotion.train.15223.seed13.aug2",
+        "emotion.train.15223.seed13.aug3",
+        "emotion.train.15223.seed13.aug4",
+        "emotion.train.15223.seed13.aug5",
+        "emotion.train.15223.seed13.aug6"
+      ],
+      "clear_errors": [
+        "emotion.train.15223.seed13.aug1",
+        "emotion.train.15223.seed13.aug2",
+        "emotion.train.15223.seed13.aug3",
+        "emotion.train.15223.seed13.aug4",
+        "emotion.train.15223.seed13.aug5",
+        "emotion.train.15223.seed13.aug6"
+      ],
+      "rows": 6
+    }
+  },
+  "clear_errors": 12,
+  "counts_toward_required_random_60": false,
+  "note": "Supersedes the listed targeted judgments for these rows only; originals are preserved.",
+  "review_id": "issue11-targeted-adjudication-v1",
+  "targeted_judgments_sha256": "1a5102148bc84b013c3d3b154516f0cd096ed860b7f4be9fe37b386f247033ed",
+  "targeted_sample_sha256": "8d61c9e8dd01a93c908611572b059037a2403270891d3f7d4b8c963513a7eec7"
+}

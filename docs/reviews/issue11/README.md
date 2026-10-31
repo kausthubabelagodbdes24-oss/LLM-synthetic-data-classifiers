@@ -87,12 +87,79 @@ Files: `targeted_long_sources_{sample,judgments,outcome}.json`.
 - **Blocked:** trec/auggpt (FLAGGED). Needs a producer correction in #9 and a fresh round-2 review that passes.
 - **Unresolved flags to weigh before freeze:** the ambiguous IDs listed above; the emotion/auggpt style mismatch and inherited weak source labels; the targeted-check distortions in `07790` and `15223`; the explicit-emotion-word frames in emotion zero-shot; the 18-text TREC overlap.
 
+## Round 2 and appended records (1 November 2026)
+
+Everything above records round 1 and is unchanged. The round-1, targeted sample, judgment and outcome files are byte-identical. `check --round 1` now reports `inputs changed since sampling (batches ['trec/auggpt'])`. That is expected: the round stays bound to the superseded original `4711ebe6…`, which is preserved under `synthetic/trec/superseded/auggpt-trec-answer-type-v2/`.
+
+The reviewer is the same as for round 1: model-assisted Claude Opus 5.5 (`claude-opus-5-5`), with no exact snapshot ID. It is the same model family that wrote the tooling and drew the samples, and there was one judgment per item and no human review. The judgments were written on 2026-11-01.
+
+**Input (verified read-only).** The corrected and promoted `synthetic/trec/auggpt_seed13.jsonl` has SHA-256 `cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07`. Its sidecar is `756b90b75c6b6deb3fc3183a3d8f69bc2e73631ac55f4b6f53192a34532bb0a4`, and all 360 rows carry fingerprint `c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56` (`auggpt-trec-answer-type-v2`, `corrected_output: true`). The promotion record is `89487383ddc3159d1b720140d1d7a1eb44160c8f81abccfb5446308115ec23ad`. `promote_auggpt --verify-promotion` and `generate --setting auggpt --seed 13 --verify` (2/2) pass. Emotion is unchanged at `59b2a6fb…`.
+
+**Binding (sample schema 2).** Corrected rows reuse superseded row IDs (ADR 0013), so each round-2 and re-check item carries a `binding`: artifact SHA-256, generation fingerprint, row ID, text SHA-256 and exact source-text SHA-256. Every judgment must repeat that binding exactly. `check` and `check-recheck` reject any mismatch.
+
+### Round 2: fresh random audit of `trec/auggpt` only (counts toward the trigger)
+
+- The same `issue11-quality-v1` hash rule (`round2`) is restricted to the flagged batch (`sample --round 2 --batch trec/auggpt`).
+- The 10 round-1 IDs are excluded, leaving 350 eligible rows. The 10 drawn IDs are in `round2_sample.json`.
+- Result: **1 clear error, 3 ambiguous (all `partially_changed`), outcome PASS** (1 < 2, below the trigger).
+  - `02857.aug2` drops "special"/"name of".
+  - `00607.aug1` adds "origins".
+  - `02740.aug3` garbles the expansion request into "what abbreviation does A&W represent".
+- Clear error: `04163.aug4` changes the named entity "Hot Wheels" to "Hot and Wheels" (`source_meaning: changed`). It was first recorded as `partially_changed` at head `3d64bcd`. Lead review 5724372746 (PR #31) required the reclassification, because a changed named entity is a source-meaning change. That earlier judgment remains in git history.
+- Two rows are unnatural (`04163.aug4`, `02740.aug3`).
+- Hashes:
+  - sample `1e9fccf8af297db5b33f958d56992d663a24379025750739cf1ee9e688835ef7`
+  - judgments `95510f9401ffc3c6ff0669bceb0379e593d09c5458fd6a06a1eb142e51062e71`
+  - outcome `d672529f7feb81eb28968f42cb4473ff2cc8553b8f2a38b3ee78278f7051a55b`
+
+### Targeted re-check of all 10 round-1 `trec/auggpt` IDs (outside the random denominator; no trigger)
+
+- `recheck --round 2` derives the IDs from `round1_sample.json` and the FLAGGED batches in `round1_outcome.json`, not from a choice made now.
+- Each item binds the corrected row and also records its round-1 binding: original artifact `4711ebe6…`, old fingerprint and old text hash.
+- Results for the two known failures:
+  - `trec.train.04257.seed13.aug5` is **resolved**. It now asks what SAP is expanded into, so it stays abbreviation.
+  - `trec.train.00845.seed13.aug3` is **not resolved**. It now asks "what specific incident" D.B. Cooper's identity refers to. That expects an event (entity), while the source is description. It repeats the confirmed round-1 failure and is a clear error.
+- The other 8 have no clear error. `04163.aug5` is partially changed: "history" narrows to how the cars were created.
+- Hashes:
+  - sample `2b807110f5b909a402039646114e89d6b2569cd0148115f3ea2185334607d3eb`
+  - judgments `acb2ef588b67220fee813d3f35ff66b8cfec5fcb80e38c6e9310b660edffafb7`
+  - outcome `aa7c20490673fb229af54509bb1c1277830fc764611b21bde07de50979e279c9`
+
+### Emotion targeted re-adjudication (appended; supplementary 54, not the random 60)
+
+- `targeted_long_sources_adjudication_2026-11-01.json` binds the preserved targeted sample (`8d61c9e8…`) and judgments by hash. It repeats each of the 12 original judgments unchanged under `original` and gives a complete rubric judgment under `adjudicated`. `check-adjudication` verifies all of this.
+- **All 12 are re-adjudicated as `source_meaning: changed`, i.e. clear errors:**
+  - `emotion.train.07790` ×6: the list of what the writer did becomes the husband's activities, so the agent is reversed.
+  - `emotion.train.15223` ×6: the third party's "he is strong" becomes the writer's own strength, so the subject is changed.
+- Retaining the Emotion label does not offset these propositional changes.
+- These 12 rows are outside the random 60. They change neither the round-1 `emotion/auggpt` PASS nor any trigger count. Per the lead's direction, confirmed material changes must be investigated and remedied before the #12 freeze.
+- Hashes:
+  - adjudication `558d862b87159dc94bd06b8c59a12fbd4dafe82f6ef93e8da51bc029f89133aa`
+  - outcome `8aa27fa5a5a3d957ab26176ef004c242b31fbb28484f86c2a1d0ec954dc8f4b9`
+
+### Handoff to #12 (updated)
+
+- **Random screen:**
+  - `trec/auggpt` round 2 is PASS (1/10 clear errors, below the two-error trigger).
+  - The other five batches keep their round-1 PASS.
+  - Model-assisted screening only; no acceptance or freeze is implied.
+- **Unresolved, for the lead to weigh before any freeze:**
+  1. `trec.train.00845.seed13.aug3` still changes the answer type (description → event/entity) after the ADR 0013 v2 correction. The other five paraphrases of `trec.train.00845` and other description sources with "what is X known for" frames were not reviewed here. A read-only scope check is recommended before deciding a remedy.
+  2. `emotion.train.07790` and `emotion.train.15223`: 12 confirmed clear errors in the supplementary check. They need an investigation and remedy decision for `emotion/auggpt` (e.g. regenerate or exclude these sources' paraphrases) before freeze. No change was made here.
+  3. Round-2 clear error `04163.aug4` ("Hot and Wheels" entity change; below the trigger, but a corrupted row in C5b) and the borderline `02740.aug3` (garbled expansion request).
+  4. All round-1 unresolved flags listed above.
+
 ## Reproduce
 
 ```cmd
 set SYNTHTEXT_DATA=C:\Users\Kausthuba Belagod\Documents\Synthtext\.ollama\pilot-qwen3-4b\data
 python -m ws3_evaluation.quality_review check --round 1      & rem re-verifies inputs; exit 2 = a batch is FLAGGED
 python -m ws3_evaluation.quality_review check-targeted
+python -m ws3_evaluation.quality_review check --round 2      & rem round 2 (trec/auggpt only); exit 0 = PASS
+python -m ws3_evaluation.quality_review check-recheck --round 2
+python -m ws3_evaluation.quality_review check-adjudication --adjudication docs\reviews\issue11\targeted_long_sources_adjudication_2026-11-01.json
 ```
+
+From 1 November, `check --round 1` exits 1 ("inputs changed", `trec/auggpt`) because round 1 is bound to the superseded original. The operator's local `run-issue11-round2-verify.bat` (kept beside the data root, not committed) runs every read-only check above.
 
 `sample` refuses to overwrite a recorded round with different content. `check` refuses to overwrite a recorded outcome, and blocks the review if any input hash or verifier result has changed.

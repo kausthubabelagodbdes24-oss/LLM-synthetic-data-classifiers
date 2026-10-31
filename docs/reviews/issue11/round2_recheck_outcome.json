@@ -1,0 +1,38 @@
+{
+  "batches": {
+    "trec/auggpt": {
+      "ambiguous_ids": [
+        "trec.train.04163.seed13.aug5"
+      ],
+      "clear_error_ids": [
+        "trec.train.00845.seed13.aug3"
+      ],
+      "known_clear_errors_now": {
+        "trec.train.00845.seed13.aug3": true,
+        "trec.train.04257.seed13.aug5": false
+      },
+      "rechecked": 10
+    }
+  },
+  "counts_toward_random_denominator": false,
+  "generation_mode": "real",
+  "judgments_sha256": "acb2ef588b67220fee813d3f35ff66b8cfec5fcb80e38c6e9310b660edffafb7",
+  "note": "Targeted re-check outside the random denominator; model-assisted, not human review.",
+  "real_run_evidence": true,
+  "review_id": "issue11-recheck-v1",
+  "reviewer": {
+    "exact_version": "unavailable: no snapshot/version identifier beyond the model ID is exposed to the session",
+    "human_review": false,
+    "interface": "Claude Code CLI session operated by @kausthubabelagodbdes24-oss",
+    "kind": "model-assisted",
+    "method": "single model pass over the local text packet (generated text, intended label, exact AugGPT source; re-check also shows the superseded round-1 text); judged against config.yaml label definitions and the ADR 0013 answer-type requirement; no self-consistency voting and no second reviewer. Same model family as the round-1 reviewer and as the implementing agent, so errors may be correlated.",
+    "model": "Claude Opus 5.5",
+    "model_id": "claude-opus-5-5",
+    "provider": "Anthropic",
+    "reviewed_on": "2026-11-01"
+  },
+  "round": 2,
+  "sample_sha256": "2b807110f5b909a402039646114e89d6b2569cd0148115f3ea2185334607d3eb",
+  "schema_version": 2,
+  "trigger_applies": false
+}
