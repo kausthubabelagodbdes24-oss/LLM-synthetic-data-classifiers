@@ -24,3 +24,23 @@ The #11 round-1 model-assisted review (PR #28) flagged `trec/auggpt_seed13`: 2 c
 ## Consequences
 
 The round-1 `trec/auggpt` judgments remain bound to the preserved original (`4711ebe6…`). After promotion, #11 must record a fresh round against the promoted artifact. The round-2 prior-ID exclusion is unchanged, so round 2 randomly samples 10 IDs different from round 1. Separately, the lead directed a targeted re-check of the two known erroneous IDs, preferably all 10 round-1 IDs, in their corrected form. That re-check stays outside the random-10 denominator. Fake-model tests show routing, identity, isolation, resume and preservation only. Whether real paraphrases keep their answer type is a question for that review. Other #11 findings (Emotion targeted distortions, ambiguity flags) are not addressed here.
+
+## Amendment 1 (31 October 2026): `auggpt-trec-answer-type-v2`, bounded corrected calls
+
+Status: **approved for the code change only.** Kausthuba, sole operator/project lead, chose this remedy directly in the Claude Code session on 31 October 2026 (IST), verbatim:
+
+> okay go ahead and Fix the cause in code (recommended) with a scoped PR: either cap the output length or turn off thinking for AugGPT calls; and/or clarify in the prompt that "Who is X?" questions keep the human label.
+
+The same provenance caveat as above applies (copied by the implementing model, Claude Opus 5.5). Generation, promotion, merging, freeze and training still each need a separate decision; none has occurred.
+
+**Context.** The operator generated the v1 candidate at merge `905175e1` in two runs. It stalled at 354/360: every call for source `trec.train.04056` (label `human`, a "Who is <named person>?" question) failed. Run 1 (19:59–21:42 IST): 90 calls, 5 call failures, 24 parse failures, 354 accepted. Run 2 (22:20–22:34 IST): 9 calls, 2 call failures (HTTP 500, 120 s read timeout), 7 parse failures, 0 accepted. The Ollama 0.40.13 log shows each such call filling the 4096-token context (`truncated = 1`) from a ~207-token prompt: the reply never terminates. Thinking was left at the model default and output length was uncapped, so nothing bounded the call. A plausible, unverified contributor is that the v1 `human` rule ("the answer is a person, group of people, organisation or title") does not fit a question asking *who someone is*. The v1 partial candidate stays untouched as evidence at `synthetic/trec/candidates/auggpt-trec-answer-type-v1/` (JSONL SHA-256 `febaf1ddbef5828b262ec609a3c684d2bd32c08fb8f3ed33bc87799fd6349533`, fingerprint `2f62b361e269918216efa5c5962cbf294e5b7a49b884895d3aa9253585eb24c1`); it is incomplete, is never promoted and is not readable under v2. The original active artifact (`4711ebe6e6918a99bb71a42d9987cfc37c9aa8596732746da95b35401336b76f`) and Emotion were unchanged throughout.
+
+**Decision (supersedes the v1 version name, paths and the "default thinking" item above; everything else above stands).**
+
+- Version `auggpt-trec-answer-type-v2`, still TREC seed 13 only.
+- Prompt: the v1 prompt plus a `human` rule: a question asking who a named person, group or organisation is must stay a who-question about that same referent and keep the `human` label (not become a definition, explanation or biography request); other `human` questions must still expect a person, group, organisation or title.
+- Bounded calls: every corrected call sends `"think": false` and `options.num_predict = 1024` (`AUGGPT_CORRECTION_REQUEST`, built by `ollama_payload`). Six ≤20-word questions in JSON need roughly 250 tokens, so the cap only stops runaway replies; a capped reply is unparseable and is retried like any parse failure. Timeout (120 s), retries, temperature 0.9, JSON format, parser and filters are unchanged. Calls for every other task and setting (Emotion, zero/few-shot, other TREC repetitions) send the byte-identical default body.
+- Identity: `prompt_extensions.trec_answer_type` additionally records `request` and `request_builder_sha256`, and the template hash changes with the new rule, so the v2 fingerprint differs from v1 and both pre-correction identities. Nothing is carried forward; v1 rows are rejected.
+- Paths: candidate `synthetic/trec/candidates/auggpt-trec-answer-type-v2/auggpt_seed13.jsonl`; on promotion the original is preserved under `synthetic/trec/superseded/auggpt-trec-answer-type-v2/`. The operator regenerates all 360 rows from scratch with the same `--candidate`, `--candidate --verify` and `--plan` commands.
+
+Whether thinking-off or the cap resolves `trec.train.04056` can only be shown by the operator's real run; fake-model tests show routing, identity and request wiring only.

@@ -134,9 +134,17 @@ def auggpt_prompt(text, k, max_words):
 # found TREC paraphrases that changed the question's expected answer type, i.e. its label. For the
 # listed task and repetitions this prompt replaces prompt_auggpt and the length guard for every
 # source. auggpt_prompt and prompt_auggpt above stay byte-identical so Emotion's identity is unchanged.
-TREC_ANSWER_TYPE_VERSION = "auggpt-trec-answer-type-v1"
+#
+# v2 (ADR 0013 amendment, 31 Oct 2026): the v1 candidate stalled at 354/360 because every call for
+# one "Who is <person>?" source ran until the 4096-token context was full (thinking left unbounded)
+# and then timed out, returned HTTP 500 or an unparseable reply. v2 adds the human-label rule below
+# and bounds every corrected call: thinking off and a fixed output-token cap (AUGGPT_CORRECTION_REQUEST).
+# Both are part of the correction identity. Calls for every other task/setting are unchanged.
+TREC_ANSWER_TYPE_VERSION = "auggpt-trec-answer-type-v2"
+AUGGPT_CORRECTION_REQUEST = {"think": False, "num_predict": 1024}
 AUGGPT_CORRECTIONS = {
-    "trec": {"version": TREC_ANSWER_TYPE_VERSION, "seeds": (13,), "decision": "docs/adr/0013-trec-auggpt-answer-type.md"},
+    "trec": {"version": TREC_ANSWER_TYPE_VERSION, "seeds": (13,), "decision": "docs/adr/0013-trec-auggpt-answer-type.md",
+             "request": AUGGPT_CORRECTION_REQUEST},
 }
 
 
@@ -149,6 +157,11 @@ def prompt_auggpt_trec_answer_type(text, k, label, definition, max_words):
         "description": "Every rephrasing must remain a question asking for an explanation, definition, "
                        "reason or how something is done, never one whose answer is a name, person, place, "
                        "number or event.",
+        "human": "If it asks who a named person, group or organisation is (for example \"Who is X ?\"), "
+                 "every rephrasing must still ask who that same person, group or organisation is; it keeps "
+                 "the human label, so do not turn it into a request for a definition, explanation or "
+                 "biography. Otherwise every rephrasing must still expect a person, group of people, "
+                 "organisation or title as its answer.",
     }.get(label, f"Every rephrasing must still expect this kind of answer: {definition}.")
     return (f"Please rephrase the following question {k} different ways:\n"
             f"{json.dumps(text)}\n"
@@ -191,15 +204,25 @@ def auggpt_candidate_path(task, seed, mode="real"):
 
 # ---------------- model & reply parsing ----------------
 
-def ask_ollama(prompt, timeout=120):
-    url = f"{CFG['ollama_url']}/api/chat"
-    r = requests.post(url, timeout=timeout, json={
+def ollama_payload(prompt, request=None):
+    """The /api/chat body. request=None gives the unchanged default body; a correction's request
+    (AUGGPT_CORRECTION_REQUEST) adds top-level "think" and an "options.num_predict" cap."""
+    payload = {
         "model": CFG["model"],
         "stream": False,
         "format": "json",
         "options": {"temperature": CFG["temperature"]},
         "messages": [{"role": "user", "content": prompt}]
-    })
+    }
+    if request is not None:
+        payload["think"] = request["think"]
+        payload["options"]["num_predict"] = request["num_predict"]
+    return payload
+
+
+def ask_ollama(prompt, timeout=120, request=None):
+    url = f"{CFG['ollama_url']}/api/chat"
+    r = requests.post(url, timeout=timeout, json=ollama_payload(prompt, request))
     r.raise_for_status()
     return r.json()["message"]["content"]
 
@@ -286,13 +309,15 @@ def parse(reply, max_words=None):
     return out
 
 
-def ask(prompt, fake, max_words=None, retries=3, stats=None):
-    """Query model with retries; handles connection failures and malformed output."""
+def ask(prompt, fake, max_words=None, retries=3, stats=None, request=None):
+    """Query model with retries; handles connection failures and malformed output.
+
+    request: a correction's bounded-call settings for ask_ollama (None keeps the default call)."""
     for attempt in range(1, retries + 1):
         if stats is not None:
             stats["calls"] += 1
         try:
-            raw = ask_fake(prompt) if fake else ask_ollama(prompt)
+            raw = ask_fake(prompt) if fake else ask_ollama(prompt, request=request)
         except requests.RequestException as e:
             if stats is not None:
                 stats["call_failures"] += 1
@@ -1043,6 +1068,8 @@ def auggpt_identity(task, seed, mode, model_identity, sources, historical=False)
         "template_sha256": hashlib.sha256(
             inspect.getsource(prompt_auggpt_trec_answer_type).encode("utf-8")).hexdigest(),
         "selector_sha256": hashlib.sha256(inspect.getsource(auggpt_prompt_for).encode("utf-8")).hexdigest(),
+        "request": dict(correction["request"]),
+        "request_builder_sha256": hashlib.sha256(inspect.getsource(ollama_payload).encode("utf-8")).hexdigest(),
         "carry_forward": "none",
     }
     corrected = {**identity, "prompt_extensions": {"trec_answer_type": extension}}
@@ -1215,11 +1242,14 @@ def generate_auggpt(task, fake, seed=None, candidate=False):
         while have < CFG["auggpt_k"] and attempts < 3:
             attempts += 1
             try:
+                # Corrected calls are bounded (ADR 0013 v2); uncorrected calls are unchanged.
+                bounded = {"request": correction["request"]} if correction is not None else {}
                 candidates = ask(
                     auggpt_prompt_for(task, seed, source_row, CFG["auggpt_k"] - have),
                     fake,
                     max_words=CFG["tasks"][task]["max_words"],
                     stats=stats,
+                    **bounded,
                 )
             except KeyboardInterrupt:
                 atomic_write_json(prov_path, build_provenance("interrupted", existing))

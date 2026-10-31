@@ -33,13 +33,14 @@ def fake_env(tmp_path, monkeypatch):
 
 def scripted_model(monkeypatch, prefix="para", per_call=None, interrupt_after=None):
     """Unique candidates; records every prompt. Optionally raises KeyboardInterrupt."""
-    state = {"calls": 0, "prompts": []}
+    state = {"calls": 0, "prompts": [], "requests": []}
 
-    def fake_ask(prompt, fake, max_words=None, retries=3, stats=None):
+    def fake_ask(prompt, fake, max_words=None, retries=3, stats=None, request=None):
         if interrupt_after is not None and state["calls"] >= interrupt_after:
             raise KeyboardInterrupt
         state["calls"] += 1
         state["prompts"].append(prompt)
+        state["requests"].append(request)
         if stats is not None:
             stats["calls"] += 1
         n = int(re.search(r"(\d+) different ways", prompt).group(1))
@@ -303,6 +304,83 @@ def test_real_candidate_keeps_the_approved_model_and_settings(fake_env, monkeypa
     assert prov["generation_identity"]["options"]["per_call"] == K
     cand = generate.auggpt_candidate_path("trec", 13, "real")
     assert generate.verify_auggpt("trec", 13, mode="real", path=cand)["real_run_evidence"] is True
+
+
+# ---------------- v2: bounded corrected calls and the human-label rule ----------------
+
+def test_v2_is_a_new_version_with_its_own_candidate_path():
+    assert VERSION == "auggpt-trec-answer-type-v2"
+    assert generate.AUGGPT_CORRECTIONS["trec"]["request"] == {"think": False, "num_predict": 1024}
+    cand = generate.auggpt_candidate_path("trec", 13, "real")
+    assert cand.parent.name == "auggpt-trec-answer-type-v2" and cand.parent.parent.name == "candidates"
+
+
+def test_default_ollama_body_is_unchanged_and_the_bounded_body_adds_only_think_and_cap():
+    default = generate.ollama_payload("p")
+    assert default == {"model": CFG["model"], "stream": False, "format": "json",
+                       "options": {"temperature": CFG["temperature"]},
+                       "messages": [{"role": "user", "content": "p"}]}
+    bounded = generate.ollama_payload("p", generate.AUGGPT_CORRECTION_REQUEST)
+    assert bounded == {**default, "think": False,
+                       "options": {"temperature": CFG["temperature"], "num_predict": 1024}}
+    # Building the bounded body never mutates the shared settings.
+    assert generate.AUGGPT_CORRECTION_REQUEST == {"think": False, "num_predict": 1024}
+
+
+def test_ask_forwards_the_request_to_ollama_and_defaults_to_none(monkeypatch):
+    seen = []
+
+    def fake_ollama(prompt, timeout=120, request=None):
+        seen.append(request)
+        return '{"examples": ["who was the poet in question ?"]}'
+
+    monkeypatch.setattr(generate, "ask_ollama", fake_ollama)
+    generate.ask("p", fake=False, stats=None)
+    generate.ask("p", fake=False, stats=None, request=generate.AUGGPT_CORRECTION_REQUEST)
+    assert seen == [None, generate.AUGGPT_CORRECTION_REQUEST]
+
+
+def test_every_corrected_call_is_bounded_and_uncorrected_calls_are_not(fake_env, monkeypatch):
+    state = scripted_model(monkeypatch)
+    generate.generate_auggpt("trec", fake=True, seed=13, candidate=True)
+    assert state["requests"] and all(r == generate.AUGGPT_CORRECTION_REQUEST for r in state["requests"])
+
+    emotion = scripted_model(monkeypatch)
+    generate.generate_auggpt("emotion", fake=True, seed=13)
+    assert emotion["requests"] and all(r is None for r in emotion["requests"])
+
+
+def test_identity_records_the_bounded_request_and_changing_it_changes_the_fingerprint(fake_env, monkeypatch):
+    fixture = dict(generate.FIXTURE_MODEL_IDENTITY)
+    identity, before, *_ = generate.auggpt_identity("trec", 13, "fake", fixture, sources())
+    ext = identity["prompt_extensions"]["trec_answer_type"]
+    assert ext["version"] == VERSION and ext["request"] == {"think": False, "num_predict": 1024}
+    assert len(ext["request_builder_sha256"]) == 64
+
+    monkeypatch.setitem(generate.AUGGPT_CORRECTIONS["trec"], "request", {"think": False, "num_predict": 2048})
+    _, capped_differently, *_ = generate.auggpt_identity("trec", 13, "fake", fixture, sources())
+    monkeypatch.setitem(generate.AUGGPT_CORRECTIONS["trec"], "request", {"think": True, "num_predict": 1024})
+    _, thinking, *_ = generate.auggpt_identity("trec", 13, "fake", fixture, sources())
+    assert len({before, capped_differently, thinking}) == 3
+
+
+def test_changing_the_request_builder_changes_the_fingerprint(fake_env, monkeypatch):
+    fixture = dict(generate.FIXTURE_MODEL_IDENTITY)
+    _, before, *_ = generate.auggpt_identity("trec", 13, "fake", fixture, sources())
+    real_getsource = generate.inspect.getsource
+    monkeypatch.setattr(generate.inspect, "getsource", lambda f: real_getsource(f) + (
+        "#edit" if f is generate.ollama_payload else ""))
+    _, after, *_ = generate.auggpt_identity("trec", 13, "fake", fixture, sources())
+    assert before != after
+
+
+def test_human_rule_keeps_who_is_questions_as_who_questions():
+    human = generate.auggpt_prompt_for("trec", 13, {"text": "who is the poet ?", "label": "human"}, 6)
+    assert 'asks who a named person, group or organisation is (for example "Who is X ?")' in human
+    assert "still ask who that same person, group or organisation is; it keeps the human label" in human
+    for other in ("abbreviation", "entity", "description", "location", "numeric"):
+        prompt = generate.auggpt_prompt_for("trec", 13, {"text": "who is the poet ?", "label": other}, 6)
+        assert "it keeps the human label" not in prompt
 
 
 # ---------------- promotion ----------------
