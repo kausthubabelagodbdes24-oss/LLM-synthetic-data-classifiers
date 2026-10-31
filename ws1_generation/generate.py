@@ -956,6 +956,45 @@ def auggpt_carried_forward_identities(task, seed, mode, model_identity, sources,
     return {} if legacy_fp == fingerprint else {legacy_fp: legacy}
 
 
+def check_carried_forward_record(path, provenance, rows, fingerprint, carried_forward):
+    """Require the sidecar's carried_forward_identities to describe exactly the rows' identities.
+
+    A current-identity sidecar must list every predecessor present in the rows, with its exact
+    identity and row count, and nothing else. A genuine predecessor-only sidecar predates the
+    guard: it must hold only its own rows and claim no carried identities.
+    """
+    row_counts = {}
+    for row in rows:
+        row_counts[row["generation_fingerprint"]] = row_counts.get(row["generation_fingerprint"], 0) + 1
+    record = provenance.get("carried_forward_identities")
+    problem = f"incompatible existing artifact {path}: carried-forward identity record"
+
+    if provenance["generation_fingerprint"] != fingerprint:
+        if record not in (None, []):
+            raise ValueError(f"{problem} is not allowed on a pre-length-guard sidecar")
+        if set(row_counts) - {provenance["generation_fingerprint"]}:
+            raise ValueError(f"{problem}: a pre-length-guard sidecar cannot hold rows from another identity")
+        return
+
+    if not isinstance(record, list):
+        raise ValueError(f"{problem} is missing")
+    expected = {fp: count for fp, count in row_counts.items() if fp != fingerprint}
+    listed = {}
+    for entry in record:
+        if not isinstance(entry, dict):
+            raise ValueError(f"{problem} has a malformed entry")
+        fp = entry.get("generation_fingerprint")
+        if fp in listed:
+            raise ValueError(f"{problem} lists {fp} more than once")
+        if fp not in carried_forward:
+            raise ValueError(f"{problem} lists an unknown identity {fp}")
+        if entry.get("generation_identity") != carried_forward[fp]:
+            raise ValueError(f"{problem} does not match the recomputed identity for {fp}")
+        listed[fp] = entry.get("row_count")
+    if listed != expected:
+        raise ValueError(f"{problem} does not match the rows: recorded {listed}, rows have {expected}")
+
+
 def generate_auggpt(task, fake, seed=None):
     """Generate provenance-checked AugGPT paraphrases for this repetition's exact sources.
 
@@ -989,6 +1028,8 @@ def generate_auggpt(task, fake, seed=None):
     previous_provenance = read_existing_provenance(
         path, existing, generation_identity, fingerprint, carried_forward
     )
+    if previous_provenance is not None:
+        check_carried_forward_record(path, previous_provenance, existing, fingerprint, carried_forward)
 
     test_seen = {norm(row["text"]) for row in test_rows}
     source_texts = {norm(row["text"]) for row in sources.values()}
@@ -1165,6 +1206,7 @@ def verify_auggpt(task, seed, mode="real"):
         rows, path, task, seed, mode, fingerprint, sources, test_rows, carried_forward
     )
     provenance = read_existing_provenance(path, rows, identity, fingerprint, carried_forward)
+    check_carried_forward_record(path, provenance, rows, fingerprint, carried_forward)
     counts = {sid: sum(row["source_ids"] == [sid] for row in rows) for sid in sorted(sources)}
     short = {sid: count for sid, count in counts.items() if count != CFG["auggpt_k"]}
     if short:
@@ -1181,7 +1223,12 @@ def verify_auggpt(task, seed, mode="real"):
         "source_count": len(sources),
         "total_count": len(rows),
         "model_identity": model_identity,
-        "generation_fingerprint": fingerprint,
+        # What the artifact records (a pre-length-guard sidecar keeps its own fingerprint).
+        "generation_fingerprint": provenance["generation_fingerprint"],
+        "row_fingerprints": {
+            fp: sum(row["generation_fingerprint"] == fp for row in rows)
+            for fp in sorted({row["generation_fingerprint"] for row in rows})
+        },
         "sessions": len(provenance["sessions"]),
         "elapsed_seconds": round(sum(s.get("elapsed_seconds") or 0 for s in provenance["sessions"]), 6),
         "cumulative_stats": provenance["cumulative_stats"],

@@ -501,8 +501,121 @@ def test_verify_accepts_a_complete_artifact_from_the_pre_length_guard_identity(f
     with monkeypatch.context() as old_code:
         old_code.setattr(generate, "auggpt_generation_identity", pre_length_guard_identity)
         scripted_model(old_code)
-        rows, _ = generate.generate_auggpt("trec", fake=True, seed=13)
+        rows, legacy = generate.generate_auggpt("trec", fake=True, seed=13)
+    # A genuine legacy-only sidecar predates the guard, so it carries no carry-forward record.
+    prov_path = synth_path("trec", "auggpt", seed=13, mode="fake").with_suffix(".provenance.json")
+    provenance = json.loads(prov_path.read_text(encoding="utf-8"))
+    provenance.pop("carried_forward_identities", None)
+    prov_path.write_text(json.dumps(provenance), encoding="utf-8")
     assert generate.verify_auggpt("trec", 13, mode="fake")["total_count"] == len(rows)
+
+
+def test_verify_summary_reports_recorded_fingerprints_not_recomputed_ones(fake_env, monkeypatch):
+    with monkeypatch.context() as old_code:
+        old_code.setattr(generate, "auggpt_generation_identity", pre_length_guard_identity)
+        scripted_model(old_code)
+        rows, legacy = generate.generate_auggpt("trec", fake=True, seed=13)
+    summary = generate.verify_auggpt("trec", 13, mode="fake")
+    assert summary["generation_fingerprint"] == legacy["generation_fingerprint"]
+    assert summary["row_fingerprints"] == {legacy["generation_fingerprint"]: len(rows)}
+
+
+def test_verify_summary_reports_both_fingerprints_of_a_mixed_artifact(fake_env, monkeypatch):
+    prov_path, provenance, legacy = mixed_artifact(monkeypatch)
+    summary = generate.verify_auggpt("trec", 13, mode="fake")
+    assert summary["generation_fingerprint"] == provenance["generation_fingerprint"]
+    assert summary["row_fingerprints"] == {legacy["generation_fingerprint"]: 36,
+                                           provenance["generation_fingerprint"]: 36}
+
+
+def mixed_artifact(monkeypatch):
+    """A complete fake artifact: 36 pre-guard rows carried forward plus 36 current rows."""
+    with monkeypatch.context() as old_code:
+        old_code.setattr(generate, "auggpt_generation_identity", pre_length_guard_identity)
+        scripted_model(old_code, per_call=1)
+        _, legacy = generate.generate_auggpt("trec", fake=True, seed=13)
+    scripted_model(monkeypatch, prefix="resumed")
+    _, provenance = generate.generate_auggpt("trec", fake=True, seed=13)
+    prov_path = synth_path("trec", "auggpt", seed=13, mode="fake").with_suffix(".provenance.json")
+    return prov_path, provenance, legacy
+
+
+def _drop_record(p, legacy):
+    p.pop("carried_forward_identities")
+
+
+def _empty_record(p, legacy):
+    p["carried_forward_identities"] = []
+
+
+def _unknown_fingerprint(p, legacy):
+    p["carried_forward_identities"][0]["generation_fingerprint"] = "0" * 64
+
+
+def _altered_identity(p, legacy):
+    p["carried_forward_identities"][0]["generation_identity"]["repetition"] = 42
+
+
+def _wrong_row_count(p, legacy):
+    p["carried_forward_identities"][0]["row_count"] -= 1
+
+
+def _duplicated_entry(p, legacy):
+    p["carried_forward_identities"].append(dict(p["carried_forward_identities"][0]))
+
+
+def _current_identity_listed(p, legacy):
+    p["carried_forward_identities"].append({
+        "generation_fingerprint": p["generation_fingerprint"],
+        "generation_identity": p["generation_identity"],
+        "row_count": 36,
+        "reason": "x",
+    })
+
+
+@pytest.mark.parametrize("tamper", [
+    _drop_record, _empty_record, _unknown_fingerprint, _altered_identity,
+    _wrong_row_count, _duplicated_entry, _current_identity_listed,
+])
+def test_verify_rejects_a_missing_or_altered_carry_forward_record(fake_env, monkeypatch, tamper):
+    prov_path, provenance, legacy = mixed_artifact(monkeypatch)
+    generate.verify_auggpt("trec", 13, mode="fake")  # the genuine mixed artifact passes
+    path = prov_path.with_name(prov_path.name.replace(".provenance.json", ".jsonl"))
+    tamper(provenance, legacy)
+    prov_path.write_text(json.dumps(provenance), encoding="utf-8")
+    before = path.read_bytes(), prov_path.read_bytes()
+
+    with pytest.raises(ValueError, match="carried-forward"):
+        generate.verify_auggpt("trec", 13, mode="fake")
+    assert (path.read_bytes(), prov_path.read_bytes()) == before
+
+
+def test_resume_rejects_a_missing_carry_forward_record(fake_env, monkeypatch):
+    prov_path, provenance, legacy = mixed_artifact(monkeypatch)
+    provenance.pop("carried_forward_identities")
+    prov_path.write_text(json.dumps(provenance), encoding="utf-8")
+    calls = scripted_model(monkeypatch)
+    with pytest.raises(ValueError, match="carried-forward"):
+        generate.generate_auggpt("trec", fake=True, seed=13)
+    assert calls["calls"] == 0
+
+
+def test_verify_rejects_a_legacy_sidecar_claiming_carried_or_current_rows(fake_env, monkeypatch):
+    with monkeypatch.context() as old_code:
+        old_code.setattr(generate, "auggpt_generation_identity", pre_length_guard_identity)
+        scripted_model(old_code)
+        generate.generate_auggpt("trec", fake=True, seed=13)
+    prov_path = synth_path("trec", "auggpt", seed=13, mode="fake").with_suffix(".provenance.json")
+    provenance = json.loads(prov_path.read_text(encoding="utf-8"))
+    provenance["carried_forward_identities"] = [{
+        "generation_fingerprint": provenance["generation_fingerprint"],
+        "generation_identity": provenance["generation_identity"],
+        "row_count": provenance["total_count"],
+        "reason": "invented",
+    }]
+    prov_path.write_text(json.dumps(provenance), encoding="utf-8")
+    with pytest.raises(ValueError, match="carried-forward"):
+        generate.verify_auggpt("trec", 13, mode="fake")
 
 
 def test_resume_still_rejects_rows_from_any_other_identity(fake_env, monkeypatch):
@@ -519,6 +632,21 @@ def test_resume_still_rejects_rows_from_any_other_identity(fake_env, monkeypatch
     with pytest.raises(ValueError, match="generation identity does not match"):
         generate.verify_auggpt("trec", 13, mode="fake")
     assert calls["calls"] == 0 and path.read_bytes() == before
+
+
+def test_verify_rejects_current_identity_rows_under_a_legacy_sidecar(fake_env, monkeypatch):
+    with monkeypatch.context() as old_code:
+        old_code.setattr(generate, "auggpt_generation_identity", pre_length_guard_identity)
+        scripted_model(old_code)
+        rows, legacy = generate.generate_auggpt("trec", fake=True, seed=13)
+    _, current_fp, _ = generate.auggpt_generation_identity(
+        "trec", 13, "fake", legacy["model_identity"], sources(13))
+    path = synth_path("trec", "auggpt", seed=13, mode="fake")
+    altered = [dict(row) for row in rows]
+    altered[0]["generation_fingerprint"] = current_fp
+    write_jsonl(path, altered)
+    with pytest.raises(ValueError, match="carried-forward"):
+        generate.verify_auggpt("trec", 13, mode="fake")
 
 
 def test_verify_cli_exit_status(fake_env, monkeypatch):
