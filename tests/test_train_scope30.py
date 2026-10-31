@@ -604,8 +604,11 @@ class _FakeSentenceTransformer:
         if type(self).on_load:
             type(self).on_load(Path(path))
 
+    encoded = []
+
     def encode(self, texts, **kw):
         import numpy as np
+        type(self).encoded.append(kw)
         return np.ones((len(texts), 4))
 
 
@@ -618,6 +621,7 @@ def hub(tmp_path, monkeypatch):
     module.SentenceTransformer = _FakeSentenceTransformer
     monkeypatch.setitem(sys.modules, "sentence_transformers", module)
     _FakeSentenceTransformer.loaded, _FakeSentenceTransformer.on_load = [], None
+    _FakeSentenceTransformer.encoded = []
     return tmp_path / "hub"
 
 
@@ -682,6 +686,69 @@ def test_loader_refuses_missing_or_unapproved_identity(hub):
     with pytest.raises(grid.GridError, match="changed since it was recorded"):
         grid.Embedder("real", forged)(["a"])
     assert _FakeSentenceTransformer.loaded == []
+
+
+IDENTITY_FORGERIES = {
+    "normalize_embeddings=False": lambda i: i.update(normalize_embeddings=False),
+    "normalize_embeddings=1 (type)": lambda i: i.update(normalize_embeddings=1),
+    "batch_size=32": lambda i: i.update(batch_size=32),
+    "batch_size=64.0 (type)": lambda i: i.update(batch_size=64.0),
+    "device=cuda": lambda i: i.update(device="cuda"),
+    "fine_tuned=True": lambda i: i.update(fine_tuned=True),
+    "fine_tuned=0 (type)": lambda i: i.update(fine_tuned=0),
+    "real_model=False": lambda i: i.update(real_model=False),
+    "real_model=1 (type)": lambda i: i.update(real_model=1),
+    "identity_sha256 altered": lambda i: i.update(identity_sha256="0" * 64),
+    "extra field": lambda i: i.update(pooling="max"),
+    "extra file hash": lambda i: i["files_sha256"].update({"extra.bin": "0" * 64}),
+    **{f"missing {k}": (lambda k: lambda i: i.pop(k))(k)
+       for k in ("normalize_embeddings", "batch_size", "device", "fine_tuned", "real_model", "identity_sha256",
+                 "files_sha256")},
+}
+
+
+@pytest.mark.parametrize("forgery", sorted(IDENTITY_FORGERIES))
+def test_loader_rejects_forged_identity_metadata(hub, forgery):
+    _fake_hub(hub, grid.APPROVED_MINILM_REVISION)
+    ident = json.loads(json.dumps(grid.model_identity("real")))
+    IDENTITY_FORGERIES[forgery](ident)
+    with pytest.raises(grid.GridError, match="differs from the canonical approved identity|changed since it was recorded"):
+        grid.verify_model_identity(ident)
+    with pytest.raises(grid.GridError):
+        grid.Embedder("real", ident)(["a"])
+    assert _FakeSentenceTransformer.loaded == [] and _FakeSentenceTransformer.encoded == []
+
+
+def test_loader_uses_exactly_the_verified_settings(hub):
+    approved = _fake_hub(hub, grid.APPROVED_MINILM_REVISION)
+    ident = grid.model_identity("real")
+    assert set(ident) == {"kind", "name", "revision", "files_sha256", "identity_sha256", "real_model",
+                          "normalize_embeddings", "batch_size", "device", "fine_tuned"}
+    assert grid.verify_model_identity(json.loads(json.dumps(ident))) == ident     # JSON round trip is exact
+    grid.Embedder("real", ident)(["a", "b"])
+    assert _FakeSentenceTransformer.loaded == [(approved, ident["device"])]
+    assert _FakeSentenceTransformer.encoded == [{"batch_size": ident["batch_size"],
+                                                 "normalize_embeddings": ident["normalize_embeddings"],
+                                                 "show_progress_bar": False}]
+
+
+@pytest.mark.parametrize("forgery", ["embedding real_model=0 (type)", "embedding extra field", "classifier C=1 (type)",
+                                     "extra top-level field", "metrics extra key", "fit extra key"])
+def test_records_with_type_or_key_set_drift_are_not_reused(done, monkeypatch, forgery):
+    _no_fit(monkeypatch)
+    change = {
+        "embedding real_model=0 (type)": lambda r: r["classifier"]["embedding"].update(real_model=0),
+        "embedding extra field": lambda r: r["classifier"]["embedding"].update(device="cpu"),
+        "classifier C=1 (type)": lambda r: r["classifier"]["classifier"].update(C=1),
+        "extra top-level field": lambda r: r.update(note="unrecorded"),
+        "metrics extra key": lambda r: r["metrics"].update(f1_weighted=0.5),
+        "fit extra key": lambda r: r["fit"].update(solver="liblinear"),
+    }[forgery]
+    _rehash(done.record("emotion", "C2"), change)
+    with pytest.raises(grid.GridError, match="emotion/C2/13: (stale|invalid)"):
+        done.run()
+    with pytest.raises(grid.GridError, match="emotion/C2/13: (stale|invalid)"):
+        done.validate()
 
 
 def test_run_grid_passes_the_recorded_identity_to_the_loader(env, hub, monkeypatch):

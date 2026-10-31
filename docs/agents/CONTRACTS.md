@@ -289,7 +289,11 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - Every other overlap fails closed.
 - **Classifier**: `sentence-transformers/all-MiniLM-L6-v2`, pinned to the lead-approved revision `1110a243fdf4706b3f48f1d95db1a4f5529b4d41` (PR #33 review 5724732904).
   - The approved snapshot is read directly, never through `refs/main`. Its identity (the revision plus the SHA-256 of every snapshot file) is recorded in every binding.
-  - The loader receives that recorded identity and loads only `snapshots/<revision>`, on CPU. It re-hashes every file immediately before and immediately after loading. Any change, missing file, extra file or other revision fails closed before training. Embeddings are normalized, batch size 64, never fine-tuned. The classifier is `LogisticRegression(C=1.0, max_iter=2000, random_state=13)`, fitted after `random.Random(13).shuffle`, as in #7.
+  - The loader receives that recorded identity. Immediately before and immediately after loading, it recomputes the canonical approved identity from the pinned snapshot: kind, name, revision, every file hash, `identity_sha256`, `real_model`, `normalize_embeddings`, `batch_size`, `device` and `fine_tuned`.
+  - The recorded identity must equal that canonical identity exactly: the same key set and the same values with the same JSON types (canonical-JSON byte equality, so `True` is not `1` and `64` is not `64.0`).
+  - It loads only `snapshots/<revision>` and encodes with exactly the verified device, batch size and normalization.
+  - Any altered, missing or extra field, changed file, other revision or forged hash fails closed before training.
+  - Record reuse compares every binding section the same way, and `metrics`/`fit` must have their exact key sets. Embeddings are normalized, batch size 64, never fine-tuned. The classifier is `LogisticRegression(C=1.0, max_iter=2000, random_state=13)`, fitted after `random.Random(13).shuffle`, as in #7.
 - **Results directory**:
   - A fresh, scope-specific directory (default `results/scope30-v1-seed13-freeze-v1`). `results/`, `results/scope30-seed13` and `results/archive` are refused, as is any non-empty directory without its `grid.json` identity. Real and fake results never share a directory.
   - `grid.json`: the scope, seed, mode, freeze ID and hash, and the twelve keys.
@@ -312,7 +316,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - wrong seed, legacy/unsafe paths, and the legacy trainer's refusal;
   - fake end-to-end with full provenance, and refusal of fake results as real;
   - exact-match resume, partial records, stale provenance (six fields), tampered or misplaced records, targeted replacement, unrequested stale rows left untouched, missing keys, duplicate `runs.csv` rows, wrong-seed files, incomplete grids, and protected or unrelated directories;
-  - key parsing, the approved model-snapshot pin, and the loader using only the recorded snapshot even if `refs/main` moves; fail-closed loading when weights or files change after recording or during loading, or when the identity is missing, unapproved or forged; `run_grid` passing the recorded identity to the loader; and the CLI.
+  - key parsing, the approved model-snapshot pin, and the loader using only the recorded snapshot even if `refs/main` moves; fail-closed loading when weights or files change after recording or during loading, or when the identity is missing, unapproved or forged (19 metadata forgeries: altered, type-swapped, missing or extra fields); the loader encoding with exactly the verified settings; records with type or key-set drift not being reused; `run_grid` passing the recorded identity to the loader; and the CLI.
 
 ## Optional evaluation and annotation response tooling (historical)
 

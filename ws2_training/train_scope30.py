@@ -302,17 +302,30 @@ def model_identity(mode, revision=APPROVED_MINILM_REVISION):
             **EMBEDDING_SETTINGS}
 
 
+def _same(a, b):
+    """Exact structural equality: same key sets, values and JSON types (unlike ==, True != 1 and 64 != 64.0)."""
+    return _canonical(a) == _canonical(b)
+
+
 def verify_model_identity(identity):
-    """Fail closed unless the cached snapshot still has exactly the recorded files and hashes."""
+    """Fail closed unless the recorded identity is, field for field and type for type, the canonical approved
+    identity recomputed now from the pinned snapshot (revision, every file hash, settings, exact key set)."""
     if not isinstance(identity, dict) or identity.get("kind") != "sentence-transformers" \
             or identity.get("name") != EMBEDDING_MODEL or identity.get("revision") != APPROVED_MINILM_REVISION:
         raise GridError(f"recorded embedder identity is not the approved {EMBEDDING_MODEL} @ {APPROVED_MINILM_REVISION}")
-    current = snapshot_files(identity["revision"])
-    if current != identity.get("files_sha256") or _sha(_canonical(current)) != identity.get("identity_sha256"):
-        changed = sorted(k for k in set(current) | set(identity.get("files_sha256") or {})
-                         if current.get(k) != (identity.get("files_sha256") or {}).get(k))
-        raise GridError(f"{EMBEDDING_MODEL} snapshot {identity['revision']} changed since it was recorded "
+    canonical = model_identity("real")                     # re-hashes the pinned snapshot
+    if _same(identity, canonical):
+        return canonical
+    recorded_files = identity.get("files_sha256") if isinstance(identity.get("files_sha256"), dict) else {}
+    changed = sorted(k for k in set(canonical["files_sha256"]) | set(recorded_files)
+                     if canonical["files_sha256"].get(k) != recorded_files.get(k))
+    if changed:
+        raise GridError(f"{EMBEDDING_MODEL} snapshot {APPROVED_MINILM_REVISION} changed since it was recorded "
                         f"(files {changed}); refusing to train with an unrecorded model")
+    fields = sorted(k for k in set(identity) | set(canonical)
+                    if k not in identity or k not in canonical or not _same(identity[k], canonical[k]))
+    raise GridError(f"recorded embedder identity differs from the canonical approved identity in {fields}; "
+                    "refusing to train with unrecorded settings")
 
 
 def require_real_dependencies():
@@ -336,14 +349,16 @@ class Embedder:
         self.mode = mode
         self.identity = identity
         self._model = None
+        self._settings = None
 
     def _load(self):
         os.environ.setdefault("HF_HUB_OFFLINE", "1")
         os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
-        verify_model_identity(self.identity)                    # immediately before use
+        verified = verify_model_identity(self.identity)         # immediately before use
         from sentence_transformers import SentenceTransformer
-        model = SentenceTransformer(str(snapshot_dir(self.identity["revision"])), device=EMBEDDING_SETTINGS["device"])
+        model = SentenceTransformer(str(snapshot_dir(verified["revision"])), device=verified["device"])
         verify_model_identity(self.identity)                    # the files read while loading were the recorded ones
+        self._settings = verified                               # encode() uses exactly the verified settings
         return model
 
     def __call__(self, texts):
@@ -354,8 +369,8 @@ class Embedder:
             return vec.transform(texts).toarray()
         if self._model is None:
             self._model = self._load()
-        return np.asarray(self._model.encode(list(texts), batch_size=EMBEDDING_SETTINGS["batch_size"],
-                                             normalize_embeddings=EMBEDDING_SETTINGS["normalize_embeddings"],
+        return np.asarray(self._model.encode(list(texts), batch_size=self._settings["batch_size"],
+                                             normalize_embeddings=self._settings["normalize_embeddings"],
                                              show_progress_bar=False))
 
 
@@ -772,7 +787,12 @@ def check_record(record, key, binding):
         return "invalid", "record hash mismatch (tampered or partial)"
     if record.get("key") != {"task": task, "condition": cond, "seed": seed}:
         return "invalid", f"record key {record.get('key')} does not match its file (duplicate/misplaced key)"
-    metrics = record.get("metrics") or {}
+    metrics = record.get("metrics")
+    if not isinstance(metrics, dict) or set(metrics) != {"macro_f1", "accuracy"}:
+        return "invalid", f"metrics must be exactly macro_f1 and accuracy, not {metrics!r}"
+    fit = record.get("fit")
+    if not isinstance(fit, dict) or set(fit) != {"n_iter", "converged", "test_rows"}:
+        return "invalid", "fit section has an unexpected key set"
     for name in ("macro_f1", "accuracy"):
         v = metrics.get(name)
         if not isinstance(v, (int, float)) or isinstance(v, bool) or not math.isfinite(v) or not 0.0 <= v <= 1.0:
@@ -781,8 +801,9 @@ def check_record(record, key, binding):
         return "invalid", f"n_train {(record.get('training') or {}).get('n_train')} != {EXPECTED_COUNTS[cond]}"
     if record.get("real_run_evidence") is not binding["real_run_evidence"]:
         return "invalid", "fake/real evidence flag does not match this run"
-    diffs = [k for k in sorted(set(binding) | set(body)) if k not in ("metrics", "fit", "started_at", "finished_at",
-                                                                      "runtime_seconds") and body.get(k) != binding.get(k)]
+    volatile = ("metrics", "fit", "started_at", "finished_at", "runtime_seconds")
+    diffs = [k for k in sorted(set(binding) | set(body)) if k not in volatile
+             and (k not in body or k not in binding or not _same(body[k], binding[k]))]
     if diffs:
         return "stale", f"provenance differs from the current binding in {diffs}"
     return "valid"
