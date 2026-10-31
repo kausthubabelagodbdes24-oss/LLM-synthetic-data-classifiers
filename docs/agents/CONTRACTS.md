@@ -16,7 +16,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
 | Repetition-specific generation | Accepted Qwen pilot for Issue #6; current scope30/seed13 under ADR0012; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
-| Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion); fresh results/scope30-seed13 storage. ADR0012 defines current single-seed exploratory scope; 12 total keys. | Training (@kausthubabelagodbdes24-oss) + evaluation |
+| Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion) in results/scope30-seed13 (#7, preserved). Twelve-key freeze-bound grid: `ws2_training/train_scope30.py` (#13; see the #13 section below). No real twelve-key result exists until the lead authorizes and validates the run. | Training (@kausthubabelagodbdes24-oss) + evaluation |
 | Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
@@ -239,7 +239,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - `--write`: writes `docs/freeze/scope30-v1-seed13.freeze.json`. It requires a clean tracked tree, records `git rev-parse HEAD`, and never overwrites different content.
   - `--verify`: read-only and fail-closed.
 - **Consumers**:
-  - `ws2_training/train.py` (#13): must train C2–C5b only on the frozen files. Consumer enforcement belongs to #13.
+  - `ws2_training/train_scope30.py` (#13): trains all twelve keys only on the frozen files after `verify_freeze` passes; the legacy `ws2_training/train.py` refuses real C2/C3/C4/C5b. See the #13 section below.
   - Evaluation and reporting (#14–#17).
 - **Manifest** (deterministic, no timestamps, no corpus text):
   - For each of the six batches (`trec`/`emotion` × `zero_shot`/`few_shot`/`auggpt`), the consumed file's path, SHA-256, bytes, rows, IDs in file order and per-label counts.
@@ -259,6 +259,64 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - `--verify` rebuilds the manifest and requires byte equality (CRLF tolerated), and requires the recorded revision to be an ancestor of HEAD. So a missing, replaced, reordered, reformatted, tampered or incompatible artifact, sidecar, reference or evidence file fails, as does an edited manifest.
 - **Limitations (Option A)**: see [docs/freeze/README.md](../freeze/README.md). Retained TREC v2 and Emotion errors are disclosed, not corrected. All findings are model-assisted or heuristic and are not population error rates.
 - **Tests**: `tests/test_freeze_scope30.py` (fake fixtures only). It covers deterministic reruns, identical-rewrite no-op, no overwrite, all-six binding without text, and 16 tamper cases. It also covers post-review reorder, a flagged latest round, unbound outcomes, missing required evidence, corpus-text rejection, revision checks, CRLF tolerance and CLI exit codes.
+
+## Freeze-bound twelve-key training grid (Issue #13, ADR 0012)
+
+- **Status**: implemented in PR #33. Review 5724732904 approved the C4 rule and the MiniLM revision. Merging does not run the experiment, and no real twelve-key result exists yet.
+- **Producer**: `ws2_training/train_scope30.py`. Commands:
+  - `--check-inputs`: read-only. Verifies the freeze and builds all twelve training sets, without fitting or writing anything.
+  - `--results-dir DIR [--keys K] [--replace K]`: trains the grid.
+  - `--validate`: read-only.
+  - `--dry-run`: fake fixtures only.
+- **Freeze enforcement**:
+  - `freeze_scope30.verify_freeze` must pass before any set is built, any classifier is fitted or anything is written.
+  - Real runs accept only `docs/freeze/scope30-v1-seed13.freeze.json` with canonical (LF) SHA-256 `dd2e52ee704835525df41071ff5214c56593969d248ca8812c23b617bfd74de1`, `generation_mode: real` and the committed #11 evidence.
+  - Synthetic inputs are read only from the paths the freeze names. Those must be the `.scope30-v1.selected.jsonl` corpora and the `auggpt_seed13.jsonl` artifacts, with matching SHA-256 and IDs in file order. Original or legacy default paths are refused.
+  - Real `train`/`test`/`pool`/`lowres_seed13` must match the canonical #5 hashes, and `test`/`pool`/`lowres` must also match the freeze.
+  - Real runs refuse fixture environment variables, a `sample` data root, a dirty tracked checkout and any config drift from 30/10/6/[13]/MiniLM.
+- **Grid**: `trec`, `emotion` × `C1 C2 C3 C4 C5a C5b` × seed 13. That is exactly twelve keys; any other seed or key is rejected.
+  - C1 (180): `per_label_sample(train, 30, 13, exact)`, the same sampler as the #7 baselines.
+  - C2 (180): the frozen selected zero-shot corpus.
+  - C3 (180): the frozen selected few-shot corpus.
+  - C4 (180): `per_label_sample(train, 15, 13, exact)` plus 15 per label from the C3 corpus. The few-shot half takes the first 15 per label in ascending `sha256("scope30-v1|13|<task>|few_shot|<row-id>")` (row ID tie-break), i.e. the first half of the same ADR 0012 rank order that selected the 30. No test data or performance is used. The lead approved this rule in PR #33 review 5724732904.
+  - C5a (60): the exact frozen `lowres_seed13` rows, 10 per label, all from the pool.
+  - C5b (420): those rows plus the frozen AugGPT artifact. Every source has exactly six paraphrases with distinct normalized texts, none equal to its source, all with the source's label.
+- **Rejected inputs**: wrong counts, missing labels, duplicate IDs or normalized texts, real rows from the pool, reordered corpora, extra rows, and any test-ID overlap. Any normalized test-text overlap is also rejected, with one exception (next item).
+- **Lead decision, issue #13, 1 November 2026 ("Pin + disclose")**:
+  - The canonical seed-13 TREC sample contains one official-dataset train/test duplicate: `trec.train.05262` = `trec.test.00378` (abbreviation; normalized-text SHA-256 `ba6af17c366034f8dca2abff920ba01cc773fc77eda6188a1127b8190b324d2e`).
+  - It is allowed only in TREC C1/C4 real rows, matched by both IDs and the text hash. It is recorded in `training.disclosed_test_text_overlap` of each affected result.
+  - The #7 TREC C1 baseline was trained with it. Sampling is unchanged.
+  - Every other overlap fails closed.
+- **Classifier**: `sentence-transformers/all-MiniLM-L6-v2`, pinned to the lead-approved revision `1110a243fdf4706b3f48f1d95db1a4f5529b4d41` (PR #33 review 5724732904).
+  - The approved snapshot is read directly, never through `refs/main`. Its identity (the revision plus the SHA-256 of every snapshot file) is recorded in every binding.
+  - The loader receives that recorded identity. Immediately before and immediately after loading, it recomputes the canonical approved identity from the pinned snapshot: kind, name, revision, every file hash, `identity_sha256`, `real_model`, `normalize_embeddings`, `batch_size`, `device` and `fine_tuned`.
+  - The recorded identity must equal that canonical identity exactly: the same key set and the same values with the same JSON types (canonical-JSON byte equality, so `True` is not `1` and `64` is not `64.0`).
+  - It loads only `snapshots/<revision>` and encodes with exactly the verified device, batch size and normalization.
+  - Any altered, missing or extra field, changed file, other revision or forged hash fails closed before training.
+  - Record reuse compares every binding section the same way, and `metrics`/`fit` must have their exact key sets. Embeddings are normalized, batch size 64, never fine-tuned. The classifier is `LogisticRegression(C=1.0, max_iter=2000, random_state=13)`, fitted after `random.Random(13).shuffle`, as in #7.
+- **Results directory**:
+  - A fresh, scope-specific directory (default `results/scope30-v1-seed13-freeze-v1`). `results/`, `results/scope30-seed13` and `results/archive` are refused, as is any non-empty directory without its `grid.json` identity. Real and fake results never share a directory.
+  - `grid.json`: the scope, seed, mode, freeze ID and hash, and the twelve keys.
+  - `records/<task>.<cond>.seed13.json`: the result binding plus metrics and runtime, self-hashed in `record_sha256`.
+  - The binding covers the freeze ID, hash, path and audit revision; the task, condition and seed; n_train, per-label counts and composition; the ordered training IDs and their SHA-256; the fit-order SHA-256; and the disclosed overlap. It also covers the consumed input roles, paths, hashes and rows (with fingerprints); the test path, hash, ID hash and counts; the embedder identity and classifier settings; the repository revision and clean flag; and Python, OS and package versions.
+  - Metrics are unrounded floats in [0, 1]. The record also holds `n_iter`/`converged`.
+  - `runs.csv`: the six legacy columns, derived from the valid records in canonical key order, with LF line endings.
+  - `grid_complete.json`: written only when exactly twelve valid keys exist, with the record hashes, the `runs.csv` hash and the runtimes.
+- **Resume and replace**:
+  - A key is reused only if its whole binding equals the binding recomputed now.
+  - A stale, partial, tampered, misplaced or wrong-flag record stops the run before any fitting, unless that key is named in `--replace`. A replaced record is moved to `superseded/` and never deleted.
+  - Unrequested keys are never touched.
+  - An unexpected file (for example a seed-42 record) stops the run.
+  - Completion is reported only after `--validate`-equivalent checks pass for exactly twelve keys.
+- **Legacy consumer**: `ws2_training/train.py` keeps C1/C5a (#7) and the fake pipeline, but refuses real C2/C3/C4/C5b before touching any results file.
+- **Tests**: `tests/test_train_scope30.py` uses an exact-count fake freeze built with the real #10/#9/#11/#12 tooling and the hashing embedder. Its scores are never evidence. It covers:
+  - exact counts, labels and composition; C1 matching the baseline sampler; deterministic C4 selection; and the exact C5a/C5b relationship;
+  - incomplete, contaminated and wrong C5b/C1–C5a sets, and the pinned-duplicate scope;
+  - missing or tampered freeze and inputs (no fitting, no directory created), real-mode accepted-freeze and fake-freeze refusal, and fixture-setting and config-drift refusal;
+  - wrong seed, legacy/unsafe paths, and the legacy trainer's refusal;
+  - fake end-to-end with full provenance, and refusal of fake results as real;
+  - exact-match resume, partial records, stale provenance (six fields), tampered or misplaced records, targeted replacement, unrequested stale rows left untouched, missing keys, duplicate `runs.csv` rows, wrong-seed files, incomplete grids, and protected or unrelated directories;
+  - key parsing, the approved model-snapshot pin, and the loader using only the recorded snapshot even if `refs/main` moves; fail-closed loading when weights or files change after recording or during loading, or when the identity is missing, unapproved or forged (19 metadata forgeries: altered, type-swapped, missing or extra fields); the loader encoding with exactly the verified settings; records with type or key-set drift not being reused; `run_grid` passing the recorded identity to the loader; and the CLI.
 
 ## Optional evaluation and annotation response tooling (historical)
 
