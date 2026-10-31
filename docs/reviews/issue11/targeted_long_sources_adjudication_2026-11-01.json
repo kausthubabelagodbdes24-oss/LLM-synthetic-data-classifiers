@@ -1,0 +1,374 @@
+{
+  "adjudicated_on": "2026-11-01",
+  "counts_toward_required_random_60": false,
+  "items": [
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source says the writer should have a list of things the writer did all day to tell the husband; this paraphrase makes the list the husband's activities. That reverses who did the listed activities, a propositional change, so source_meaning is changed and the row is a clear error. Keeping self-doubt (and the inherited weak surprise label) does not preserve the source meaning.",
+        "label_fit": "ambiguous",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Guard row: self-doubt about being an ideal housewife kept, but the list becomes what the husband did rather than what the writer did (detail inverted). Source's surprise label rests only on 'amazing'; label weakness inherited from the source, whose wording does not clearly express surprise.",
+        "label_fit": "ambiguous",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.07790.seed13.aug1",
+      "text_sha256": "7b6d5491320e53c43c702d18ad5d4ac0501af06b7b92cf8cfe9d6ef31b3ef03d"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source says the writer should have a list of things the writer did all day to tell the husband; this paraphrase makes the list the husband's activities. That reverses who did the listed activities, a propositional change, so source_meaning is changed and the row is a clear error. Keeping self-doubt (and the inherited weak surprise label) does not preserve the source meaning.",
+        "label_fit": "ambiguous",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Guard row: adds explicit insecurity and 'perfect' for 'amazing'; list detail inverted to tracking the husband. Surprise not expressed; inherited.",
+        "label_fit": "ambiguous",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.07790.seed13.aug2",
+      "text_sha256": "73475240ef6d9ed5c968930c9076951f7b2b6bb2058f5d941cff5aaaea25d226"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source says the writer should have a list of things the writer did all day to tell the husband; this paraphrase makes the list the husband's activities. That reverses who did the listed activities, a propositional change, so source_meaning is changed and the row is a clear error. Keeping self-doubt (and the inherited weak surprise label) does not preserve the source meaning.",
+        "label_fit": "ambiguous",
+        "naturalness": "minor_issues",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Guard row: self-questioning kept; drops 'amazing'; list detail inverted to the husband's tasks. Surprise not expressed.",
+        "label_fit": "ambiguous",
+        "naturalness": "minor_issues",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.07790.seed13.aug3",
+      "text_sha256": "b59a2af5405e12a1c98667a43b264de86f581ccdc1c4deb77a885836c97ebb3c"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source says the writer should have a list of things the writer did all day to tell the husband; this paraphrase makes the list the husband's activities. That reverses who did the listed activities, a propositional change, so source_meaning is changed and the row is a clear error. Keeping self-doubt (and the inherited weak surprise label) does not preserve the source meaning.",
+        "label_fit": "ambiguous",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Guard row: falling short of the amazing-housewife ideal kept; list detail inverted. Surprise not expressed; inherited.",
+        "label_fit": "ambiguous",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.07790.seed13.aug4",
+      "text_sha256": "bf2f97a78da6dc9d868f264e46fea402fb341b7f11c26ed3917ff5ef714674ff"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source says the writer should have a list of things the writer did all day to tell the husband; this paraphrase makes the list the husband's activities. That reverses who did the listed activities, a propositional change, so source_meaning is changed and the row is a clear error. Keeping self-doubt (and the inherited weak surprise label) does not preserve the source meaning.",
+        "label_fit": "ambiguous",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Guard row: self-doubt kept; drops 'amazing'; list detail inverted. Surprise not expressed.",
+        "label_fit": "ambiguous",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.07790.seed13.aug5",
+      "text_sha256": "5497acbf435fe488d330d4e556f46281b8e457f89225b74b847e085d57c50c37"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source says the writer should have a list of things the writer did all day to tell the husband; this paraphrase makes the list the husband's activities. That reverses who did the listed activities, a propositional change, so source_meaning is changed and the row is a clear error. Keeping self-doubt (and the inherited weak surprise label) does not preserve the source meaning.",
+        "label_fit": "ambiguous",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Guard row: near-identical to aug1 including the inverted list detail; surprise not expressed.",
+        "label_fit": "ambiguous",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.07790.seed13.aug6",
+      "text_sha256": "f01b3f7693806e2734c2f932696563e954e003d73b1946ade5bad135e805c369"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source attributes strength to a third party ('he is strong', likely religious) while denying belief in the writer's weakness; this paraphrase makes the writer strong. That changes the subject of a proposition, so source_meaning is changed and the row is a clear error even though sadness still fits.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Feeling like a fake and that it is not fine preserved, so sadness fits; but the source's 'he is strong' (a third party, likely religious) becomes the writer saying they are strong, changing that clause.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.15223.seed13.aug1",
+      "text_sha256": "1e00b94a81efcb5fa2eddcefe4b11c8cac7bffdd141897c67d95982c353b8172"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source attributes strength to a third party ('he is strong', likely religious) while denying belief in the writer's weakness; this paraphrase makes the writer strong. That changes the subject of a proposition, so source_meaning is changed and the row is a clear error even though sadness still fits.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Feeling like a fake and that it is not fine preserved, so sadness fits; but the source's 'he is strong' (a third party, likely religious) becomes the writer saying they are strong, changing that clause.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.15223.seed13.aug2",
+      "text_sha256": "8c91856f97be7a36e6252c0b998608f8912a4804c4a8de4b66ff6173b43d7ca0"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source attributes strength to a third party ('he is strong', likely religious) while denying belief in the writer's weakness; this paraphrase makes the writer strong. That changes the subject of a proposition, so source_meaning is changed and the row is a clear error even though sadness still fits.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Feeling like a fake and that it is not fine preserved, so sadness fits; but the source's 'he is strong' (a third party, likely religious) becomes the writer saying they are strong, changing that clause.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.15223.seed13.aug3",
+      "text_sha256": "bc6eeb6579bec7abcbd5775a04c41b56c4de1b472df04f1e2829f27502d87fe2"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source attributes strength to a third party ('he is strong', likely religious) while denying belief in the writer's weakness; this paraphrase makes the writer strong. That changes the subject of a proposition, so source_meaning is changed and the row is a clear error even though sadness still fits.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Feeling like a fake and that it is not fine preserved, so sadness fits; but the source's 'he is strong' (a third party, likely religious) becomes the writer saying they are strong, changing that clause.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.15223.seed13.aug4",
+      "text_sha256": "ae551844fbc0fc12321659678de2e53d3713674e7a4715dc789a8b769bd05782"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source attributes strength to a third party ('he is strong', likely religious) while denying belief in the writer's weakness; this paraphrase makes the writer strong. That changes the subject of a proposition, so source_meaning is changed and the row is a clear error even though sadness still fits.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Feeling like a fake and that it is not fine preserved, so sadness fits; but the source's 'he is strong' (a third party, likely religious) becomes the writer saying they are strong, changing that clause.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.15223.seed13.aug5",
+      "text_sha256": "44689a4f6c47bc281c8b59cd2b28c8a9be72b633bc290eef86e17bb99427442f"
+    },
+    {
+      "adjudicated": {
+        "ambiguous": false,
+        "clear_error": true,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Re-adjudicated (2026-11-01): the source attributes strength to a third party ('he is strong', likely religious) while denying belief in the writer's weakness; this paraphrase makes the writer strong. That changes the subject of a proposition, so source_meaning is changed and the row is a clear error even though sadness still fits.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "batch": "emotion/auggpt",
+      "generation_fingerprint": "9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f",
+      "original": {
+        "ambiguous": true,
+        "clear_error": false,
+        "copied_demonstration": "not_applicable",
+        "explanation": "Feeling like a fake and that it is not fine preserved, so sadness fits; but the source's 'he is strong' (a third party, likely religious) becomes the writer saying they are strong, changing that clause.",
+        "label_fit": "fits",
+        "naturalness": "natural",
+        "source_meaning": "partially_changed",
+        "style_fit": "mismatch",
+        "template_repetition": "none"
+      },
+      "row_id": "emotion.train.15223.seed13.aug6",
+      "text_sha256": "705cabc3f49e7bcb4bab30fd552dc5b9f6daa544099f60cb1295e3ac05ab5ab1"
+    }
+  ],
+  "reason": "Lead review on PR #28 (5722710702) and issue #11 follow-up (31 Oct 2026): re-adjudicate all six paraphrases of emotion.train.07790 and emotion.train.15223 under the existing source-meaning rubric; retaining the Emotion label alone is insufficient. Original targeted judgments are preserved unchanged.",
+  "review_id": "issue11-targeted-adjudication-v1",
+  "reviewer": {
+    "exact_version": "unavailable: no snapshot/version identifier beyond the model ID is exposed to the session",
+    "human_review": false,
+    "interface": "Claude Code CLI session operated by @kausthubabelagodbdes24-oss",
+    "kind": "model-assisted",
+    "method": "single model pass over the local text packet (generated text, intended label, exact AugGPT source; re-check also shows the superseded round-1 text); judged against config.yaml label definitions and the ADR 0013 answer-type requirement; no self-consistency voting and no second reviewer. Same model family as the round-1 reviewer and as the implementing agent, so errors may be correlated.",
+    "model": "Claude Opus 5.5",
+    "model_id": "claude-opus-5-5",
+    "provider": "Anthropic",
+    "reviewed_on": "2026-11-01"
+  },
+  "rubric": {
+    "ambiguous": "derived: not a clear error, and label_fit == ambiguous or source_meaning == partially_changed",
+    "clear_error": "derived: label_fit == wrong or source_meaning == changed; counts toward the two-error trigger",
+    "copied_demonstration": "few-shot only: compared with the row's own three source demonstrations",
+    "label_definitions": "config.yaml tasks.<task>.labels (unchanged; annoyance under anger, worry under fear)",
+    "label_fit": "fits: clearly the intended label; ambiguous: plausible under the intended label but another label is comparably plausible or the label is under-determined; wrong: clearly a different label",
+    "naturalness": "fluency and plausibility as a real question/tweet",
+    "source_meaning": "AugGPT only: compared with the exact low-resource source text and label; changed means the meaning or the expressed label changed; partially_changed means details dropped/added but the label and core meaning survive",
+    "style_fit": "matches the task/dataset style in config.yaml (TREC short search question; Emotion lower-case first-person tweet)",
+    "template_repetition": "repeated_frame when the text reuses an opening/frame that recurs across the artifact with little lexical variation",
+    "trigger": ">= 2 clear errors among a batch's 10 -> FLAGGED"
+  },
+  "schema_version": 1,
+  "source_ids": [
+    "emotion.train.07790",
+    "emotion.train.15223"
+  ],
+  "targeted_judgments_sha256": "1a5102148bc84b013c3d3b154516f0cd096ed860b7f4be9fe37b386f247033ed",
+  "targeted_sample_sha256": "8d61c9e8dd01a93c908611572b059037a2403270891d3f7d4b8c963513a7eec7"
+}

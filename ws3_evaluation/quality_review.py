@@ -17,6 +17,17 @@ row IDs, never on text, labels or apparent quality; nothing is filtered or repla
     python -m ws3_evaluation.quality_review check  --round 1     # re-verify inputs, validate judgments, outcomes
     python -m ws3_evaluation.quality_review targeted             # supplementary long-source AugGPT packet
     python -m ws3_evaluation.quality_review check-targeted       # validate the supplementary judgments
+    python -m ws3_evaluation.quality_review sample  --round 2 --batch trec/auggpt   # fresh audit of a flagged batch
+    python -m ws3_evaluation.quality_review check   --round 2
+    python -m ws3_evaluation.quality_review recheck --round 2    # corrected versions of round-1 flagged IDs
+    python -m ws3_evaluation.quality_review check-recheck --round 2
+    python -m ws3_evaluation.quality_review check-adjudication --adjudication <file>   # dated targeted re-adjudication
+
+Rounds >= 2 use sample schema 2: each item carries a ``binding`` (input artifact SHA-256, generation
+fingerprint, row ID, text SHA-256 and, for AugGPT, exact source-text SHA-256) that every judgment must
+repeat exactly, because corrected rows can reuse superseded row IDs (ADR 0013). Round 1 keeps schema 1
+so its recorded evidence re-derives unchanged. Re-checks and adjudications never enter a random
+round's denominator or its two-error trigger.
 
 The committed evidence (``docs/reviews/issue11/``) holds IDs, hashes, the rubric and judgments, no
 corpus text. The text-bearing packet (texts, few-shot demonstrations, exact AugGPT sources) is
@@ -129,8 +140,12 @@ def _file_record(path):
             "rows": sum(1 for line in raw.decode("utf-8").splitlines() if line.strip())}
 
 
-def verify_inputs(mode="real"):
-    """Run the read-only producer verifiers and record exact hashes/fingerprints for every batch."""
+def verify_inputs(mode="real", extended=False):
+    """Run the read-only producer verifiers and record exact hashes/fingerprints for every batch.
+
+    extended=True (sample schema 2) also records the AugGPT sidecar hash, ADR 0013 correction and
+    checked promotion record, so evidence resolves a promoted replacement's exact provenance.
+    """
     batches, failures = {}, []
     for task in TASKS:
         for setting in SETTINGS:
@@ -148,6 +163,9 @@ def verify_inputs(mode="real"):
                         "source_count": summary["source_count"],
                         "verifier": "ws1_generation.generate.verify_auggpt",
                     }
+                    if extended:
+                        record.update({k: summary.get(k) for k in (
+                            "provenance_sha256", "prompt_correction", "corrected_output", "promotion_record")})
                 else:
                     summary = sel.verify_selection(task, setting, mode=mode)
                     path = batch_input_path(task, setting, mode)
@@ -239,10 +257,44 @@ def _opening(text, n=3):
     return " ".join(norm(text).split()[:n])
 
 
-def build_sample(round_no, mode="real", evidence_dir=None):
-    """Verify inputs and derive the round's sample (IDs only) and its text-bearing packet."""
-    inputs = verify_inputs(mode)
+def round_schema(round_no):
+    return 1 if round_no == 1 else 2
+
+
+def _binding(item, record, source_text=None):
+    """The exact identity a schema-2 judgment must repeat (row IDs alone are not unique, ADR 0013)."""
+    binding = {"artifact_sha256": record["input"]["sha256"],
+               "generation_fingerprint": item.get("generation_fingerprint") or record["generation_fingerprint"],
+               "row_id": item["row_id"], "text_sha256": item["text_sha256"]}
+    if source_text is not None:
+        binding["source_text_sha256"] = _sha256_bytes(source_text.encode("utf-8"))
+    return binding
+
+
+def _round_batches(batches):
+    keys = [f"{t}/{s}" for t in TASKS for s in SETTINGS]
+    if batches is None:
+        return keys
+    unknown = sorted(set(batches) - set(keys))
+    if unknown or not batches:
+        raise ReviewError(f"unknown or empty batch selection {unknown or batches}; choose from {keys}")
+    return [k for k in keys if k in set(batches)]
+
+
+def build_sample(round_no, mode="real", evidence_dir=None, batches=None):
+    """Verify inputs and derive the round's sample (IDs only) and its text-bearing packet.
+
+    batches restricts a later round to the batches that need a fresh audit (e.g. a FLAGGED batch);
+    round 1 always covers all six.
+    """
+    schema = round_schema(round_no)
+    if schema == 1 and batches is not None:
+        raise ReviewError("round 1 covers all six batches")
+    selected = _round_batches(batches)
+    inputs = verify_inputs(mode, extended=schema >= 2)
     prior = _prior_sampled(round_no, evidence_dir)
+    if schema >= 2:
+        prior = {k: v for k, v in prior.items() if k in selected}
     pools = {task: {r["id"]: r for r in read_jsonl(real_path(task, "pool"))} for task in TASKS}
     sources = {task: gen.load_auggpt_sources(task, SEED) for task in TASKS}
     zero_few_texts = {
@@ -251,12 +303,14 @@ def build_sample(round_no, mode="real", evidence_dir=None):
         for task in TASKS
     }
     sample = {
-        "schema_version": SCHEMA_VERSION, "review_id": REVIEW_ID, "round": round_no, "seed": SEED,
+        "schema_version": schema, "review_id": REVIEW_ID, "round": round_no, "seed": SEED,
         "generation_mode": mode, "real_run_evidence": mode == "real",
         "sampling_rule": SAMPLING_RULE, "per_batch": PER_BATCH,
         "excluded_prior_round_ids": {k: sorted(v) for k, v in sorted(prior.items())},
         "inputs": inputs, "batches": {},
     }
+    if schema >= 2:
+        sample["batches_in_round"] = selected
     packet = {"review_id": REVIEW_ID, "round": round_no, "generation_mode": mode,
               "label_definitions": {t: CFG["tasks"][t]["labels"] for t in TASKS},
               "style": {t: CFG["tasks"][t]["style"] for t in TASKS}, "batches": {}}
@@ -264,6 +318,8 @@ def build_sample(round_no, mode="real", evidence_dir=None):
         max_words = CFG["tasks"][task]["max_words"]
         for setting in SETTINGS:
             key = f"{task}/{setting}"
+            if key not in selected:
+                continue
             rows = read_jsonl(batch_input_path(task, setting, mode))
             by_id = {r["id"]: r for r in rows}
             if len(by_id) != len(rows):
@@ -308,6 +364,10 @@ def build_sample(round_no, mode="real", evidence_dir=None):
                     entry["source"] = {"id": sid, "label": src["label"], "text": src["text"],
                                        "word_count": item["source_word_count"], "long_source": item["long_source"]}
                     aid["jaccard_to_source"] = _jaccard(row["text"], src["text"])
+                if schema >= 2:
+                    item["binding"] = _binding(item, inputs["batches"][key],
+                                               src["text"] if setting == "auggpt" else None)
+                    entry["binding"] = item["binding"]
                 entry["aids"] = aid
                 items.append(item)
                 packet_items.append(entry)
@@ -343,8 +403,8 @@ def _packet_markdown(packet):
     return "\n".join(lines) + "\n"
 
 
-def write_sample(round_no, mode="real", evidence_dir=None):
-    sample, packet = build_sample(round_no, mode, evidence_dir)
+def write_sample(round_no, mode="real", evidence_dir=None, batches=None):
+    sample, packet = build_sample(round_no, mode, evidence_dir, batches)
     data = _canonical_bytes(sample)
     _write_new_or_same(sample_path(round_no, evidence_dir), data)
     out = packet_dir()
@@ -385,6 +445,16 @@ def validate_items(items, expected, setting_of, where):
     return problems
 
 
+def validate_bindings(items, sample_items, where):
+    """Schema 2: every judgment repeats its sampled row's exact binding."""
+    problems = []
+    for j, item in zip(items, sample_items):
+        if j.get("binding") != item["binding"]:
+            problems.append(f"{where} {j.get('batch')} {j.get('row_id')}: binding does not equal the sampled "
+                            "row's artifact hash, fingerprint, row id, text hash and source-text hash")
+    return problems
+
+
 def _check_reviewer(reviewer, problems):
     required = ("kind", "provider", "model", "exact_version", "human_review")
     if not isinstance(reviewer, dict) or any(k not in reviewer for k in required):
@@ -400,7 +470,8 @@ def check_round(round_no, mode="real", evidence_dir=None):
         raise ReviewError(f"{s_path}: sample is missing")
     s_raw = s_path.read_bytes()
     sample = json.loads(s_raw)
-    rederived, _ = build_sample(round_no, mode, evidence_dir)   # re-runs the read-only verifiers
+    rederived, _ = build_sample(round_no, mode, evidence_dir,   # re-runs the read-only verifiers
+                                sample.get("batches_in_round"))
     rederived = json.loads(_canonical_bytes(rederived))
     current = rederived["inputs"]
     if current != sample.get("inputs"):
@@ -421,6 +492,9 @@ def check_round(round_no, mode="real", evidence_dir=None):
     expected = [(k, item["row_id"]) for k, b in sample["batches"].items() for item in b["items"]]
     items = judged.get("items", [])
     problems += validate_items(items, expected, lambda k: (k or "/").split("/")[1], f"round {round_no}")
+    if sample.get("schema_version", 1) >= 2:
+        problems += validate_bindings(items, [i for b in sample["batches"].values() for i in b["items"]],
+                                      f"round {round_no}")
     if problems:
         raise ReviewError("invalid judgments:\n  " + "\n  ".join(problems))
     batches = {}
@@ -442,7 +516,7 @@ def check_round(round_no, mode="real", evidence_dir=None):
             "outcome": "FLAGGED" if len(clear) >= CLEAR_ERROR_TRIGGER else "PASS",
         }
     return {
-        "schema_version": SCHEMA_VERSION, "review_id": REVIEW_ID, "round": round_no,
+        "schema_version": sample.get("schema_version", 1), "review_id": REVIEW_ID, "round": round_no,
         "generation_mode": mode, "real_run_evidence": mode == "real",
         "sample_sha256": _evidence_sha256(s_raw),
         "judgments_sha256": _evidence_sha256(j_path.read_bytes()),
@@ -536,10 +610,217 @@ def check_targeted(mode="real", evidence_dir=None):
             "ambiguous": sum(j["ambiguous"] for j in items), "by_source": by_source}
 
 
+# --- targeted re-check of corrected rows that reuse flagged round IDs (outside any random denominator) --
+
+RECHECK_ID = "issue11-recheck-v1"
+
+
+def recheck_paths(round_no, evidence_dir=None):
+    base = Path(evidence_dir or EVIDENCE_DIR)
+    return tuple(base / f"round{round_no}_recheck_{name}.json" for name in ("sample", "judgments", "outcome"))
+
+
+def build_recheck(round_no, mode="real", evidence_dir=None):
+    """Every row ID sampled in round R-1's FLAGGED batches, as it now reads in the current input.
+
+    The IDs come from the preserved earlier sample and outcome, never from a choice made now. Each item
+    binds the current row and also records the earlier round's binding (input hash, fingerprint, text
+    hash) so the corrected and superseded versions of a reused ID are never confused.
+    """
+    if round_no < 2:
+        raise ReviewError("a re-check needs an earlier round")
+    prev = round_no - 1
+    prev_sample_path, prev_outcome_path = sample_path(prev, evidence_dir), outcome_path(prev, evidence_dir)
+    if not prev_sample_path.exists() or not prev_outcome_path.exists():
+        raise ReviewError(f"round {prev} sample and outcome are required for a re-check")
+    prev_sample = json.loads(prev_sample_path.read_text(encoding="utf-8"))
+    prev_outcome = json.loads(prev_outcome_path.read_text(encoding="utf-8"))
+    flagged = prev_outcome.get("flagged_batches") or []
+    if not flagged:
+        raise ReviewError(f"round {prev} has no FLAGGED batch to re-check")
+    inputs = verify_inputs(mode, extended=True)
+    sources = {task: gen.load_auggpt_sources(task, SEED) for task in TASKS}
+    sample = {
+        "schema_version": 2, "review_id": RECHECK_ID, "round": round_no, "seed": SEED,
+        "generation_mode": mode, "real_run_evidence": mode == "real",
+        "counts_toward_random_denominator": False, "trigger_applies": False,
+        "selection": f"every row id sampled in round {prev}'s FLAGGED batches, read from the current input",
+        "rechecks_round": prev,
+        "round_sample_sha256": _evidence_sha256(prev_sample_path.read_bytes()),
+        "round_outcome_sha256": _evidence_sha256(prev_outcome_path.read_bytes()),
+        "inputs": {k: inputs["batches"][k] for k in flagged}, "batches": {},
+    }
+    packet = {"review_id": RECHECK_ID, "round": round_no, "generation_mode": mode,
+              "label_definitions": {t: CFG["tasks"][t]["labels"] for t in TASKS}, "batches": {}}
+    for key in flagged:
+        task, setting = key.split("/")
+        record = inputs["batches"][key]
+        by_id = {r["id"]: r for r in read_jsonl(batch_input_path(task, setting, mode))}
+        prev_batch = prev_sample["batches"][key]
+        prev_input = prev_sample["inputs"]["batches"][key]
+        superseded = {}
+        promotion = record.get("promotion_record") or {}
+        if setting == "auggpt" and promotion.get("preserved_original_path"):
+            old_path = synth_path(task, "auggpt", seed=SEED, mode=mode).parent / promotion["preserved_original_path"]
+            if _file_record(old_path)["sha256"] == prev_input["input"]["sha256"]:
+                superseded = {r["id"]: r for r in read_jsonl(old_path)}
+        items, entries = [], []
+        known = set(prev_outcome["batches"][key]["clear_error_ids"])
+        for order, prev_item in enumerate(prev_batch["items"], 1):
+            rid = prev_item["row_id"]
+            if rid not in by_id:
+                raise ReviewError(f"{key}: {rid} is missing from the current input")
+            row = by_id[rid]
+            item = {"order": order, "row_id": rid, "label": row["label"],
+                    "text_sha256": _sha256_bytes(row["text"].encode("utf-8")),
+                    "source_ids": list(row.get("source_ids", [])),
+                    f"round{prev}_clear_error": rid in known,
+                    f"round{prev}_binding": {"artifact_sha256": prev_input["input"]["sha256"],
+                                             "generation_fingerprint": prev_item.get("generation_fingerprint"),
+                                             "row_id": rid, "text_sha256": prev_item["text_sha256"]}}
+            if setting == "auggpt":
+                item["generation_fingerprint"] = row["generation_fingerprint"]
+            src = sources[task][row["source_ids"][0]] if setting == "auggpt" else None
+            item["binding"] = _binding(item, record, src["text"] if src else None)
+            if item["text_sha256"] == prev_item["text_sha256"]:
+                raise ReviewError(f"{key}: {rid} still has its round-{prev} text; nothing was corrected")
+            entry = {"order": order, "row_id": rid, "label": row["label"], "text": row["text"],
+                     "binding": item["binding"], f"round{prev}_clear_error": rid in known}
+            if src:
+                entry["source"] = {"id": src["id"], "label": src["label"], "text": src["text"]}
+            old = superseded.get(rid)
+            if old and _sha256_bytes(old["text"].encode("utf-8")) == prev_item["text_sha256"]:
+                entry[f"round{prev}_text"] = old["text"]
+            items.append(item)
+            entries.append(entry)
+        sample["batches"][key] = {"known_clear_error_ids": sorted(known), "items": items}
+        packet["batches"][key] = entries
+    return sample, packet
+
+
+def write_recheck(round_no, mode="real", evidence_dir=None):
+    sample, packet = build_recheck(round_no, mode, evidence_dir)
+    data = _canonical_bytes(sample)
+    _write_new_or_same(recheck_paths(round_no, evidence_dir)[0], data)
+    out = packet_dir()
+    out.mkdir(parents=True, exist_ok=True)
+    (out / f"round{round_no}_recheck_packet.json").write_bytes(_canonical_bytes(packet))
+    return json.loads(data), _evidence_sha256(data)
+
+
+def check_recheck(round_no, mode="real", evidence_dir=None):
+    s_path, j_path, _ = recheck_paths(round_no, evidence_dir)
+    if not s_path.exists() or not j_path.exists():
+        raise ReviewError("re-check sample or judgments are missing")
+    s_raw = s_path.read_bytes()
+    sample = json.loads(s_raw)
+    rederived, _ = build_recheck(round_no, mode, evidence_dir)
+    if json.loads(_canonical_bytes(rederived)) != sample:
+        raise ReviewError(f"{s_path}: re-check sample/inputs changed since it was recorded")
+    judged = json.loads(j_path.read_text(encoding="utf-8"))
+    problems = []
+    if judged.get("sample_sha256") != _evidence_sha256(s_raw) or judged.get("round") != round_no:
+        problems.append("re-check judgments are not bound to this re-check sample (sample_sha256/round)")
+    _check_reviewer(judged.get("reviewer"), problems)
+    expected = [(k, i["row_id"]) for k, b in sample["batches"].items() for i in b["items"]]
+    items = judged.get("items", [])
+    problems += validate_items(items, expected, lambda k: (k or "/").split("/")[1], "re-check")
+    problems += validate_bindings(items, [i for b in sample["batches"].values() for i in b["items"]], "re-check")
+    if problems:
+        raise ReviewError("invalid re-check judgments:\n  " + "\n  ".join(problems))
+    batches = {}
+    for key, batch in sample["batches"].items():
+        mine = [j for j in items if j["batch"] == key]
+        batches[key] = {
+            "rechecked": len(mine),
+            "clear_error_ids": [j["row_id"] for j in mine if j["clear_error"]],
+            "ambiguous_ids": [j["row_id"] for j in mine if j["ambiguous"]],
+            "known_clear_errors_now": {rid: next(j["clear_error"] for j in mine if j["row_id"] == rid)
+                                       for rid in batch["known_clear_error_ids"]},
+        }
+    return {"schema_version": 2, "review_id": RECHECK_ID, "round": round_no, "generation_mode": mode,
+            "real_run_evidence": mode == "real", "counts_toward_random_denominator": False,
+            "trigger_applies": False, "sample_sha256": _evidence_sha256(s_raw),
+            "judgments_sha256": _evidence_sha256(j_path.read_bytes()), "reviewer": judged["reviewer"],
+            "batches": batches,
+            "note": "Targeted re-check outside the random denominator; model-assisted, not human review."}
+
+
+# --- dated re-adjudication of preserved targeted judgments (append-only) --------------------------
+
+ADJUDICATION_ID = "issue11-targeted-adjudication-v1"
+
+
+def check_adjudication(adjudication_path, mode="real", evidence_dir=None):
+    """Validate a dated adjudication appended to the targeted check; the original judgments stay as recorded.
+
+    The adjudication must bind the preserved targeted sample and judgments by hash, cover every row of
+    each adjudicated source in sample order, repeat each row's recorded judgment unchanged under
+    ``original`` and give a complete rubric judgment under ``adjudicated``.
+    """
+    targeted = check_targeted(mode, evidence_dir)   # the preserved evidence must still verify
+    s_path, j_path = targeted_paths(evidence_dir)
+    t_sample = json.loads(s_path.read_text(encoding="utf-8"))
+    t_judged = {j["row_id"]: j for j in json.loads(j_path.read_text(encoding="utf-8"))["items"]}
+    path = Path(adjudication_path)
+    adj = json.loads(path.read_text(encoding="utf-8"))
+    problems = []
+    if adj.get("review_id") != ADJUDICATION_ID:
+        problems.append(f"review_id must be {ADJUDICATION_ID}")
+    if (adj.get("targeted_sample_sha256"), adj.get("targeted_judgments_sha256")) != (
+            targeted["sample_sha256"], targeted["judgments_sha256"]):
+        problems.append("adjudication is not bound to the preserved targeted sample/judgments hashes")
+    if adj.get("counts_toward_required_random_60") is not False:
+        problems.append("counts_toward_required_random_60 must be false")
+    if not str(adj.get("adjudicated_on", "")).strip() or not str(adj.get("reason", "")).strip():
+        problems.append("adjudicated_on and reason are required")
+    _check_reviewer(adj.get("reviewer"), problems)
+    source_ids = adj.get("source_ids") or []
+    expected_rows = [i for i in t_sample["items"] if i["source_id"] in set(source_ids)]
+    if not source_ids or {i["source_id"] for i in expected_rows} != set(source_ids):
+        problems.append("source_ids must name sources present in the targeted sample")
+    items = adj.get("items", [])
+    key = f"{t_sample['task']}/auggpt"
+    adjudicated = [dict(it.get("adjudicated") or {}, batch=it.get("batch"), row_id=it.get("row_id"))
+                   for it in items]
+    problems += validate_items(adjudicated, [(key, i["row_id"]) for i in expected_rows],
+                               lambda k: "auggpt", "adjudication")
+    recorded_fields = (*FIELDS, "clear_error", "ambiguous", "explanation")
+    for it, row in zip(items, expected_rows):
+        tag = f"adjudication {it.get('row_id')}"
+        original = t_judged[row["row_id"]]
+        if it.get("original") != {f: original[f] for f in recorded_fields}:
+            problems.append(f"{tag}: original must repeat the recorded targeted judgment unchanged")
+        if it.get("text_sha256") != row["text_sha256"] or it.get("generation_fingerprint") != row[
+                "generation_fingerprint"]:
+            problems.append(f"{tag}: text_sha256/generation_fingerprint differ from the targeted sample")
+    if problems:
+        raise ReviewError("invalid adjudication:\n  " + "\n  ".join(problems))
+    by_source = {}
+    for it, row in zip(items, expected_rows):
+        b = by_source.setdefault(row["source_id"], {"rows": 0, "clear_errors": [], "changed_from_original": []})
+        b["rows"] += 1
+        if it["adjudicated"]["clear_error"]:
+            b["clear_errors"].append(it["row_id"])
+        if any(it["adjudicated"][f] != it["original"][f] for f in (*FIELDS, "clear_error", "ambiguous")):
+            b["changed_from_original"].append(it["row_id"])
+    return {"review_id": ADJUDICATION_ID, "adjudication_file": path.name,
+            "adjudication_sha256": _evidence_sha256(path.read_bytes()),
+            "targeted_sample_sha256": targeted["sample_sha256"],
+            "targeted_judgments_sha256": targeted["judgments_sha256"],
+            "counts_toward_required_random_60": False, "adjudicated_rows": len(items),
+            "clear_errors": sum(it["adjudicated"]["clear_error"] for it in items), "by_source": by_source,
+            "note": "Supersedes the listed targeted judgments for these rows only; originals are preserved."}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["sample", "check", "targeted", "check-targeted"])
+    ap.add_argument("command", choices=["sample", "check", "targeted", "check-targeted",
+                                        "recheck", "check-recheck", "check-adjudication"])
     ap.add_argument("--round", type=int, default=1)
+    ap.add_argument("--batch", action="append", default=None,
+                    help="rounds >= 2: restrict sampling to this task/setting batch (repeatable)")
+    ap.add_argument("--adjudication", default=None, help="check-adjudication: the dated adjudication file")
     ap.add_argument("--evidence-dir", default=None, help="default docs/reviews/issue11")
     ap.add_argument("--dry-run", action="store_true", help="fake fixtures (never real-run evidence)")
     args = ap.parse_args(argv)
@@ -548,8 +829,33 @@ def main(argv=None):
     mode = "fake" if args.dry_run else "real"
     note = "" if mode == "real" else " (FAKE fixture; not real-run evidence)"
     try:
+        if args.batch is not None and args.command != "sample":
+            ap.error("--batch applies to sample only (check re-reads the recorded batches)")
+        if args.command == "recheck":
+            sample, digest = write_recheck(args.round, mode, args.evidence_dir)
+            for key, batch in sample["batches"].items():
+                print(f"RECHECK{note} {key} round {args.round} (outside the random denominator): "
+                      f"{[i['row_id'] for i in batch['items']]}")
+            print(f"re-check sha256 {digest}; local packet in {packet_dir()}")
+            return
+        if args.command == "check-recheck":
+            result = check_recheck(args.round, mode, args.evidence_dir)
+            _write_new_or_same(recheck_paths(args.round, args.evidence_dir)[2], _canonical_bytes(result))
+            for key, batch in result["batches"].items():
+                print(f"RECHECK CHECK{note} {key} round {args.round}: clear_errors={batch['clear_error_ids']} "
+                      f"known_errors_now={batch['known_clear_errors_now']} (no trigger; outside denominator)")
+            return
+        if args.command == "check-adjudication":
+            if not args.adjudication:
+                ap.error("check-adjudication needs --adjudication <file>")
+            result = check_adjudication(args.adjudication, mode, args.evidence_dir)
+            out = Path(args.adjudication).with_name(Path(args.adjudication).stem + "_outcome.json")
+            _write_new_or_same(out, _canonical_bytes(result))
+            print(f"ADJUDICATION CHECK{note}: {json.dumps({k: result[k] for k in ('adjudicated_rows', 'clear_errors')})}"
+                  f" by_source={json.dumps(result['by_source'])}")
+            return
         if args.command == "sample":
-            sample, digest = write_sample(args.round, mode, args.evidence_dir)
+            sample, digest = write_sample(args.round, mode, args.evidence_dir, args.batch)
             for key, batch in sample["batches"].items():
                 print(f"SAMPLED{note} {key} round {args.round}: {batch['selected_ids_in_order']}")
             print(f"sample sha256 {digest}; local packet in {packet_dir()}")

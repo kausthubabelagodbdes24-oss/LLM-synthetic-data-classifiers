@@ -213,7 +213,23 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 - **Trigger**: `clear_error` = wrong intended label or (AugGPT) changed source meaning/label; at least 2 of 10 → `FLAGGED` (`check` exits 2). Ambiguity, copies, unnatural wording, style mismatch and repeated frames are recorded separately. A flagged batch needs a producer correction recorded in GitHub and a fresh round (`sample --round R+1`).
 - **Supplementary targeted check**: `targeted` / `check-targeted` review every Emotion AugGPT paraphrase of a source over `max_words` (length guard), kept separate and marked `counts_toward_required_random_60: false`.
 - **Round-1 status (31 October 2026)**: 60/60 recorded by Claude Opus 5.5 (model-assisted; exact snapshot unavailable). trec/zero_shot, trec/few_shot, emotion/zero_shot, emotion/few_shot and emotion/auggpt PASS; trec/auggpt FLAGGED (2 answer-type changes), blocking its acceptance pending #9 correction and round 2. See `docs/reviews/issue11/README.md`. Not human annotation, agreement, alpha or population accuracy; no freeze implied.
-- **Tests**: `tests/test_quality_review.py` (fake fixtures only) covers the hash rule, IDs-only evidence, demonstration/source packets, fresh later rounds, no overwrite, changed/missing input blocking (including edits producer verifiers tolerate), the two-error trigger, judgment validation and CLI exit codes, and separation of the targeted check.
+- **Later rounds (schema 2, 1 November 2026)**:
+  - `sample --round R --batch <task/setting>` restricts a fresh audit to the batches that need it. The same hash rule applies, earlier-round IDs of those batches are excluded, and `batches_in_round` is recorded. Round 1 keeps schema 1, so its evidence re-derives unchanged.
+  - Schema-2 input records add the AugGPT sidecar hash, `prompt_correction`, `corrected_output` and the checked ADR 0013 `promotion_record`.
+  - Every item carries a `binding`: input artifact SHA-256, generation fingerprint, row ID, text SHA-256 and, for AugGPT, exact source-text SHA-256. Every judgment must repeat that binding exactly, because corrected rows reuse superseded row IDs.
+- **Re-check** (`recheck` / `check-recheck --round R`):
+  - Covers every ID sampled in round R-1's FLAGGED batches, taken from the preserved sample and outcome, as each row now reads in the current input.
+  - Each item records both its current binding and its round R-1 binding, and the re-check refuses a row whose text is unchanged.
+  - Marked `counts_toward_random_denominator: false` and `trigger_applies: false`. Files: `round<R>_recheck_{sample,judgments,outcome}.json`.
+- **Adjudication** (`check-adjudication --adjudication <file>`):
+  - A dated, append-only re-judgment of rows from the supplementary targeted check. It must bind the preserved targeted sample and judgments by hash, cover every row of each named source in order, and repeat each recorded judgment unchanged under `original` beside a full rubric judgment under `adjudicated`.
+  - The original targeted files are never rewritten, and the adjudication never counts toward the random 60.
+- **Round-2 status (1 November 2026)**: see `docs/reviews/issue11/README.md`.
+  - trec/auggpt round 2 (promoted v2 artifact `cf526bb9…`, fingerprint `c4d5308a…`): 0/10 clear errors, PASS.
+  - Re-check of the 10 round-1 IDs: `04257.aug5` resolved; `00845.aug3` still a clear answer-type change, outside the denominator and unresolved.
+  - Emotion re-adjudication: all 12 paraphrases of `07790`/`15223` are `changed`, i.e. clear errors in the supplementary check. They are unresolved for #12.
+  - Model-assisted only; no acceptance or freeze is implied.
+- **Tests**: `tests/test_quality_review.py` (fake fixtures only) covers the hash rule, IDs-only evidence, demonstration/source packets, fresh later rounds, no overwrite, changed/missing input blocking (including edits producer verifiers tolerate), the two-error trigger, judgment validation and CLI exit codes, and separation of the targeted check. It also covers a promoted ADR 0013 fixture, flagged-batch round 2 with prior-ID exclusion and preserved round-1 files, exact-binding rejection per field, the re-check (outside the denominator, superseded text rejected), and adjudication binding and tamper rejection.
 
 ## Optional evaluation and annotation response tooling (historical)
 

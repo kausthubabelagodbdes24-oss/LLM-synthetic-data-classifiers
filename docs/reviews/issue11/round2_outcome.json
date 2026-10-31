@@ -1,0 +1,51 @@
+{
+  "batches": {
+    "trec/auggpt": {
+      "ambiguous": 4,
+      "ambiguous_ids": [
+        "trec.train.02857.seed13.aug2",
+        "trec.train.00607.seed13.aug1",
+        "trec.train.04163.seed13.aug4",
+        "trec.train.02740.seed13.aug3"
+      ],
+      "clear_error_ids": [],
+      "clear_errors": 0,
+      "copied_demonstration_ids": [],
+      "outcome": "PASS",
+      "partially_changed_meaning_ids": [
+        "trec.train.02857.seed13.aug2",
+        "trec.train.00607.seed13.aug1",
+        "trec.train.04163.seed13.aug4",
+        "trec.train.02740.seed13.aug3"
+      ],
+      "repeated_frame_ids": [],
+      "reviewed": 10,
+      "style_mismatch_ids": [],
+      "unnatural_ids": [
+        "trec.train.04163.seed13.aug4",
+        "trec.train.02740.seed13.aug3"
+      ]
+    }
+  },
+  "flagged_batches": [],
+  "generation_mode": "real",
+  "judgments_sha256": "59a4a0d8488f11847299190f8966f07188dd94451fdc439b07dbab9adb8ec5f3",
+  "note": "Model-assisted screen; not independent-human annotation, agreement or population accuracy.",
+  "real_run_evidence": true,
+  "review_id": "issue11-quality-v1",
+  "reviewer": {
+    "exact_version": "unavailable: no snapshot/version identifier beyond the model ID is exposed to the session",
+    "human_review": false,
+    "interface": "Claude Code CLI session operated by @kausthubabelagodbdes24-oss",
+    "kind": "model-assisted",
+    "method": "single model pass over the local text packet (generated text, intended label, exact AugGPT source; re-check also shows the superseded round-1 text); judged against config.yaml label definitions and the ADR 0013 answer-type requirement; no self-consistency voting and no second reviewer. Same model family as the round-1 reviewer and as the implementing agent, so errors may be correlated.",
+    "model": "Claude Opus 5.5",
+    "model_id": "claude-opus-5-5",
+    "provider": "Anthropic",
+    "reviewed_on": "2026-11-01"
+  },
+  "round": 2,
+  "sample_sha256": "1e9fccf8af297db5b33f958d56992d663a24379025750739cf1ee9e688835ef7",
+  "schema_version": 2,
+  "trigger": ">= 2 clear errors among a batch's 10 -> FLAGGED"
+}

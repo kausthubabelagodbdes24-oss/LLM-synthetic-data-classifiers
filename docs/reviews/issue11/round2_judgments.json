@@ -1,0 +1,252 @@
+{
+  "items": [
+    {
+      "ambiguous": true,
+      "batch": "trec/auggpt",
+      "binding": {
+        "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
+        "generation_fingerprint": "c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56",
+        "row_id": "trec.train.02857.seed13.aug2",
+        "source_text_sha256": "ee485fe5158e4e17efbd59acf4d2ad666bcbbb97eb3e9124537b5c835bb8cb38",
+        "text_sha256": "2cb3abeaf0861e82a0d99363992f0bbe2146cfff15094b16df678749ee35f89c"
+      },
+      "clear_error": false,
+      "copied_demonstration": "not_applicable",
+      "explanation": "Still asks for the person (human). Drops 'special' and 'the name of'; 'initial ... fired by Nixon' turns the source's 'later fired' aside into a restrictive clause. Core question survives.",
+      "label": "human",
+      "label_fit": "fits",
+      "naturalness": "minor_issues",
+      "order": 1,
+      "row_id": "trec.train.02857.seed13.aug2",
+      "source_meaning": "partially_changed",
+      "style_fit": "matches",
+      "template_repetition": "none"
+    },
+    {
+      "ambiguous": false,
+      "batch": "trec/auggpt",
+      "binding": {
+        "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
+        "generation_fingerprint": "c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56",
+        "row_id": "trec.train.02798.seed13.aug5",
+        "source_text_sha256": "7c93c7b319f091709d5183f98ad5997c98dbe973787ae5ab1a7111adf8490e54",
+        "text_sha256": "7cc9a610ca41ad9dd0915370d4696bd1114eb9d69d44d64c0e3a18a04448f615"
+      },
+      "clear_error": false,
+      "copied_demonstration": "not_applicable",
+      "explanation": "Definition/explanation request for the same concept; description kept.",
+      "label": "description",
+      "label_fit": "fits",
+      "naturalness": "natural",
+      "order": 2,
+      "row_id": "trec.train.02798.seed13.aug5",
+      "source_meaning": "preserved",
+      "style_fit": "matches",
+      "template_repetition": "none"
+    },
+    {
+      "ambiguous": true,
+      "batch": "trec/auggpt",
+      "binding": {
+        "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
+        "generation_fingerprint": "c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56",
+        "row_id": "trec.train.00607.seed13.aug1",
+        "source_text_sha256": "ca40d9449a2359c2bf0d0eba42aac28bb80bb59bd7e201b460355e272c6555ea",
+        "text_sha256": "14aed607940f67afdb3ccf4c61ba28b4838f6de993e13b80bdb63d2f86694c3c"
+      },
+      "clear_error": false,
+      "copied_demonstration": "not_applicable",
+      "explanation": "Still an explanatory (description) question about the Amish faith, but adds 'origins', widening the scope beyond the source. Polite 'can you explain' request framing.",
+      "label": "description",
+      "label_fit": "fits",
+      "naturalness": "natural",
+      "order": 3,
+      "row_id": "trec.train.00607.seed13.aug1",
+      "source_meaning": "partially_changed",
+      "style_fit": "partial",
+      "template_repetition": "none"
+    },
+    {
+      "ambiguous": true,
+      "batch": "trec/auggpt",
+      "binding": {
+        "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
+        "generation_fingerprint": "c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56",
+        "row_id": "trec.train.04163.seed13.aug4",
+        "source_text_sha256": "b37d2598065abed0c038c5d0d815ba728d2756a8039ff9b5f5f50775d7c71d34",
+        "text_sha256": "3793b335cb9dd81874c3883587bb6f84ecd83ada630f2300ab648e7b4476c148"
+      },
+      "clear_error": false,
+      "copied_demonstration": "not_applicable",
+      "explanation": "Description intent (history and production) kept, but the product name is corrupted to 'Hot and Wheels'. Recorded as partially_changed because the referent stays recognisable; a stricter entity-preservation reading could count it as changed. Imperative ending in '?'.",
+      "label": "description",
+      "label_fit": "fits",
+      "naturalness": "unnatural",
+      "order": 4,
+      "row_id": "trec.train.04163.seed13.aug4",
+      "source_meaning": "partially_changed",
+      "style_fit": "matches",
+      "template_repetition": "none"
+    },
+    {
+      "ambiguous": false,
+      "batch": "trec/auggpt",
+      "binding": {
+        "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
+        "generation_fingerprint": "c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56",
+        "row_id": "trec.train.04455.seed13.aug6",
+        "source_text_sha256": "ddeff5f2344f2dc9e9ebf0f8f51422b2315b2def25451400fc142eaabb59ca07",
+        "text_sha256": "b2e52286e31a828df46f0899c6fb46c0c6f5f622962c709f854d8c161a1249a7"
+      },
+      "clear_error": false,
+      "copied_demonstration": "not_applicable",
+      "explanation": "Asks for the expansion of the abbreviation, as ADR 0013 requires; abbreviation kept. 'expanded to' is slightly awkward.",
+      "label": "abbreviation",
+      "label_fit": "fits",
+      "naturalness": "minor_issues",
+      "order": 5,
+      "row_id": "trec.train.04455.seed13.aug6",
+      "source_meaning": "preserved",
+      "style_fit": "matches",
+      "template_repetition": "none"
+    },
+    {
+      "ambiguous": false,
+      "batch": "trec/auggpt",
+      "binding": {
+        "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
+        "generation_fingerprint": "c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56",
+        "row_id": "trec.train.02357.seed13.aug4",
+        "source_text_sha256": "22d98d39791b656cb33c67a381f4148f5f2c7d1cac4d28d9b4ef873b1cf8d295",
+        "text_sha256": "da1eb137216289545956a870188045932086fc3e03cd4abc5900fec207035dea"
+      },
+      "clear_error": false,
+      "copied_demonstration": "not_applicable",
+      "explanation": "How/why reason question about marijuana leading to other drugs; description kept. Subject reframed from the drug to its users without changing the proposition.",
+      "label": "description",
+      "label_fit": "fits",
+      "naturalness": "natural",
+      "order": 6,
+      "row_id": "trec.train.02357.seed13.aug4",
+      "source_meaning": "preserved",
+      "style_fit": "matches",
+      "template_repetition": "none"
+    },
+    {
+      "ambiguous": false,
+      "batch": "trec/auggpt",
+      "binding": {
+        "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
+        "generation_fingerprint": "c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56",
+        "row_id": "trec.train.03037.seed13.aug3",
+        "source_text_sha256": "cef3c02c218ca1b03c3b7365563d0ecfc2aedb5a9b36ce9e11a59e03f112ed2c",
+        "text_sha256": "3489d1b84e281e1ae0e6add40ab4527436ab4be4bc885847ee6912543426db2e"
+      },
+      "clear_error": false,
+      "copied_demonstration": "not_applicable",
+      "explanation": "Same place question (largest county by size); location kept.",
+      "label": "location",
+      "label_fit": "fits",
+      "naturalness": "natural",
+      "order": 7,
+      "row_id": "trec.train.03037.seed13.aug3",
+      "source_meaning": "preserved",
+      "style_fit": "matches",
+      "template_repetition": "none"
+    },
+    {
+      "ambiguous": false,
+      "batch": "trec/auggpt",
+      "binding": {
+        "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
+        "generation_fingerprint": "c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56",
+        "row_id": "trec.train.03875.seed13.aug4",
+        "source_text_sha256": "e4c9939e09647775f358cd96c817c4e7abf6156b41087be5b53afd0679564a16",
+        "text_sha256": "902ea1880f6654b5070fd6b662db1094cd32c0a8c2d0873c5ee5ca48c5ffbb76"
+      },
+      "clear_error": false,
+      "copied_demonstration": "not_applicable",
+      "explanation": "Same request for the novel's opening words; entity kept. Close to the source wording.",
+      "label": "entity",
+      "label_fit": "fits",
+      "naturalness": "natural",
+      "order": 8,
+      "row_id": "trec.train.03875.seed13.aug4",
+      "source_meaning": "preserved",
+      "style_fit": "matches",
+      "template_repetition": "none"
+    },
+    {
+      "ambiguous": false,
+      "batch": "trec/auggpt",
+      "binding": {
+        "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
+        "generation_fingerprint": "c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56",
+        "row_id": "trec.train.05005.seed13.aug4",
+        "source_text_sha256": "a0da3f74a396fc8fc8afd47f5a01a0c61fb9af98bf4cd8b6c195edd1bf8b26eb",
+        "text_sha256": "78c79bd59bbcf151cb1022dbdddbb5b03d1e949c6a252af756303bb8c6fb4de4"
+      },
+      "clear_error": false,
+      "copied_demonstration": "not_applicable",
+      "explanation": "Asks for the cruise company (organisation, human); 'advertise for' becomes 'represent', same reading in context.",
+      "label": "human",
+      "label_fit": "fits",
+      "naturalness": "natural",
+      "order": 9,
+      "row_id": "trec.train.05005.seed13.aug4",
+      "source_meaning": "preserved",
+      "style_fit": "matches",
+      "template_repetition": "none"
+    },
+    {
+      "ambiguous": true,
+      "batch": "trec/auggpt",
+      "binding": {
+        "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
+        "generation_fingerprint": "c4d5308aa37a6ca8c8a820fc14e042376101bb2cddf352f25c5b933c2e3a4f56",
+        "row_id": "trec.train.02740.seed13.aug3",
+        "source_text_sha256": "d9d4f8ecca8125cffe59c79d3ed4edea9c475a582230109bcaef62a7bb358072",
+        "text_sha256": "c7f0b2868939d1daf9dd4e6dc65e06a90400e9810502eb12d838979e6b1d2a54"
+      },
+      "clear_error": false,
+      "copied_demonstration": "not_applicable",
+      "explanation": "Still about the abbreviation A&W (abbreviation under either half of the definition), but the request for what it stands for is garbled into 'what abbreviation does A&W represent'; the expansion request is no longer clear.",
+      "label": "abbreviation",
+      "label_fit": "fits",
+      "naturalness": "unnatural",
+      "order": 10,
+      "row_id": "trec.train.02740.seed13.aug3",
+      "source_meaning": "partially_changed",
+      "style_fit": "matches",
+      "template_repetition": "none"
+    }
+  ],
+  "review_id": "issue11-quality-v1",
+  "reviewer": {
+    "exact_version": "unavailable: no snapshot/version identifier beyond the model ID is exposed to the session",
+    "human_review": false,
+    "interface": "Claude Code CLI session operated by @kausthubabelagodbdes24-oss",
+    "kind": "model-assisted",
+    "method": "single model pass over the local text packet (generated text, intended label, exact AugGPT source; re-check also shows the superseded round-1 text); judged against config.yaml label definitions and the ADR 0013 answer-type requirement; no self-consistency voting and no second reviewer. Same model family as the round-1 reviewer and as the implementing agent, so errors may be correlated.",
+    "model": "Claude Opus 5.5",
+    "model_id": "claude-opus-5-5",
+    "provider": "Anthropic",
+    "reviewed_on": "2026-11-01"
+  },
+  "round": 2,
+  "rubric": {
+    "ambiguous": "derived: not a clear error, and label_fit == ambiguous or source_meaning == partially_changed",
+    "clear_error": "derived: label_fit == wrong or source_meaning == changed; counts toward the two-error trigger",
+    "copied_demonstration": "few-shot only: compared with the row's own three source demonstrations",
+    "label_definitions": "config.yaml tasks.<task>.labels (unchanged; annoyance under anger, worry under fear)",
+    "label_fit": "fits: clearly the intended label; ambiguous: plausible under the intended label but another label is comparably plausible or the label is under-determined; wrong: clearly a different label",
+    "naturalness": "fluency and plausibility as a real question/tweet",
+    "source_meaning": "AugGPT only: compared with the exact low-resource source text and label; changed means the meaning or the expressed label changed; partially_changed means details dropped/added but the label and core meaning survive",
+    "style_fit": "matches the task/dataset style in config.yaml (TREC short search question; Emotion lower-case first-person tweet)",
+    "template_repetition": "repeated_frame when the text reuses an opening/frame that recurs across the artifact with little lexical variation",
+    "trigger": ">= 2 clear errors among a batch's 10 -> FLAGGED"
+  },
+  "rubric_note": "TREC answer type is the label (config.yaml definitions); ADR 0013 requires abbreviation rows to keep asking for the expansion/abbreviation and description rows to stay explanatory.",
+  "sample_sha256": "1e9fccf8af297db5b33f958d56992d663a24379025750739cf1ee9e688835ef7",
+  "schema_version": 2
+}
