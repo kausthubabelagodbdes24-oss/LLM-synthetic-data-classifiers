@@ -152,7 +152,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
       - a task, repetition or mode mismatch;
       - a `correction` or `decision` other than ADR 0013;
       - promoted hashes that differ from the candidate's;
-      - fingerprints that differ from the corrected identity, or an original recorded under it;
+      - any `original`/`candidate`/`promoted` `generation_fingerprint` that is not a lowercase 64-hex string (validated before any comparison, so lists, objects or null give a controlled `FAIL`, not a traceback); candidate and promoted fingerprints that differ from each other or from the corrected identity; or an original recorded under the corrected identity;
       - any missing or hash-mismatched file: active JSONL/sidecar, preserved original JSONL/sidecar, or retained candidate JSONL/sidecar.
 
       A candidate copied to the active path by hand therefore fails. `--candidate --verify` needs no record, and `--verify --historical` reads the preserved original. `promote --promote` marks the record complete only after the active bytes equal the candidate's and the candidate re-verifies.

@@ -1322,9 +1322,11 @@ def check_promotion_record(task, seed, mode="real", fingerprint=None):
         return value
 
     def sha_field(*keys):
+        """Shared validator for file hashes and generation fingerprints (both SHA-256 hex)."""
         value = field(*keys)
         if not isinstance(value, str) or not _SHA256_HEX.fullmatch(value):
-            raise ValueError(f"{problem} is malformed: {'.'.join(keys)} is not a SHA-256 hex digest")
+            raise ValueError(f"{problem} is malformed: {'.'.join(keys)} is not a SHA-256 hex digest "
+                             f"(lowercase, 64 hex characters); got {type(value).__name__}")
         return value
 
     if not isinstance(record, dict) or record.get("schema_version") != PROMOTION_RECORD_SCHEMA_VERSION:
@@ -1350,10 +1352,14 @@ def check_promotion_record(task, seed, mode="real", fingerprint=None):
         raise ValueError(f"{problem}: promoted hashes differ from the candidate hashes")
     if hashes["original artifact"] == hashes["candidate artifact"]:
         raise ValueError(f"{problem}: original and candidate hashes are identical")
-    recorded_fps = {field("candidate", "generation_fingerprint"), field("promoted", "generation_fingerprint")}
-    if len(recorded_fps) != 1 or (fingerprint is not None and recorded_fps != {fingerprint}):
+    # Validate every fingerprint's type and form before any comparison, so a malformed record
+    # (list, object, null, ...) fails as a controlled ValueError rather than a TypeError.
+    fps = {part: sha_field(part, "generation_fingerprint") for part in ("original", "candidate", "promoted")}
+    if fps["candidate"] != fps["promoted"]:
+        raise ValueError(f"{problem}: candidate and promoted fingerprints differ")
+    if fingerprint is not None and fps["promoted"] != fingerprint:
         raise ValueError(f"{problem}: recorded fingerprints do not match the corrected identity")
-    if field("original", "generation_fingerprint") in recorded_fps:
+    if fps["original"] == fps["promoted"]:
         raise ValueError(f"{problem}: the original is recorded under the corrected identity")
 
     archive = auggpt_superseded_path(task, seed, mode)
@@ -1379,7 +1385,7 @@ def check_promotion_record(task, seed, mode="real", fingerprint=None):
         "decision": correction["decision"],
         "original_artifact_sha256": hashes["original artifact"],
         "original_provenance_sha256": hashes["original provenance"],
-        "original_generation_fingerprint": field("original", "generation_fingerprint"),
+        "original_generation_fingerprint": fps["original"],
         "preserved_original_path": archive.relative_to(active.parent).as_posix(),
         "candidate_artifact_sha256": hashes["candidate artifact"],
     }

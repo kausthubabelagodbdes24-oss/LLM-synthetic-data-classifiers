@@ -469,6 +469,13 @@ BYPASSES = {
         lambda loc: _edit_record(loc, lambda r: (r["promoted"].update(generation_fingerprint="f" * 64),
                                                  r["candidate"].update(generation_fingerprint="f" * 64))),
         "fingerprints do not match"),
+    "candidate and promoted fingerprints differ": (
+        lambda loc: _edit_record(loc, lambda r: r["candidate"].update(generation_fingerprint="e" * 64)),
+        "candidate and promoted fingerprints differ"),
+    "original recorded under the corrected identity": (
+        lambda loc: _edit_record(loc, lambda r: r["original"].update(
+            generation_fingerprint=r["promoted"]["generation_fingerprint"])),
+        "original is recorded under the corrected identity"),
     "missing preserved original": (
         lambda loc: loc["archive"].unlink(), "preserved original artifact .* is missing"),
     "modified preserved original": (
@@ -546,3 +553,40 @@ def test_completed_promotion_summary_binds_original_and_candidate(fake_env, monk
     # Historical evidence at the preserved path still reads, as superseded output.
     hist = generate.verify_auggpt("trec", 13, mode="fake", path=loc["archive"], historical=True)
     assert hist["corrected_output"] is False and hist["promotion_record"] is None
+
+
+MALFORMED_FINGERPRINTS = {
+    "list": ["a" * 64],
+    "object": {"sha256": "a" * 64},
+    "null": None,
+    "uppercase hex": "A" * 64,
+    "wrong length": "a" * 63,
+    "non-hex": "g" * 64,
+}
+
+
+@pytest.mark.parametrize("part", ["original", "candidate", "promoted"])
+@pytest.mark.parametrize("kind", list(MALFORMED_FINGERPRINTS))
+def test_malformed_record_fingerprints_fail_as_controlled_errors(fake_env, monkeypatch, capsys, part, kind):
+    loc = promoted(monkeypatch)
+    _edit_record(loc, lambda r: r[part].update(generation_fingerprint=MALFORMED_FINGERPRINTS[kind]))
+    record_before = loc["record"].read_bytes()
+    message = f"malformed: {part}.generation_fingerprint is not a SHA-256 hex digest"
+
+    with pytest.raises(ValueError, match=message):  # a TypeError would escape this
+        generate.verify_auggpt("trec", 13, mode="fake")
+    with pytest.raises(promote_auggpt.PromotionError, match=message):
+        promote_auggpt.verify_promotion("trec", 13, mode="fake")
+
+    capsys.readouterr()
+    with pytest.raises(SystemExit) as cli:
+        generate.main(["--setting", "auggpt", "--task", "trec", "--seed", "13", "--dry-run", "--verify"])
+    out = capsys.readouterr()
+    assert cli.value.code == 1
+    assert out.out.startswith("FAIL trec auggpt seed 13:") and f"{part}.generation_fingerprint" in out.out
+    assert "Traceback" not in out.out + out.err
+    with pytest.raises(SystemExit) as promo_cli:
+        promote_auggpt.main(["--task", "trec", "--seed", "13", "--dry-run", "--verify-promotion"])
+    out = capsys.readouterr()
+    assert promo_cli.value.code == 1 and out.out.startswith("FAIL") and "Traceback" not in out.out + out.err
+    assert loc["record"].read_bytes() == record_before
