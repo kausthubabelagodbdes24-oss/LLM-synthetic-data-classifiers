@@ -1,21 +1,21 @@
 {
   "batches": {
     "trec/auggpt": {
-      "ambiguous": 4,
+      "ambiguous": 3,
       "ambiguous_ids": [
         "trec.train.02857.seed13.aug2",
         "trec.train.00607.seed13.aug1",
-        "trec.train.04163.seed13.aug4",
         "trec.train.02740.seed13.aug3"
       ],
-      "clear_error_ids": [],
-      "clear_errors": 0,
+      "clear_error_ids": [
+        "trec.train.04163.seed13.aug4"
+      ],
+      "clear_errors": 1,
       "copied_demonstration_ids": [],
       "outcome": "PASS",
       "partially_changed_meaning_ids": [
         "trec.train.02857.seed13.aug2",
         "trec.train.00607.seed13.aug1",
-        "trec.train.04163.seed13.aug4",
         "trec.train.02740.seed13.aug3"
       ],
       "repeated_frame_ids": [],
@@ -29,7 +29,7 @@
   },
   "flagged_batches": [],
   "generation_mode": "real",
-  "judgments_sha256": "59a4a0d8488f11847299190f8966f07188dd94451fdc439b07dbab9adb8ec5f3",
+  "judgments_sha256": "95510f9401ffc3c6ff0669bceb0379e593d09c5458fd6a06a1eb142e51062e71",
   "note": "Model-assisted screen; not independent-human annotation, agreement or population accuracy.",
   "real_run_evidence": true,
   "review_id": "issue11-quality-v1",

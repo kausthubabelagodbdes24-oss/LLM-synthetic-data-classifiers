@@ -67,7 +67,7 @@
       "template_repetition": "none"
     },
     {
-      "ambiguous": true,
+      "ambiguous": false,
       "batch": "trec/auggpt",
       "binding": {
         "artifact_sha256": "cf526bb948ef0e5227d54434ec897429bb0afe3f7a803579d34b374c5755ef07",
@@ -76,15 +76,15 @@
         "source_text_sha256": "b37d2598065abed0c038c5d0d815ba728d2756a8039ff9b5f5f50775d7c71d34",
         "text_sha256": "3793b335cb9dd81874c3883587bb6f84ecd83ada630f2300ab648e7b4476c148"
       },
-      "clear_error": false,
+      "clear_error": true,
       "copied_demonstration": "not_applicable",
-      "explanation": "Description intent (history and production) kept, but the product name is corrupted to 'Hot and Wheels'. Recorded as partially_changed because the referent stays recognisable; a stricter entity-preservation reading could count it as changed. Imperative ending in '?'.",
+      "explanation": "Description intent (history and production) kept, but the named entity 'Hot Wheels' is changed to 'Hot and Wheels'. Changing a named entity is a source-meaning change under the rubric and ADR 0013 (entities must be preserved): clear error. Reclassified from partially_changed at lead review 5724372746 (PR #31, head 3d64bcd); the earlier judgment is in git history. Imperative ending in '?'.",
       "label": "description",
       "label_fit": "fits",
       "naturalness": "unnatural",
       "order": 4,
       "row_id": "trec.train.04163.seed13.aug4",
-      "source_meaning": "partially_changed",
+      "source_meaning": "changed",
       "style_fit": "matches",
       "template_repetition": "none"
     },

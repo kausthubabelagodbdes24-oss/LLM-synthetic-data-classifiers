@@ -225,7 +225,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - A dated, append-only re-judgment of rows from the supplementary targeted check. It must bind the preserved targeted sample and judgments by hash, cover every row of each named source in order, and repeat each recorded judgment unchanged under `original` beside a full rubric judgment under `adjudicated`.
   - The original targeted files are never rewritten, and the adjudication never counts toward the random 60.
 - **Round-2 status (1 November 2026)**: see `docs/reviews/issue11/README.md`.
-  - trec/auggpt round 2 (promoted v2 artifact `cf526bb9…`, fingerprint `c4d5308a…`): 0/10 clear errors, PASS.
+  - trec/auggpt round 2 (promoted v2 artifact `cf526bb9…`, fingerprint `c4d5308a…`): 1/10 clear errors (`04163.aug4`, entity "Hot Wheels" changed; reclassified at lead review 5724372746), PASS below the trigger.
   - Re-check of the 10 round-1 IDs: `04257.aug5` resolved; `00845.aug3` still a clear answer-type change, outside the denominator and unresolved.
   - Emotion re-adjudication: all 12 paraphrases of `07790`/`15223` are `changed`, i.e. clear errors in the supplementary check. They are unresolved for #12.
   - Model-assisted only; no acceptance or freeze is implied.

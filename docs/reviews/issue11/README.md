@@ -101,16 +101,16 @@ The reviewer is the same as for round 1: model-assisted Claude Opus 5.5 (`claude
 
 - The same `issue11-quality-v1` hash rule (`round2`) is restricted to the flagged batch (`sample --round 2 --batch trec/auggpt`).
 - The 10 round-1 IDs are excluded, leaving 350 eligible rows. The 10 drawn IDs are in `round2_sample.json`.
-- Result: **0 clear errors, 4 ambiguous (all `partially_changed`), outcome PASS.**
+- Result: **1 clear error, 3 ambiguous (all `partially_changed`), outcome PASS** (1 < 2, below the trigger).
   - `02857.aug2` drops "special"/"name of".
   - `00607.aug1` adds "origins".
-  - `04163.aug4` corrupts the product name to "Hot and Wheels". This is borderline. A stricter entity-preservation reading would count it as `changed`, giving 1 clear error, still below the trigger.
   - `02740.aug3` garbles the expansion request into "what abbreviation does A&W represent".
+- Clear error: `04163.aug4` changes the named entity "Hot Wheels" to "Hot and Wheels" (`source_meaning: changed`). It was first recorded as `partially_changed` at head `3d64bcd`. Lead review 5724372746 (PR #31) required the reclassification, because a changed named entity is a source-meaning change. That earlier judgment remains in git history.
 - Two rows are unnatural (`04163.aug4`, `02740.aug3`).
 - Hashes:
   - sample `1e9fccf8af297db5b33f958d56992d663a24379025750739cf1ee9e688835ef7`
-  - judgments `59a4a0d8488f11847299190f8966f07188dd94451fdc439b07dbab9adb8ec5f3`
-  - outcome `d74c0a159bad1ad62555f5416dba693fc3172004e1f0970145b0afe318897b92`
+  - judgments `95510f9401ffc3c6ff0669bceb0379e593d09c5458fd6a06a1eb142e51062e71`
+  - outcome `d672529f7feb81eb28968f42cb4473ff2cc8553b8f2a38b3ee78278f7051a55b`
 
 ### Targeted re-check of all 10 round-1 `trec/auggpt` IDs (outside the random denominator; no trigger)
 
@@ -140,13 +140,13 @@ The reviewer is the same as for round 1: model-assisted Claude Opus 5.5 (`claude
 ### Handoff to #12 (updated)
 
 - **Random screen:**
-  - `trec/auggpt` round 2 is PASS (0/10).
+  - `trec/auggpt` round 2 is PASS (1/10 clear errors, below the two-error trigger).
   - The other five batches keep their round-1 PASS.
   - Model-assisted screening only; no acceptance or freeze is implied.
 - **Unresolved, for the lead to weigh before any freeze:**
   1. `trec.train.00845.seed13.aug3` still changes the answer type (description → event/entity) after the ADR 0013 v2 correction. The other five paraphrases of `trec.train.00845` and other description sources with "what is X known for" frames were not reviewed here. A read-only scope check is recommended before deciding a remedy.
   2. `emotion.train.07790` and `emotion.train.15223`: 12 confirmed clear errors in the supplementary check. They need an investigation and remedy decision for `emotion/auggpt` (e.g. regenerate or exclude these sources' paraphrases) before freeze. No change was made here.
-  3. Round-2 borderline rows: `04163.aug4` ("Hot and Wheels" entity corruption) and `02740.aug3` (garbled expansion request).
+  3. Round-2 clear error `04163.aug4` ("Hot and Wheels" entity change; below the trigger, but a corrupted row in C5b) and the borderline `02740.aug3` (garbled expansion request).
   4. All round-1 unresolved flags listed above.
 
 ## Reproduce
