@@ -4,7 +4,7 @@
 
 ### Generator Identity, Environment, and Provenance
 
-All synthetic data for the accepted `scope30-v1` study was generated locally and offline using Ollama 0.40.13 on an NVIDIA GeForce RTX 4060 Laptop GPU (8 GiB VRAM), under Windows 11. 
+All synthetic data for the accepted `scope30-v1` study was generated locally and offline using Ollama 0.40.13 on an NVIDIA GeForce RTX 4060 Laptop GPU (8 GiB VRAM), under Windows 11.
 
 Following the initial generation pilot, the original candidate generator (`llama3.2:3b`, digest `a80c4f17…`) exhibited significant label drift and high error rates on subjective categories (documented in [`docs/PILOT_REPORT.md`](../PILOT_REPORT.md)). Under [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md) and [ADR 0011](../adr/0011-accept-qwen-pilot-and-uniform-100-target.md), the project lead tested and accepted `qwen3:4b` as the replacement generator across all conditions:
 - **Configured Model Tag:** `qwen3:4b`

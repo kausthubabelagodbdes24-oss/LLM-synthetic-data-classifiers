@@ -47,7 +47,7 @@ def test_report_files_exist_and_non_empty():
 
 def test_primary_citations_verified():
     sec2 = (DOCS_REPORT_DIR / "section_2_related_work.md").read_text(encoding="utf-8")
-    
+
     # 1. Li et al. (2023)
     assert "2310.07849" in sec2
     assert "Li" in sec2
@@ -74,7 +74,7 @@ def test_primary_citations_verified():
 
 def test_accepted_qwen_model_settings_and_provenance():
     sec3a = (DOCS_REPORT_DIR / "section_3a_generation_methods.md").read_text(encoding="utf-8")
-    
+
     # Model identity & digest
     assert "qwen3:4b" in sec3a
     assert "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7" in sec3a
@@ -91,7 +91,7 @@ def test_accepted_qwen_model_settings_and_provenance():
 def test_scope30_counts_and_costs_disclosed():
     sec3a = (DOCS_REPORT_DIR / "section_3a_generation_methods.md").read_text(encoding="utf-8")
     sec6 = (DOCS_REPORT_DIR / "section_6_limitations_and_conclusions.md").read_text(encoding="utf-8")
-    
+
     # Selected counts
     for text in (sec3a, sec6):
         assert "180" in text  # C1-C4 size per task
@@ -109,7 +109,7 @@ def test_scope30_counts_and_costs_disclosed():
 def test_quality_review_findings_and_freeze_disclosures():
     sec3a = (DOCS_REPORT_DIR / "section_3a_generation_methods.md").read_text(encoding="utf-8")
     sec6 = (DOCS_REPORT_DIR / "section_6_limitations_and_conclusions.md").read_text(encoding="utf-8")
-    
+
     # Model-assisted review disclosure (not human)
     assert "Claude Opus 5.5" in sec3a
     assert "model-assisted" in sec3a.lower()
@@ -139,7 +139,7 @@ def test_quality_review_findings_and_freeze_disclosures():
 
 def test_prompt_templates_match_code():
     app_a = (DOCS_REPORT_DIR / "appendix_a_prompts_and_examples.md").read_text(encoding="utf-8")
-    
+
     # Verify function names
     assert "def prompt_zero_shot" in app_a
     assert "def prompt_few_shot" in app_a
