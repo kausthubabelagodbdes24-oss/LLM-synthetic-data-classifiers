@@ -16,9 +16,13 @@ Authority: [ADR0012](adr/0012-eod-exploratory-30-seed13.md), explicitly approved
 |#12|Resolve review flags, validate exact selected counts/provenance and freeze manifests.|
 |#13|Twelve-key grid;180/180/180/180/60/420 per task, frozen accepted inputs.|
 |#14|Single-seed values/gaps,two charts,no SD/alpha. Zero C1:undefined gap+absolute difference.|
-|#15–#16|Methods/limitations/slides describe actual revised design, review and costs.|
+|#15–#16|Methods/limitations describe the actual revised design, review and costs. Final presentation slides are outside GitHub scope.|
 |#17|Report/PDF based on twelve results; lead review replaces three-person review.|
-|#18|Slides,lead review,actual submission evidence; tag still needs separate approval.|
+|#18|Google Colab-compatible reproducibility walkthrough: safe fake generation/training demonstration plus the committed real tables/charts. It never reruns or substitutes for the accepted experiment.|
+
+## Presentation boundary
+
+Per [ADR0014](adr/0014-presentation-separation-colab.md), the professor-facing final slide deck and submission logistics are private owner work. They are not committed, attached to issues, or tracked as development acceptance criteria. GitHub development continues to cover the reviewed report/PDF, methods, appendix, comparison tables, charts and reproducibility notebook.
 
 ## Safe adoption order
 

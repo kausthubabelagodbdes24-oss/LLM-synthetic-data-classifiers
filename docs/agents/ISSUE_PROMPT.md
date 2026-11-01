@@ -14,6 +14,8 @@ Use an isolated checkout/worktree and unique issue branch from current main. Pre
 
 Read ADR0012 and docs/SCOPE_MIGRATION.md: 30/label, seed13 only, both tasks, six conditions, twelve result keys. Follow exact-count/source checks, disclosed model-assisted quality review, freeze and single-seed paired gaps. Independent-human annotation and distribution/report-sharing are removed. Preserve originals; use derived selection manifests and fresh scope-specific result storage. Do not fabricate human judgments, results, approvals or test outcomes. Do not commit real data, secrets, environments or unrelated changes. No unapproved shared-setting changes, force-pushes, history rewrites, branch deletion, release tags or frozen-data regeneration.
 
+The final professor-facing presentation deck and submission logistics are private owner work outside GitHub. Issues may deliver reports, tables, charts and the Colab walkthrough, but must not request, attach or track final slides.
+
 Run meaningful behavior tests and required fake-data pipeline checks using Python 3.11. Distinguish fake tests from real model/data evidence. Review the full diff, update affected durable docs and open a PR into main using its template. State evidence per acceptance criterion, test commands/results, contract effects and remaining human/operational requirements. Verify current-head CI. Leave the PR open for the lead or an explicitly authorized integrator; do not merge or close an incomplete issue yourself.
 
 Finish with issue/PR links, branch/commit, completed criteria with evidence, tests actually run, blockers and an actionable next-owner handoff. Persist that handoff on GitHub so the next model needs no private chat context.
