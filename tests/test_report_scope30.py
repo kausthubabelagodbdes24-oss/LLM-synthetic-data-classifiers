@@ -229,3 +229,78 @@ def test_pdf_text_check_detects_missing_values_and_blank_pages(evidence):
 
 def test_report_crlf_checkout_is_tolerated(report, evidence):
     assert problems_for(report.replace("\n", "\r\n"), evidence) == []
+
+
+# --- PR #39 review fixes -------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("sentence,needle", [
+    ("The C3 − C2 difference is not significant.", "not significant"),
+    ("No difference was statistically insignificant.", "insignificant"),
+    ("This is the largest within-task difference in the grid.", "largest within-task difference in the grid"),
+    ("C3/C4 consumed 59/54 demonstrations.", "C3/C4 consumed"),
+])
+def test_strict_wording_is_rejected_even_when_negated(report, evidence, sentence, needle):
+    marker = "**Summary of directions.**"
+    assert_flagged(report.replace(marker, f"{sentence} {marker}", 1), evidence, needle)
+
+
+def test_significance_and_bounded_c4_cost_disclosures_are_required(report, evidence):
+    assert_flagged(report.replace("Statistical significance was not assessed or claimed",
+                                  "Significance was not discussed"), evidence, "Statistical significance")
+    assert_flagged(report.replace("C4 on at most", "C4 on exactly"), evidence, "C4 on at most")
+
+
+def test_largest_comparison_claim_matches_accepted_comparisons(report, evidence):
+    analysis, freeze = evidence
+    assert rp.largest_planned_difference(analysis) == ("mix_vs_real", "trec")
+    altered = json.loads(json.dumps(analysis))
+    for comp in altered["comparisons"]:
+        if comp["id"] == "few_vs_zero":
+            comp["per_task"]["emotion"]["macro_f1_diff"] = 0.5
+    found = rp.validate_report(report, altered, freeze)
+    assert any("'largest' claim does not match" in p for p in found)
+
+
+def test_report_modules_cite_only_backed_hashes_and_no_strict_wording(evidence):
+    import re
+    analysis, freeze = evidence
+    known = rp.known_hashes(analysis, freeze)
+    for path in sorted((rp.DOCS / "report").glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        unbacked = set(re.findall(r"\b[0-9a-f]{64}\b", text)) - known
+        assert not unbacked, f"{path.name} cites hashes not backed by accepted evidence: {sorted(unbacked)}"
+        if path.name == "README.md":
+            continue                                   # quotes the retired claims as reconciliation notes
+        for phrase in rp.STRICT_FORBIDDEN:
+            assert phrase.lower() not in text.lower(), f"{path.name}: {phrase!r}"
+
+
+def test_every_committed_pdf_page_renders_inside_the_margins():
+    geometry = rp.render_page_geometry(rp.PDF_PATH)
+    assert len(geometry) == json.loads(rp.PDF_SIDECAR_PATH.read_text(encoding="utf-8"))["pages"]
+    assert rp.check_pdf_render(rp.PDF_PATH) == []
+    for g in geometry:
+        assert abs(g["left_mm"] - rp.LEFT_MARGIN_MM) <= rp.LEFT_EDGE_TOLERANCE_MM
+
+
+def test_shifted_or_clipped_page_is_detected(tmp_path):
+    from pypdf import PdfReader, PdfWriter, Transformation
+    writer = PdfWriter(clone_from=PdfReader(str(rp.PDF_PATH)))
+    writer.pages[7].add_transformation(Transformation().translate(tx=-40, ty=0))   # page 8, 14 mm left
+    shifted = tmp_path / "shifted.pdf"
+    with open(shifted, "wb") as fh:
+        writer.write(fh)
+    problems = rp.check_pdf_render(shifted)
+    assert any(p.startswith("page 8 ") for p in problems), problems
+    assert not any(p.startswith("page 7 ") for p in problems)
+
+
+def test_pdf_footer_is_part_of_the_page_not_a_type3_overlay():
+    from pypdf import PdfReader
+    reader = PdfReader(str(rp.PDF_PATH))
+    total = len(reader.pages)
+    for number, page in enumerate(reader.pages, 1):
+        assert f"SynthText scope30-v1 report — page {number} of {total}" in page.extract_text()
+        fonts = page.get("/Resources", {}).get("/Font", {})
+        for ref in fonts.values():
+            assert ref.get_object().get("/Subtype") != "/Type3"

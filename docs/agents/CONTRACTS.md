@@ -410,14 +410,14 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - Directory index: `docs/report/README.md`.
 - **Invariants and Specifications**:
   - **Datasets and Split Sizes**:
-    - TREC (`SetFit/TREC-QC`): 6 labels (`ABBR`, `DESC`, `ENTY`, `HUM`, `LOC`, `NUM`); official train 5,452, test 500. Deterministic 90/10 seed-0 split: `train.jsonl` (4,907 rows, SHA-256 `00bfe51d6dc988aaae09e5318db50b2849dff78363630f9a7aa97d19da050e88`), `pool.jsonl` (545 rows, SHA-256 `08b68832a764d25725f0580a6b728ae5c76dbb945110eb96bc75c88ea3074ba3`), `test.jsonl` (500 rows, SHA-256 `cbf804ec675c9603f90b656793f6c1ff5b26719ab29f1b402cf8d0be4c0c45aa`). `lowres_seed13.jsonl` (60 rows, SHA-256 `50f24e933ef74465df9d4fc0298a44b82d9a3b680c6553fc27df8d4a9cf41d8e`). Abbreviation count in train is 76 (> 30).
+    - TREC (`SetFit/TREC-QC`): 6 labels (`ABBR`, `DESC`, `ENTY`, `HUM`, `LOC`, `NUM`); official train 5,452, test 500. Deterministic 90/10 seed-0 split: `train.jsonl` (4,907 rows, SHA-256 `b587c84d26b361bbe6f4126aff136e9d737c6c349059e89d2a3ce79e226f4331`), `pool.jsonl` (545 rows, SHA-256 `0a78fbe6e38b8b9eb4f7d9e24e619d63f855e073bffb1e00edb23508490d3a6e`), `test.jsonl` (500 rows, SHA-256 `415f526277d0f23f9bfe903a2a6d994529ec183820b6d9d0d55d47c3195aa0c0`). `lowres_seed13.jsonl` (60 rows, SHA-256 `901c0596a42b6fd0fa128cb1dd05b26bb1dbdcbd0c1a0a3dca9011beb7a03a29`). These are the `prepare_data.CHECKSUMS` values (corrected in Issue #17; an earlier revision of this entry listed unbacked TREC hashes). Abbreviation count in train is 76 (> 30).
     - Emotion (`dair-ai/emotion`): 6 labels (`sadness`, `joy`, `love`, `anger`, `fear`, `surprise`); sub-facets: annoyance -> anger, anxiety -> fear; official train 16,000, test 2,000 (validation split excluded). Deterministic 90/10 seed-0 split: `train.jsonl` (14,400 rows, SHA-256 `4c6e92df9649661ab1c6fefe06f83206382322e6997fcb70ca53d22d302fac57`), `pool.jsonl` (1,600 rows, SHA-256 `dde4702b5f5168f5fad977ba6b659f9304ae02a3cb37c18281e208271f847d40`), `test.jsonl` (2,000 rows, SHA-256 `d3b7176e8ab6be052151511a3e9843fa633c5747d0dae73980a2e52a4fb6cd88`). `lowres_seed13.jsonl` (60 rows, SHA-256 `7bec4826ca96fa056ec5defc13a051f1c2ac25ef0270164219af13e1471af27f`).
   - **Separation and Untouched Tests**:
     - Disjoint training/pool splits guarantee no overlap between supervised training rows and few-shot in-context demonstration rows.
     - No official test row was directly sampled into training sets, demonstrations, or synthetic sources; normalized test-text matching candidates were rejected during synthetic generation.
     - One normalized official TREC train/test text duplicate (`trec.train.05262 = trec.test.00378`) was retained in C1 and C4 under the approved "Pin + Disclose" decision; all other prohibited overlaps fail closed.
   - **Disclosed Pinned Duplicate**:
-    - Official TREC benchmark contains 10 train/test duplicates. Seed 13 sampling draws `trec.train.05262` ("What is the abbreviation for Texas ?"), matching test item `trec.test.00378` (label `ABBR`, normalized SHA-256 `ba6af17c366034f8dca2abff920ba01cc773fc77eda6188a1127b8190b324d2e`).
+    - The official TREC release contains train/test text duplicates (their number is not recorded in committed evidence). Seed 13 sampling draws `trec.train.05262` ("What is the abbreviation for Texas ?"), matching test item `trec.test.00378` (label `ABBR`, normalized SHA-256 `ba6af17c366034f8dca2abff920ba01cc773fc77eda6188a1127b8190b324d2e`).
     - Lead decision: "Pin + Disclose" in `training.disclosed_test_text_overlap`. Appears only in TREC C1 and C4; fails closed on any other condition or synthetic overlap.
   - **Scope30-v1 Design and Counts**:
     - 2 tasks x 6 conditions x seed 13 only = 12 unique result keys.
@@ -461,7 +461,8 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 - **Producer**: `ws3_evaluation/report_scope30.py`.
   - `--check` is read-only.
   - `--build-pdf OUT` and `--write-pdf` render Markdown to HTML, then to an A4 PDF through Playwright Chromium. The two #14 PNGs are embedded byte for byte, and the build timestamps are normalized.
-  - Build dependencies are in `requirements-report.txt`. `pypdf` is in the test requirements so CI can check the PDF text.
+  - Build dependencies are in `requirements-report.txt`. `pypdf` and `pypdfium2` are in the test requirements, so CI checks the PDF text and renders every page.
+  - Page size, margins (20 mm sides) and the page-number footer come from a CSS `@page` rule, so the footer uses the body's embedded TrueType font rather than a Chromium Type 3 overlay.
 - **Consumes, read-only**:
   - `docs/analysis/scope30-v1-seed13/analysis.json`, pinned to `d0486efd…`;
   - the two charts, pinned to `fc6e2f6a…` and `5ed188eb…`;
@@ -480,7 +481,9 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - Citation completeness both ways.
   - Rejection of stale scaffold text and of unverified surnames.
   - For the PDF: sidecar hash and size, staleness against `REPORT.md`, page count, values and sections in the extracted text, blank pages and missing glyphs.
-- **Reconciliation findings** (modules left unchanged; see `docs/report/README.md`): the #16 methods module gives TREC split hashes that match no committed record (`00bfe51d…` and others versus canonical `b587c84d…` and others). The report uses the canonical values. `tests/test_report_methods_scope30.py` still asserts the module's values, so that is a lead decision.
+  - Rendering: every page is rendered with pdfium and must be non-blank. Ink must stay at least 12 mm from the side edges, and each page's leftmost content must sit at the 20 mm margin (±1 mm), so a shifted or clipped page fails.
+  - Wording rejected even when negated: "not significant" and its variants (no test was run), the over-broad "largest within-task difference in the grid", and "C3/C4 consumed". The C4 cost must stay bounded ("C4 on at most"), and the "largest" claim is recomputed from `analysis.json`.
+- **Reconciliation** (PR #39 review): the #15/#16 modules and their tests were corrected to the committed evidence; the canonical TREC hashes replaced unbacked ones, and other unsupported method claims were removed or attributed. See `docs/report/README.md` for the list. The accepted #14 interpretation is not modified.
 - **Tests**: `tests/test_report_scope30.py` covers the committed report and PDF and about 50 targeted mutations: values, identifiers, sections, charts, claims, citations, stale PDF and pins.
 - **Operator**: `run-issue17-report.bat CHECK|BUILD` (Windows). It runs on a clean checkout, stops at the first failure and writes a log. It never runs generation, Ollama, promotion, retraining, freezing, tagging or presentation work.
 

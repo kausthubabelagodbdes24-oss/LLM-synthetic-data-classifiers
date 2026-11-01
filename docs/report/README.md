@@ -23,18 +23,31 @@ To prevent concurrent editing collisions across workstreams and issues:
 - Individual workstream deliverables are stored as separate modular files in this directory (`docs/report/`).
 - Issue #15 delivers Sections 2, 3a, 6, and Appendix A.
 - Issue #16 delivers Sections 3b and 4 (`methods_data_classifiers.md`).
-- Issue #17 combined these section files into `docs/REPORT.md` (condensed for the 6–8 page target) and built `docs/REPORT.pdf`. `REPORT.md` is the canonical report. The modules stay as the accepted #15/#16 inputs.
+- Issue #17 combined these section files into `docs/REPORT.md` (condensed for the 6–8 page target) and built `docs/REPORT.pdf`. `REPORT.md` is the canonical report. The modules remain the #15/#16 inputs, corrected as listed below.
 
-## Issue #17 reconciliation notes on the modules
+## Issue #17 corrections to the modules (PR #39 review)
 
-`REPORT.md` reports only what the committed evidence supports. Where a module disagreed with that evidence, the report follows the evidence. The modules were left unchanged for the lead to decide:
+The lead's review of PR #39 required the modules to agree with the committed code, freeze and training evidence. Issue #17 corrected them, and the module tests now assert the corrected values:
 
-- `methods_data_classifiers.md` §1.2/§1.5 gives TREC `train`/`pool`/`test`/`lowres_seed13` SHA-256 values (`00bfe51d…`, `08b68832…`, `cbf804ec…`, `50f24e93…`). These match neither `prepare_data.CHECKSUMS` nor the freeze manifest (`b587c84d…`, `0a78fbe6…`, `415f5262…`, `901c0596…`). The report uses the canonical values.
-- `methods_data_classifiers.md` §1.2 gives a TREC pool label distribution (10/118/125/123/92/77) that conflicts with the #5 contract (10/126/128/124/78/79). Neither can be checked against committed data, so the report omits it.
-- `methods_data_classifiers.md` §1.5 says `lowres_seed13` was drawn from `train.jsonl`, but `prepare_data.py` samples it from `pool.jsonl`. §2.3 says C4's real half is the first 15 per label of the C1 sample, but `train_scope30.py` draws an independent seed-13 `per_label_sample(train, 15)`. §2.2 lists solver, tolerance, loss and a convergence guarantee, none of which is recorded in the grid binding.
-- `section_3a_generation_methods.md` describes normalization as punctuation-stripping, but `common.norm` only lower-cases and collapses whitespace. It also attributes the Ollama 0.40.13 / RTX 4060 environment to all generation, whereas the repository records it for the pilot (`PILOT_REPORT.md`).
-- `section_2_related_work.md` attributes claims to Li et al. (2023) and Dai et al. (2023) beyond their verified abstracts. The report keeps only the verified claims.
-- The superseded scaffold's surnames ("Harshita Jain", "Hementh M") have no authoritative record and are not used.
+- `methods_data_classifiers.md`:
+  - The TREC `train`/`pool`/`test`/`lowres_seed13` SHA-256 values are now the `prepare_data.CHECKSUMS` values (`b587c84d…`, `0a78fbe6…`, `415f5262…`, `901c0596…`), which the freeze also records. The earlier values (`00bfe51d…`, `08b68832…`, `cbf804ec…`, `50f24e93…`) matched no committed record.
+  - The pool label counts are taken from the Issue #5 contract and attributed to it.
+  - `lowres_seed13` is drawn from `pool.jsonl`.
+  - C4's real half is described as an independent seed-13 draw of 15 per label.
+  - Only the recorded classifier settings are stated: the solver, tolerance, loss and convergence claims were removed.
+  - C4's demonstration cost is shown as at most 59 / 54.
+  - The unverified count of ten official duplicates was removed.
+- `section_3a_generation_methods.md`:
+  - Normalization is lower-casing plus whitespace collapsing (`common.norm`).
+  - The Ollama 0.40.13 / RTX 4060 environment is attributed to the pilot record only, and "Windows 11" was removed.
+  - "Significant label drift" became the operator's recorded pilot label-fit problems.
+- `section_2_related_work.md`: the Li et al. (2023) and Dai et al. (2023) paragraphs keep only claims supported by the papers' abstracts.
+- `section_6_limitations_and_conclusions.md`:
+  - The 20/30-word limits are described as generation limits, not real-text lengths.
+  - The abbreviation-class sensitivity follows the #14 interpretation (roughly 0.01–0.02).
+  - "Future research should evaluate replications" became a statement of what was not run.
+- Author names: no authoritative record gives the teammates' surnames, so the report uses given names plus GitHub handles.
+- Not modified: `docs/analysis/scope30-v1-seed13-interpretation.md` is an accepted #14 output and still calls C4 − C1 on TREC "the largest within-task difference in the grid". The report narrows this to the largest absolute macro-F1 difference among the four comparisons in Table 2 of the report.
 
 ## Presentation Boundaries (ADR 0014)
 

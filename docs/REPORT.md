@@ -8,7 +8,7 @@
 
 *Evidence base.* Every number in this report comes from committed, accepted artifacts: the freeze manifest `docs/freeze/scope30-v1-seed13.freeze.json` (#12), the accepted twelve-key grid as bound by `docs/analysis/scope30-v1-seed13/analysis.json` (#13, #14), the issue #11 review evidence and the accepted report modules in `docs/report/` (#15, #16). `python -m ws3_evaluation.report_scope30 --check` re-checks those values.
 
-**Abstract.** We trained frozen-embedding logistic-regression classifiers on real, LLM-generated and mixed training sets for two six-class tasks: TREC question type (treated as the objective task) and Emotion (treated as the subjective task). The six conditions are real data (C1), zero-shot synthetic (C2), few-shot synthetic (C3), a half-real, half-few-shot mix (C4), ten real sources per label (C5a), and those sources plus six AugGPT paraphrases each (C5b). Synthetic text came from a local `qwen3:4b` model. C1–C4 use 180 training rows per task; C5a uses 60 and C5b uses 420. With one seed (13) and one run per condition, both synthetic-only conditions scored above real data on TREC (relative macro-F1 gaps +4.12% and +6.69%) and below it on Emotion (−6.80% and −5.90%). This direction matches the planned expectation of a larger negative gap on the more subjective task. However, a single run cannot estimate reliability, the two tasks differ in more than subjectivity, and synthetic-data quality was screened only by model-assisted and heuristic review. The results are therefore exploratory observations, not significant, stable or causal findings.
+**Abstract.** We trained frozen-embedding logistic-regression classifiers on real, LLM-generated and mixed training sets for two six-class tasks: TREC question type (treated as the objective task) and Emotion (treated as the subjective task). The six conditions are real data (C1), zero-shot synthetic (C2), few-shot synthetic (C3), a half-real, half-few-shot mix (C4), ten real sources per label (C5a), and those sources plus six AugGPT paraphrases each (C5b). Synthetic text came from a local `qwen3:4b` model. C1–C4 use 180 training rows per task; C5a uses 60 and C5b uses 420. With one seed (13) and one run per condition, both synthetic-only conditions scored above real data on TREC (relative macro-F1 gaps +4.12% and +6.69%) and below it on Emotion (−6.80% and −5.90%). This direction matches the planned expectation of a larger negative gap on the more subjective task. However, a single run cannot estimate reliability, the two tasks differ in more than subjectivity, and synthetic-data quality was screened only by model-assisted and heuristic review. The results are therefore exploratory observations. Statistical significance was not assessed or claimed, and no stability or causal claim is made.
 
 ## 1. Introduction
 
@@ -130,7 +130,7 @@ The trainer refuses to build any set or fit any classifier until the freeze veri
 
 ## 5. Results
 
-Table 1 lists the twelve accepted results and Table 2 the four planned comparisons. All values are single runs at seed 13 and are shown to four decimals from the full-precision `analysis.json`. No standard deviation, confidence interval or significance test exists for one run, and none is shown.
+Table 1 lists the twelve accepted results and Table 2 the four planned comparisons. All values are single runs at seed 13 and are shown to four decimals from the full-precision `analysis.json`. No standard deviation, confidence interval or significance test was computed for the single run, and none is shown.
 
 **Table 1. Macro-F1 and accuracy of the twelve accepted results on the official test sets.**
 
@@ -176,7 +176,7 @@ Table 1 lists the twelve accepted results and Table 2 the four planned compariso
 
 **Comparison 2: few-shot versus zero-shot.** On TREC, C3 was higher than C2 on both metrics. On Emotion, C3 was higher on macro-F1 and lower on accuracy, a difference of four test texts. Few-shot generation used 59 (TREC) and 54 (Emotion) real demonstrations that zero-shot did not.
 
-**Comparison 3: mix versus real.** On TREC, C4 scored higher than C1 on both metrics. This is the largest within-task difference in the grid, although only 90 of C4's 180 rows are real. On Emotion, C4 was lower on macro-F1 and higher on accuracy (one test text).
+**Comparison 3: mix versus real.** On TREC, C4 scored higher than C1 on both metrics. This is the largest absolute macro-F1 difference among the four planned comparisons (Table 2), although only 90 of C4's 180 rows are real. On Emotion, C4 was lower on macro-F1 and higher on accuracy (one test text).
 
 **Comparison 4: AugGPT versus sources.** On TREC, C5b scored higher than C5a on both metrics. On Emotion, C5b was higher on macro-F1 and lower on accuracy. C5b has seven times as many training rows as C5a from the same 60 real sources, so the difference mixes paraphrase content with training-set size. The retained AugGPT defects (Section 3.4) are part of that content.
 
@@ -186,15 +186,15 @@ Table 1 lists the twelve accepted results and Table 2 the four planned compariso
 
 **Limitations.**
 
-1. **One seed, one run.** All twelve values come from seed 13. A different seed (a different real sample, generated corpus or selection) could change any difference, including its sign. No significance, confidence interval, stability or replication claim is made.
+1. **One seed, one run.** All twelve values come from seed 13. A different seed (a different real sample, generated corpus or selection) could change any difference, including its sign. Statistical significance was not assessed or claimed, and no confidence interval, stability or replication claim is made.
 2. **Small data.** C1–C4 use 30 examples per label and C5a uses 10. TREC's abbreviation test class is small (nine items, per the #14 interpretation), so a few test items can move its macro-F1.
 3. **Task confounding.** TREC and Emotion also differ in label semantics, text length and style, test-set size (500 versus 2,000), label balance and baseline level. The cross-task difference therefore cannot be attributed to subjectivity, and this study does not claim that subjectivity caused it.
-4. **Unequal C5 sizes and unequal labelling costs.** C5a has 60 rows and C5b 420. C3/C4 consumed 59/54 real demonstrations beyond their training counts, and C5b reuses the C5a sources.
+4. **Unequal C5 sizes and unequal labelling costs.** C5a has 60 rows and C5b 420. C3 drew on 59 (TREC) and 54 (Emotion) real demonstrations beyond its training count, and C4 on at most 59 / 54: the exact number behind C4's 90 few-shot rows cannot be computed from committed artifacts. C5b reuses the C5a sources.
 5. **Model-assisted and heuristic quality review.** One model judged ten items per batch, plus targeted checks and regex scans. This is not independent human annotation or inter-annotator agreement, and its counts are not population error rates. Known defects were retained under Option A: about 13 problematic TREC AugGPT paraphrases, `00845.aug3`, and all 12 paraphrases of two Emotion sources.
 6. **Other disclosed artifacts.** One official TREC train/test duplicate is in C1 and C4, and 18 TREC texts are shared between the C2 and C3 corpora.
 7. **Fixed pipeline.** The study uses one compact generator (`qwen3:4b`), frozen MiniLM embeddings and logistic regression. Results may not transfer to other generators, embeddings or classifiers.
 
-**Conclusions.** In this exploratory scope30-v1 run, synthetic-only training data from `qwen3:4b` scored above 180 real examples on TREC and below them on Emotion. The relative gap was 10.92 (zero-shot) and 12.59 (few-shot) percentage points more negative on Emotion. This direction is consistent with the expectation drawn from Li et al. (2023). The other comparisons showed same-sign directions on TREC and mixed metric directions on Emotion. With one seed, the reliability of these observations is unknown. They do not establish significance, stability, generalisation or a causal role for subjectivity. This study did not include additional seeds, a predefined equivalence threshold or controls for the non-subjective differences between the tasks; those are natural next steps.
+**Conclusions.** In this exploratory scope30-v1 run, synthetic-only training data from `qwen3:4b` scored above 180 real examples on TREC and below them on Emotion. The relative gap was 10.92 (zero-shot) and 12.59 (few-shot) percentage points more negative on Emotion. This direction is consistent with the expectation drawn from Li et al. (2023). The other comparisons showed same-sign directions on TREC and mixed metric directions on Emotion. With one seed, the reliability of these observations is unknown. Statistical significance was not assessed or claimed, and the observations do not establish stability, generalisation or a causal role for subjectivity. This study did not include additional seeds, a predefined equivalence threshold or controls for the non-subjective differences between the tasks; those are natural next steps.
 
 ## References
 

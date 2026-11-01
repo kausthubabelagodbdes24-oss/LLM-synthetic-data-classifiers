@@ -4,9 +4,9 @@
 
 ### Generator Identity, Environment, and Provenance
 
-All synthetic data for the accepted `scope30-v1` study was generated locally and offline using Ollama 0.40.13 on an NVIDIA GeForce RTX 4060 Laptop GPU (8 GiB VRAM), under Windows 11.
+All synthetic data for the accepted `scope30-v1` study was generated locally and offline through Ollama. The committed record of the hardware and Ollama version is the pilot's ([`docs/PILOT_REPORT.md`](../PILOT_REPORT.md)): Ollama 0.40.13 on an NVIDIA RTX 4060 Laptop GPU (8 GiB). The final scope30-v1 sidecars record the model identity and digest, but they are not committed and the committed evidence does not record the hardware or Ollama version of those final runs.
 
-Following the initial generation pilot, the original candidate generator (`llama3.2:3b`, digest `a80c4f17…`) exhibited significant label drift and high error rates on subjective categories (documented in [`docs/PILOT_REPORT.md`](../PILOT_REPORT.md)). Under [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md) and [ADR 0011](../adr/0011-accept-qwen-pilot-and-uniform-100-target.md), the project lead tested and accepted `qwen3:4b` as the replacement generator across all conditions:
+Following the initial generation pilot, the original candidate generator (`llama3.2:3b`, digest `a80c4f17…`) showed clear label-fit problems in the operator's pilot review (documented in [`docs/PILOT_REPORT.md`](../PILOT_REPORT.md)). Under [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md) and [ADR 0011](../adr/0011-accept-qwen-pilot-and-uniform-100-target.md), the project lead tested and accepted `qwen3:4b` as the replacement generator across all conditions:
 - **Configured Model Tag:** `qwen3:4b`
 - **Model Digest:** `359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7` (pinned in `ws1_generation.generate.APPROVED_GENERATORS`)
 - **Sampling Temperature:** $T = 0.9$
@@ -54,7 +54,7 @@ We implemented three distinct prompting strategies in `ws1_generation/generate.p
 Candidate generations are processed through a multi-stage filtering pipeline before admission to synthetic corpora:
 - **Structured JSON Parsing**: Parses the model reply into an array of string candidates. If parsing fails, the call is retried up to three times.
 - **Conversational Chatter Filter**: Regex patterns (`NON_EXAMPLE_PATTERNS`) reject assistant conversational filler (e.g., *"Here are your examples:"*, *"Sure, below are..."*, *"As an AI..."*).
-- **Exact-Match Test Leakage Exclusion**: Every candidate is normalized (lowercased, whitespace-collapsed, punctuation-stripped) and checked against the untouched official held-out test split (`data/real/<task>/test.jsonl`). Any candidate matching a test item is immediately rejected. Across all accepted synthetic corpora, zero test leaks occurred.
+- **Exact-Match Test Leakage Exclusion**: Every candidate is normalized with `common.norm` (lower-cased and whitespace-collapsed; punctuation is kept) and checked against the untouched official held-out test split (`data/real/<task>/test.jsonl`). Any candidate matching a test item is immediately rejected. Across all accepted synthetic corpora, zero test leaks occurred.
 - **In-Corpus Deduplication**: Duplicate normalized texts within the same artifact are rejected.
 - **Copy Rejection**: Few-shot candidates copying any of the prompt's three demonstrations are rejected. AugGPT candidates identical to the source text are rejected.
 - **Write-Ahead Journaling**: Each batch of accepted rows is written to an identity-bound write-ahead journal before appending to the JSONL corpus, followed by atomic provenance metadata replacement. Interrupted runs resume cleanly from the shortfall without duplicate rows or count inflation.

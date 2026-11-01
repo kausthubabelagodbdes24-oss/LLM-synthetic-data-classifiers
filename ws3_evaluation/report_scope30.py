@@ -15,7 +15,7 @@ It also rejects missing sections, unbacked hashes, stale scaffold text and unqua
 ``docs/REPORT.pdf`` matches its sidecar and that the sidecar was built from the current ``REPORT.md``.
 
 Building needs the optional ``requirements-report.txt`` packages (``markdown``, ``playwright`` with Chromium,
-``pypdf``). Checking needs only the standard library, plus ``pypdf`` when the PDF text is checked.
+``pypdf``, ``pypdfium2``). Checking needs ``pypdf`` (PDF text) and ``pypdfium2`` (page rendering).
 It never runs generation, training, analysis, freezing or Ollama.
 """
 
@@ -86,6 +86,12 @@ CLAIM_PATTERNS = {
     "independent human review": r"independent[- ]human|independent human",
     "superiority": r"\boutperform\w*|\bsuperior\w*|\bimprove(?:s|d|ment)?\b|\bdegrad\w*",
 }
+# Wording rejected even inside a negated sentence: it implies a test that was never run, overstates a
+# comparison, or states the bounded C4 demonstration cost as exact.
+STRICT_FORBIDDEN = (
+    "not significant", "non-significant", "nonsignificant", "insignificant", "not statistically significant",
+    "largest within-task difference in the grid", "C3/C4 consumed",
+)
 NEGATION = re.compile(
     r"\b(?:no|not|nor|never|cannot|without|neither|unknown|none|isn't|doesn't|did not|does not|is not|"
     r"are not|was not|were not|rather than|instead of)\b", re.I)
@@ -235,6 +241,15 @@ def expected_phrases(analysis, freeze):
     return phrases
 
 
+def largest_planned_difference(analysis):
+    """(comparison id, task) with the largest absolute macro-F1 difference among the four planned comparisons."""
+    diffs = {}
+    for comp in analysis["comparisons"]:
+        for task, v in comp["per_task"].items():
+            diffs[(comp["id"], task)] = abs(v["absolute"] if "absolute" in v else v["macro_f1_diff"])
+    return max(diffs, key=diffs.get)
+
+
 def known_hashes(analysis, freeze):
     """Every 64-hex value the report may cite: those present in accepted evidence or pinned in code."""
     from ws2_training import prepare_data, train_scope30
@@ -359,7 +374,16 @@ def validate_report(text, analysis, freeze, report_dir=DOCS):
             problems.append(f"revision not backed by accepted evidence: {rev}")
     # Scientific wording.
     problems += claim_problems(body + "\n" + appendix)
-    for required in ("model-assisted", "Option A", "trec.train.05262", "trec.test.00378", "seed 13",
+    lowered = text.lower()
+    for phrase in STRICT_FORBIDDEN:
+        if phrase.lower() in lowered:
+            problems.append(f"forbidden wording: {phrase!r}")
+    largest = largest_planned_difference(analysis)
+    if "largest absolute macro-F1 difference among the four planned comparisons" in text and \
+            largest != ("mix_vs_real", "trec"):
+        problems.append(f"'largest' claim does not match the accepted comparisons (largest is {largest})")
+    for required in ("Statistical significance was not assessed or claimed", "C4 on at most",
+                     "model-assisted", "Option A", "trec.train.05262", "trec.test.00378", "seed 13",
                      "not independent human annotation", "C5b has seven times as many training rows as C5a",
                      "No equivalence or meaningfulness threshold was defined"):
         if required not in text:
@@ -382,9 +406,11 @@ def validate_report(text, analysis, freeze, report_dir=DOCS):
 # --------------------------------------------------------------------------------------- PDF build/check
 
 CSS = """
-@page { size: A4; margin: 17mm 17mm 18mm 17mm; }
-html { font-family: "DejaVu Serif", Cambria, Georgia, "Times New Roman", serif; font-size: 10pt;
-       line-height: 1.38; color: #111; }
+@page { size: A4; margin: 18mm 20mm 20mm 20mm;
+        @bottom-center { content: "SynthText scope30-v1 report — page " counter(page) " of " counter(pages);
+                         font-family: "DejaVu Serif", Cambria, Georgia, serif; font-size: 7.5pt; color: #555; } }
+html { font-family: "DejaVu Serif", Cambria, Georgia, "Times New Roman", serif; font-size: 9.7pt;
+       line-height: 1.34; color: #111; }
 body { margin: 0; }
 h1 { font-size: 15pt; line-height: 1.25; margin: 0 0 8pt; }
 h2 { font-size: 12.5pt; margin: 14pt 0 5pt; border-bottom: 0.6pt solid #999; padding-bottom: 2pt;
@@ -451,17 +477,74 @@ def build_pdf(out_path, report_path=REPORT_PATH):
             browser = pw.chromium.launch()
             page = browser.new_page()
             page.goto(html_path.as_uri(), wait_until="load")
-            pdf = page.pdf(format="A4", print_background=True, display_header_footer=True,
-                           header_template="<span></span>",
-                           footer_template=('<div style="font-size:8px;width:100%;text-align:center;'
-                                            'color:#555;">SynthText scope30-v1 report — page '
-                                            '<span class="pageNumber"></span> of <span class="totalPages">'
-                                            '</span></div>'),
-                           margin={"top": "17mm", "bottom": "18mm", "left": "17mm", "right": "17mm"})
+            # Page size, margins and the page-number footer come from the CSS @page rule, so the footer uses
+            # the body's embedded TrueType font (no separate Chromium header/footer layer or Type 3 font).
+            pdf = page.pdf(prefer_css_page_size=True, print_background=True)
             browser.close()
     pdf = _normalize_pdf_dates(pdf)
     Path(out_path).write_bytes(pdf)
     return pdf
+
+
+# Rendered-page geometry (A4, millimetres). Every page's leftmost ink (heading, paragraph or table border) sits
+# at the 20 mm side margin; ink closer than MIN_EDGE_MM to an edge, or a page whose content starts elsewhere
+# (shifted or clipped), is reported.
+PAGE_MM = (210.0, 297.0)
+LEFT_MARGIN_MM = 20.0
+MIN_EDGE_MM = 12.0
+LEFT_EDGE_TOLERANCE_MM = 1.0
+
+
+def render_page_geometry(pdf_path, dpi=100):
+    """Per page: ink bounding box and the most common left text edge, in mm, rendered with pdfium."""
+    import pypdfium2 as pdfium
+    from collections import Counter
+    doc = pdfium.PdfDocument(str(pdf_path))
+    out = []
+    try:
+        for index in range(len(doc)):
+            image = doc[index].render(scale=dpi / 72).to_pil().convert("L")
+            width, height = image.size
+            px = image.load()
+            mm = 25.4 / dpi
+            ink_rows, starts = [], Counter()
+            for y in range(height):
+                first = next((x for x in range(width) if px[x, y] < 200), None)
+                if first is None:
+                    continue
+                last = next(x for x in range(width - 1, -1, -1) if px[x, y] < 200)
+                ink_rows.append((y, first, last))
+                starts[round(first * mm)] += 1
+            if not ink_rows:
+                out.append({"page": index + 1, "blank": True})
+                continue
+            out.append({
+                "page": index + 1, "blank": False,
+                "left_mm": min(r[1] for r in ink_rows) * mm, "right_mm": max(r[2] for r in ink_rows) * mm,
+                "top_mm": ink_rows[0][0] * mm, "bottom_mm": ink_rows[-1][0] * mm,
+                "text_left_mm": starts.most_common(1)[0][0],
+            })
+    finally:
+        doc.close()
+    return out
+
+
+def check_pdf_render(pdf_path):
+    """Render every page with pdfium and reject blank pages, ink near an edge and shifted pages."""
+    problems = []
+    for g in render_page_geometry(pdf_path):
+        if g["blank"]:
+            problems.append(f"page {g['page']} renders blank")
+            continue
+        if g["left_mm"] < MIN_EDGE_MM or g["right_mm"] > PAGE_MM[0] - MIN_EDGE_MM:
+            problems.append(f"page {g['page']} has ink within {MIN_EDGE_MM} mm of a side edge "
+                            f"({g['left_mm']:.1f}–{g['right_mm']:.1f} mm)")
+        if g["top_mm"] < MIN_EDGE_MM - 4 or g["bottom_mm"] > PAGE_MM[1] - 8:
+            problems.append(f"page {g['page']} has ink too close to the top or bottom edge")
+        if abs(g["left_mm"] - LEFT_MARGIN_MM) > LEFT_EDGE_TOLERANCE_MM:
+            problems.append(f"page {g['page']} content starts at {g['left_mm']:.1f} mm, not the "
+                            f"{LEFT_MARGIN_MM:.0f} mm margin (shifted or clipped page)")
+    return problems
 
 
 def pdf_text_pages(pdf_path):
@@ -554,6 +637,11 @@ def check_pdf(analysis, pdf_path=PDF_PATH, sidecar_path=PDF_SIDECAR_PATH, report
     if len(pages) != sidecar.get("pages"):
         problems.append(f"PDF has {len(pages)} pages but the sidecar records {sidecar.get('pages')}")
     problems += check_pdf_text(pages, analysis)
+    try:
+        problems += check_pdf_render(pdf_path)
+    except ImportError:
+        if require_text:
+            problems.append("pypdfium2 is required to render-check the PDF (pip install -r requirements-report.txt)")
     return problems
 
 
@@ -589,7 +677,7 @@ def main(argv=None):
         out = Path(args.build_pdf) if args.build_pdf else PDF_PATH
         pdf = build_pdf(out)
         pages = pdf_text_pages(out)
-        text_problems = check_pdf_text(pages, analysis)
+        text_problems = check_pdf_text(pages, analysis) + check_pdf_render(out)
         for p in text_problems:
             print(f"FAIL {p}")
         if text_problems:
