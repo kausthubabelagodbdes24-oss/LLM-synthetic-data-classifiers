@@ -9,10 +9,10 @@
   },
   "pages": 14,
   "pdf": "docs/REPORT.pdf",
-  "pdf_bytes": 328512,
-  "pdf_sha256": "194263701b95ca40546b6e496c5706c70f2d37ef0ecd82e5aa10276aba2d187f",
+  "pdf_bytes": 328990,
+  "pdf_sha256": "669e3ba78baef28fd52308177dcd88a69e3057b5fb0f69936f0068b9fc1f8ed1",
   "report": "docs/REPORT.md",
-  "report_sha256_lf": "dfb2a662a9583d42fbb76b1730a468d90b8be1e82bd963c9e438daf8eef76870",
+  "report_sha256_lf": "7d2ecac3086344486e58c8370553aa9794534deae1f5b776616babb6ceb47a83",
   "review_status": "not reviewed or accepted by the author",
   "schema_version": 1
 }
