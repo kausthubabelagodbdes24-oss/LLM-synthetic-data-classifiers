@@ -18,6 +18,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
 | Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion) in results/scope30-seed13 (#7, preserved). Twelve-key freeze-bound grid: `ws2_training/train_scope30.py` (#13; see the #13 section below). The real grid ran once at `1354118` and was accepted by the lead on #13 (1 November 2026); `grid_complete.json` sha256 `3b12bbb8…`. Single-seed paired analysis: `ws3_evaluation/analyze_scope30.py` (#14; see the #14 section below). | Training (@kausthubabelagodbdes24-oss) + evaluation |
 | Generation report sections and appendix | Generation deliverables for Issue #15 (Sections 2, 3a, 6, Appendix A) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Sole operator and author: @kausthubabelagodbdes24-oss (historical: WS1 @harshitadjainbdes24-byte) |
+| Data and classifier methods sections | Training deliverables for Issue #16 (Sections 3b, 4) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Training (@kausthubabelagodbdes24-oss; sole operator) |
 | Reproducibility walkthrough | `notebooks/SynthText_scope30_walkthrough.ipynb` separates a fake-fixture pipeline demonstration from read-only accepted real analysis. It never reruns the accepted experiment. Final presentation slides are outside repository and issue scope under ADR0014. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
@@ -386,17 +387,68 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 ## Generation report sections and Appendix A (Issue #15, scope30-v1)
 
 - **Authority & Status**: [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), [ADR 0013](../adr/0013-trec-auggpt-answer-type.md), [ADR 0014](../adr/0014-presentation-separation-colab.md), and [PROJECT_SPEC.md](../PROJECT_SPEC.md). Delivered in PR for Issue #15.
-- **Producer**: Sole operator and author: @kausthubabelagodbdes24-oss (historical: Harshita @harshitadjainbdes24-byte, WS1).
+- **Producer**: Sole operator and author: @kausthubabelagodbdes24-oss (historical: WS1 @harshitadjainbdes24-byte).
 - **Consumer**: Issue #16 (data/classifier methods), Issue #17 ([Evaluation] Assemble the revised exploratory report and reviewed PDF).
 - **Deliverable Paths**:
   - `docs/report/section_2_related_work.md`: Related work on synthetic data utility across task subjectivity (Li et al., 2023), text augmentation via AugGPT (Dai et al., 2023), few-shot in-context learning (Brown et al., 2020), and Sentence-BERT dense representations (Reimers and Gurevych, 2019) from verified primary sources.
   - `docs/report/section_3a_generation_methods.md`: Accepted Qwen model identity (`qwen3:4b`, digest `359d7dd4…`), temperature T=0.9, thinking behavior, prompt strategies (zero-shot, few-shot with 3 pool demonstrations, AugGPT with length guard and ADR 0013 v2 answer-type constraints), filtering rules, write-ahead journals, seed-13 selection (720 zero/few-shot across four artifacts + 720 AugGPT paraphrases across two artifacts = 1,440 synthetic examples), demonstration costs (59 TREC / 54 Emotion), quality screening (multi-stage: initial gate of 10 rows in each of six batches, round 2, targeted rechecks, supplementary Emotion check, and heuristic scope scans; disclosed as model-assisted and heuristic, not independent human review or population error rate), and freeze under lead Option A.
-  - `docs/report/section_6_limitations_and_conclusions.md`: Grounded strictly in observed numerical directions from the four accepted single-seed comparisons in `docs/analysis/scope30-v1-seed13/` (recording observed contrary directions between TREC and Emotion without inferential claims like 'outperformed', 'gain', or 'loss'; stating reliability is unknown with one seed and no equivalence threshold was defined; single-seed, small data, task confounding, demonstration cost, and model-assisted screening limitations).
+  - `docs/report/section_6_limitations_and_conclusions.md`: Grounded strictly in observed numerical directions from the four accepted single-seed comparisons in `docs/analysis/scope30-v1-seed13/` (TREC values were higher than their references at seed 13; Emotion C2/C3 values were lower than C1, while other Emotion comparisons had mixed metric directions; recording observed contrary directions between TREC and Emotion without inferential claims like 'outperformed', 'gain', or 'loss'; stating reliability is unknown with one seed and no equivalence threshold was defined; no causal, significance, stability or generalisation claim is made; single-seed, small data, task confounding, demonstration cost, and model-assisted screening limitations).
   - `docs/report/appendix_a_prompts_and_examples.md`: Verbatim generation prompt templates from `ws1_generation/generate.py`, two good and two problematic examples per task with verified row ID and artifact SHA-256 provenance from accepted final artifacts, and the eight historical pilot examples from ADR 0011 / `PILOT_REPORT.md` explicitly distinguished.
   - `docs/report/README.md`: Directory structure and workstream index reconciling #15, #16, and #17 deliverables.
 - **Report Scaffold Integrity**: The shared report assembly file (`docs/REPORT.md`) is preserved untouched for #17's final assembly to maintain modular file separation between workstreams.
 - **Presentation Separation**: Presentation slides and submission logistics remain outside GitHub scope per ADR 0014.
 - **Verification**: `tests/test_generation_report_sections.py` validates file presence, primary citations, model settings, exact hashes, prompt template parity with `ws1_generation/generate.py`, example provenance, and scientific boundary disclosures.
+
+## Data, classifier and training-method specifications (Issue #16, ADR 0012, ADR 0014)
+
+- **Authority**: [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), [ADR 0014](../adr/0014-presentation-separation-colab.md), [PROJECT_SPEC.md](../PROJECT_SPEC.md), lead decisions on #13 and #16.
+- **Producer**: Workstream 2 (Training and project lead: Kausthuba Belagod @kausthubabelagodbdes24-oss; sole operator).
+- **Consumers**: Report assembly (#17), documentation, walkthrough (#18), external research presentation.
+- **Artifacts**:
+  - Modular report section: `docs/report/methods_data_classifiers.md` (covering Sections 3b and 4 of the report scaffold).
+  - Directory index: `docs/report/README.md`.
+- **Invariants and Specifications**:
+  - **Datasets and Split Sizes**:
+    - TREC (`SetFit/TREC-QC`): 6 labels (`ABBR`, `DESC`, `ENTY`, `HUM`, `LOC`, `NUM`); official train 5,452, test 500. Deterministic 90/10 seed-0 split: `train.jsonl` (4,907 rows, SHA-256 `00bfe51d6dc988aaae09e5318db50b2849dff78363630f9a7aa97d19da050e88`), `pool.jsonl` (545 rows, SHA-256 `08b68832a764d25725f0580a6b728ae5c76dbb945110eb96bc75c88ea3074ba3`), `test.jsonl` (500 rows, SHA-256 `cbf804ec675c9603f90b656793f6c1ff5b26719ab29f1b402cf8d0be4c0c45aa`). `lowres_seed13.jsonl` (60 rows, SHA-256 `50f24e933ef74465df9d4fc0298a44b82d9a3b680c6553fc27df8d4a9cf41d8e`). Abbreviation count in train is 76 (> 30).
+    - Emotion (`dair-ai/emotion`): 6 labels (`sadness`, `joy`, `love`, `anger`, `fear`, `surprise`); sub-facets: annoyance -> anger, anxiety -> fear; official train 16,000, test 2,000 (validation split excluded). Deterministic 90/10 seed-0 split: `train.jsonl` (14,400 rows, SHA-256 `4c6e92df9649661ab1c6fefe06f83206382322e6997fcb70ca53d22d302fac57`), `pool.jsonl` (1,600 rows, SHA-256 `dde4702b5f5168f5fad977ba6b659f9304ae02a3cb37c18281e208271f847d40`), `test.jsonl` (2,000 rows, SHA-256 `d3b7176e8ab6be052151511a3e9843fa633c5747d0dae73980a2e52a4fb6cd88`). `lowres_seed13.jsonl` (60 rows, SHA-256 `7bec4826ca96fa056ec5defc13a051f1c2ac25ef0270164219af13e1471af27f`).
+  - **Separation and Untouched Tests**:
+    - Disjoint training/pool splits guarantee no overlap between supervised training rows and few-shot in-context demonstration rows.
+    - No official test row was directly sampled into training sets, demonstrations, or synthetic sources; normalized test-text matching candidates were rejected during synthetic generation.
+    - One normalized official TREC train/test text duplicate (`trec.train.05262 = trec.test.00378`) was retained in C1 and C4 under the approved "Pin + Disclose" decision; all other prohibited overlaps fail closed.
+  - **Disclosed Pinned Duplicate**:
+    - Official TREC benchmark contains 10 train/test duplicates. Seed 13 sampling draws `trec.train.05262` ("What is the abbreviation for Texas ?"), matching test item `trec.test.00378` (label `ABBR`, normalized SHA-256 `ba6af17c366034f8dca2abff920ba01cc773fc77eda6188a1127b8190b324d2e`).
+    - Lead decision: "Pin + Disclose" in `training.disclosed_test_text_overlap`. Appears only in TREC C1 and C4; fails closed on any other condition or synthetic overlap.
+  - **Scope30-v1 Design and Counts**:
+    - 2 tasks x 6 conditions x seed 13 only = 12 unique result keys.
+    - C1–C4 = 180 rows per task (30/label across all 6 classes).
+    - C4 = 15 real + 15 few-shot per label (90 real + 90 synthetic).
+    - C5a = 60 real sources (10/label).
+    - C5b = 60 real sources + 360 AugGPT paraphrases = 420 rows per task (6 paraphrases per source).
+    - Unequal C5a/C5b sizes disclosed as inherent to data augmentation.
+  - **Deterministic Selection and Freeze Binding**:
+    - Selection rule: per-label ascending SHA-256 hex of UTF-8 `scope30-v1|13|<task>|<setting>|<row-id>` with row ID tie-breaker; extracts top 30 without truncating raw outputs.
+    - Freeze manifest: `docs/freeze/scope30-v1-seed13.freeze.json` (SHA-256 `dd2e52ee704835525df41071ff5214c56593969d248ca8812c23b617bfd74de1`).
+    - Training records bind code commit, ordered training IDs, split hashes, embedder identity, and hyperparameters into immutable self-hashed records.
+  - **Embedder and Classifier Identity**:
+    - Embedder: `sentence-transformers/all-MiniLM-L6-v2`, revision `1110a243fdf4706b3f48f1d95db1a4f5529b4d41`, model_identity.identity_sha256 `36bb95116de1358079c1fab49ac634493101e484c99edbd882691fbf96859cad` (hash of canonical snapshot file-hash mapping; individual snapshot-file SHA-256 values are recorded separately), 384 dimensions, frozen, L2 normalized, CPU, batch 64, offline.
+    - Classifier: Scikit-learn `LogisticRegression(C=1.0, max_iter=2000, random_state=13, solver='lbfgs')`.
+  - **Training Harness Behavior**:
+    - `ws2_training/train_scope30.py` enforces fail-closed freeze check, dedicated results storage `results/scope30-v1-seed13-freeze-v1/`, idempotent resume, archive of replaced keys to `superseded/`, and `--validate` verification of 12 unique keys.
+  - **Cost Separation**:
+    - Classifier input size ($n_{\text{train}}$) separated from real labelled demonstration/source costs:
+      - C1: 180 real training rows, 0 demos.
+      - C2: 0 real training rows, 0 demos.
+      - C3: 0 real training rows, 59 real demos (TREC) / 54 real demos (Emotion).
+      - C4: 90 real training rows, up to 59 (TREC) / 54 (Emotion) real demos.
+      - C5a: 60 real training rows, 0 demos.
+      - C5b: 60 real training rows, 360 synthetic paraphrases, 0 demos (60 real labelled items total).
+  - **Metrics and Scientific Claim Boundaries**:
+    - Macro-F1 and accuracy reported on official test sets.
+    - Paired relative gap = `(synthetic - C1) / C1`; undefined if C1 is 0; missing C1 blocks analysis.
+    - Single-run evaluation on seed 13 only: no cross-seed SD, no confidence intervals, no zero-error bars, no claims of statistical significance or stability.
+    - Cross-task comparison is non-causal: differences between TREC and Emotion encompass text length, syntactic complexity, class balance, and test size, and cannot be attributed to subjectivity alone.
+  - **Presentation Boundary (ADR 0014)**:
+    - Final presentation slides and submission logistics are private owner deliverables outside GitHub and are not repository artifacts.
 
 ## Optional evaluation and annotation response tooling (historical)
 
