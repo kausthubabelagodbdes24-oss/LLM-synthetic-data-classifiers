@@ -142,6 +142,17 @@ python -m ws2_training.train_scope30 --results-dir <fresh dir> --validate
 
 Real runs need a clean checkout, `sentence-transformers` + `torch` and a locally cached MiniLM snapshot. `--dry-run` uses fake fixtures and is never evidence. See the #13 section of [contracts](docs/agents/CONTRACTS.md).
 
+### Single-seed gap analysis (issue #14)
+
+`ws3_evaluation.analyze_scope30` analyses the frozen grid that the lead accepted on #13. In real mode the grid's `grid_complete.json` SHA-256 is pinned. The legacy `ws3_evaluation.analyze` reports a mean ± SD over seeds and must not be used for scope30-v1.
+
+```bash
+python -m ws3_evaluation.analyze_scope30 --check --results-dir <grid dir>   # read-only; writes nothing
+python -m ws3_evaluation.analyze_scope30 --results-dir <grid dir> [--out <fresh dir>]
+```
+
+It writes `summary.md`, `analysis.json`, `f1_by_condition.png` and `gap.png` once, to a fresh directory (default `docs/analysis/scope30-v1-seed13/`). Real analysis needs a clean checkout. Inspect both charts before reporting. See the #14 section of [contracts](docs/agents/CONTRACTS.md).
+
 ## Files and remaining setup confirmations
 
 - `config.yaml`, `common.py`: shared settings/helpers; config records ADR0012 scope.
