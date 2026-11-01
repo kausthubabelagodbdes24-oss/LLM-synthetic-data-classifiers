@@ -46,6 +46,18 @@ NAMES = {"C1": "Real", "C2": "Zero-shot", "C3": "Few-shot", "C4": "Real + few-sh
 TASK_NAMES = {"trec": "TREC", "emotion": "Emotion"}
 REAL_PARTS = ("real_train", "lowres_source")
 SYNTHETIC_PARTS = ("zero_shot", "few_shot", "auggpt")
+# Exact training composition per condition (ADR 0012), from the producer's own size constants. A record must match
+# its condition's structure exactly - key set, values and JSON integer type - or the cost disclosure would be wrong.
+_ALL, _C4_REAL = ts.PER_LABEL * ts.N_LABELS, ts.C4_REAL_PER_LABEL * ts.N_LABELS
+_SOURCES = ts.LOWRES_PER_LABEL * ts.N_LABELS
+EXPECTED_COMPOSITION = {
+    "C1": {"real_train": _ALL},
+    "C2": {"zero_shot": _ALL},
+    "C3": {"few_shot": _ALL},
+    "C4": {"few_shot": _ALL - _C4_REAL, "real_train": _C4_REAL},
+    "C5a": {"lowres_source": _SOURCES},
+    "C5b": {"auggpt": _SOURCES * ts.AUGGPT_K, "lowres_source": _SOURCES},
+}
 COMPLETE_KEYS = {"result_kind", "scope_id", "seed", "generation_mode", "real_run_evidence", "complete", "keys",
                  "freeze", "classifier", "repository", "runs_csv_sha256", "results", "total_runtime_seconds"}
 ENTRY_KEYS = {"key", "n_train", "macro_f1", "accuracy", "training_ids_sha256", "record_sha256",
@@ -127,9 +139,9 @@ def _check_record(key, raw, rec, entry, complete, mode):
     if n_train != ts.EXPECTED_COUNTS[cond]:
         problems.append(f"{name}: n_train {n_train} != {ts.EXPECTED_COUNTS[cond]}")
     composition = training.get("composition")
-    if not isinstance(composition, dict) or sum(composition.values()) != n_train \
-            or not set(composition) <= set(REAL_PARTS + SYNTHETIC_PARTS):
-        problems.append(f"{name}: training composition {composition!r} does not account for n_train")
+    if not ts._same(composition, EXPECTED_COMPOSITION[cond]):        # structural: no arithmetic on untrusted values
+        problems.append(f"{name}: training composition {composition!r} is not the exact {cond} structure "
+                        f"{EXPECTED_COMPOSITION[cond]}")
     if metrics and not all(ts._same(metrics[m], entry.get(m)) for m in ("macro_f1", "accuracy")):
         problems.append(f"{name}: metrics differ from grid_complete.json")
     if n_train != entry.get("n_train") or training.get("ids_sha256") != entry.get("training_ids_sha256") \

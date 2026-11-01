@@ -280,23 +280,72 @@ def test_resealed_record_that_disagrees_with_grid_complete_is_rejected(fake):
     (lambda r: r["freeze"].update(sha256="0" * 64), "freeze binding"),
     (lambda r: r["repository"].update(revision="0" * 40), "repository binding"),
     (lambda r: r["classifier"]["classifier"].update(C=2.0), "classifier/embedder identity"),
-    (lambda r: r["training"].update(composition={"real_train": 100}), "composition"),
 ])
 def test_consistently_resealed_but_invalid_records_are_rejected(fake, change, message):
-    grid_dir, _, ctx = fake
-    p = rec_path(grid_dir, "trec", "C3")
+    reseal_consistently(fake[0], "trec", "C3", change)
+    with pytest.raises(an.AnalysisError, match=message):
+        an.load_grid(fake[0], "fake")
+
+
+def reseal_consistently(grid_dir, task, cond, change):
+    """Alter one record, reseal it, and make grid_complete.json agree so only the record's own content is at fault."""
+    p = rec_path(grid_dir, task, cond)
     rec = json.loads(p.read_text(encoding="utf-8"))
     change(rec)
     sealed = write_record(p, rec)
-    # Make grid_complete.json agree with the altered record so only the record's own content is at fault.
+    training = sealed["training"] if isinstance(sealed.get("training"), dict) else {}
     complete = json.loads((grid_dir / ts.COMPLETE).read_text(encoding="utf-8"))
     for e in complete["results"]:
-        if e["key"] == "trec/C3/13":
+        if e["key"] == f"{task}/{cond}/13":
             e.update(record_sha256=sealed["record_sha256"], record_file_sha256=ts._sha(p.read_bytes()),
-                     n_train=sealed["training"]["n_train"], macro_f1=sealed["metrics"].get("macro_f1"))
+                     n_train=training.get("n_train"), macro_f1=sealed["metrics"].get("macro_f1"))
     (grid_dir / ts.COMPLETE).write_bytes(ts._canonical(complete))
-    with pytest.raises(an.AnalysisError, match=message):
-        an.load_grid(grid_dir, "fake")
+
+
+def test_expected_compositions_are_the_adr0012_structures():
+    assert an.EXPECTED_COMPOSITION == COMPOSITION
+    assert all(sum(an.EXPECTED_COMPOSITION[c].values()) == ts.EXPECTED_COUNTS[c] for c in an.CONDITIONS)
+
+
+@pytest.mark.parametrize("cond, composition", [
+    # Allowed components that still sum to n_train, but not the condition's exact structure.
+    ("C1", {"real_train": 90, "few_shot": 90}),
+    ("C1", {"lowres_source": 180}),
+    ("C1", {"real_train": 180, "auggpt": 0}),                 # extra zero-count key
+    ("C2", {"few_shot": 180}),
+    ("C3", {"zero_shot": 90, "few_shot": 90}),
+    ("C4", {"few_shot": 80, "real_train": 100}),
+    ("C4", {"few_shot": 180}),
+    ("C4", {"real_train": 180}),
+    ("C5a", {"lowres_source": 30, "real_train": 30}),
+    ("C5b", {"auggpt": 300, "lowres_source": 120}),
+    ("C5b", {"auggpt": 420}),
+    ("C5b", {"auggpt": 360, "real_train": 60}),
+    # Malformed counts and containers: rejected cleanly, never a TypeError.
+    ("C1", {"real_train": -180}),
+    ("C4", {"few_shot": 270, "real_train": -90}),
+    ("C1", {"real_train": 180.0}),
+    ("C4", {"few_shot": 90.5, "real_train": 89.5}),
+    ("C1", {"real_train": True}),
+    ("C1", {"real_train": "180"}),
+    ("C1", {"real_train": None}),
+    ("C1", {"real_train": [180]}),
+    ("C1", {"real_train": {"n": 180}}),
+    ("C1", [["real_train", 180]]),
+    ("C1", "real_train=180"),
+    ("C1", None),
+    ("C1", {}),
+])
+def test_composition_must_be_the_exact_condition_structure(fake, cond, composition):
+    reseal_consistently(fake[0], "emotion", cond, lambda r: r["training"].update(composition=composition))
+    with pytest.raises(an.AnalysisError, match=f"emotion/{cond}/13: training composition .* is not the exact {cond}"):
+        an.load_grid(fake[0], "fake")
+
+
+def test_non_object_training_section_is_rejected_cleanly(fake):
+    reseal_consistently(fake[0], "trec", "C4", lambda r: r.update(training=["n_train", 180]))
+    with pytest.raises(an.AnalysisError, match="trec/C4/13: n_train None != 180"):
+        an.load_grid(fake[0], "fake")
 
 
 def test_foreign_or_duplicate_record_files_are_rejected(fake):

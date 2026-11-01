@@ -326,7 +326,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - Records bind the producing commit (`1354118`) and its environment, so `train_scope30 --validate` is run from that pinned checkout.
   - This module validates the frozen records on their own:
     - each record's canonical bytes and `record_sha256`, and its file hash against `grid_complete.json`;
-    - the exact key, counts and composition, metrics in [0, 1], and the generation-mode flag;
+    - the exact key and counts; the exact per-condition training composition (C1 180 real; C2 180 zero-shot; C3 180 few-shot; C4 90 real + 90 few-shot; C5a 60 sources; C5b 60 sources + 360 AugGPT), compared structurally so that wrong, extra, missing, negative, fractional, boolean or non-numeric counts are rejected cleanly; metrics in [0, 1]; and the generation-mode flag;
     - the freeze, classifier and repository bindings against `grid_complete.json`;
     - `runs.csv` re-derived byte for byte;
     - the `grid.json` identity; and exactly twelve keys, with no foreign files.
@@ -349,7 +349,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - known-value gaps and comparisons, C1 = 0 (undefined but retained, labelled in the summary and chart), and a missing C1 blocking the analysis;
   - cost separation;
   - acceptance of the fake grid built end to end by the real #13 fixture, refusal of fake grids as real, and the real pin (a resealed metric change is rejected), revision, freeze and model;
-  - tampered, resealed-inconsistent and invalid records (ten cases), foreign record files, `runs.csv` mismatch, `grid.json` identity and the freeze used for costs;
+  - tampered, resealed-inconsistent and invalid records (nine cases), 25 wrong or malformed compositions plus a non-object training section, foreign record files, `runs.csv` mismatch, `grid.json` identity and the freeze used for costs;
   - no error bars on single-seed charts, charted values equal to the computed values, write-once outputs whose hashes match `analysis.json`, the clean-checkout requirement, and the CLI guards.
 
 ## Optional evaluation and annotation response tooling (historical)
