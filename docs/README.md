@@ -45,11 +45,9 @@ The following material preserves auditability but is not needed for the final pr
 - [Generator pilot history](PILOT_REPORT.md)
 - [Quality-review evidence](reviews/issue11/README.md)
 - [Original planning documents](source-plans/README.md)
-- [Internal interface contracts](agents/CONTRACTS.md)
-- [Implementation protocol](agents/IMPLEMENTATION_PROTOCOL.md)
-- [Reusable implementation prompt](agents/ISSUE_PROMPT.md)
+- [Technical provenance archive](archive/TECHNICAL_PROVENANCE.md)
 - [Historical optional annotation tooling](ANNOTATION_GUIDE.md)
 
 </details>
 
-Historical documents are retained to keep the repository honest and reproducible. They do not override the final specification or the accepted report.
+Historical documents are retained to keep the repository honest and reproducible. Archived records do not override the final specification or accepted report.

@@ -68,3 +68,17 @@ def test_public_documents_preserve_ownership_and_claim_boundaries():
     assert "no standard deviation, confidence interval, significance test" in spec
     assert "final professor-facing presentation" in spec
     assert "outside the repository" in spec
+
+
+def test_public_credits_are_human_team_members_only_and_mailmap_corrects_old_email():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    team = readme.split("## Team", 1)[1].split("## Status and scope", 1)[0]
+    for owner in ("Harshita", "Kausthuba Belagod", "Hementh"):
+        assert owner in team
+    for non_team_credit in ("swiftsol", "claude", "anthropic"):
+        assert non_team_credit not in team.lower()
+
+    mailmap = (ROOT / ".mailmap").read_text(encoding="utf-8")
+    assert "Kausthuba Belagod <belgod@gmail.com>" in mailmap
+    assert "Claude Opus 5.5 <noreply@anthropic.com>" in mailmap
+    assert "kausthubabelagodbdes24@rvu.edu.in" in mailmap
