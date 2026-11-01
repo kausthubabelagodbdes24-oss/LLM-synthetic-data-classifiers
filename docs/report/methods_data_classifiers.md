@@ -1,7 +1,7 @@
 # Methods: Data Preparation, Classification Heads, and Experimental Training (scope30-v1)
 
 **Workstream 2: Data and Classifier Methods**<br>
-**Accountable Lead:** Kausthuba Belagod (@kausthubabelagodbdes24-oss)<br>
+**Training Owner and Project Lead:** Kausthuba Belagod (@kausthubabelagodbdes24-oss)<br>
 **Execution Authority:** [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), [ADR 0014](../adr/0014-presentation-separation-colab.md), [PROJECT_SPEC.md](../PROJECT_SPEC.md), [CONTRACTS.md](../agents/CONTRACTS.md)<br>
 **Target Scope:** Sections 3b ("Tasks and Real Data Preparation") and 4 ("Classifier and Experimental Conditions") of the repository report scaffold.
 

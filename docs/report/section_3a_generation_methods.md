@@ -1,6 +1,6 @@
 ## 3a. Model and Generation Method
 
-*Author / Sole Operator: Kausthuba Belagod (@kausthubabelagodbdes24-oss); Historical Workstream 1: Harshita (@harshitadjainbdes24-byte)*
+*Generation workstream owner / section author: Harshita (@harshitadjainbdes24-byte); implementation and integration performed by Kausthuba Belagod (@kausthubabelagodbdes24-oss) on her behalf.*
 
 ### Generator Identity, Environment, and Provenance
 

@@ -1,10 +1,10 @@
 # Synthetic Training Data from a Compact Local LLM on an Objective and a Subjective Text-Classification Task: An Exploratory Single-Seed Comparison (scope30-v1)
 
-**Author:** Kausthuba Belagod (@kausthubabelagodbdes24-oss), project lead and sole operator<br>
+**Workstream authors:** Harshita (@harshitadjainbdes24-byte), data generation; Kausthuba Belagod (@kausthubabelagodbdes24-oss), training and project lead; Hementh (@hem4456), evaluation and report assembly<br>
 **Project:** SynthText, AI & ML minor project. Repository: `kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers`<br>
-**Report date:** 1 November 2026. **Status:** assembled for lead review (issue #17). The author has not yet reviewed or accepted this report or its PDF.
+**Report date:** 1 November 2026. **Status:** assembled for lead review (issue #17). The project lead has not yet reviewed or accepted this report or its PDF.
 
-*Contributions.* Under [ADR 0012](adr/0012-eod-exploratory-30-seed13.md), Kausthuba Belagod ran generation, training, evaluation and report assembly. The workstreams were originally assigned to Harshita (@harshitadjainbdes24-byte; generation) and Hementh (@hem4456; evaluation). Those historical roles are acknowledged here, but they are not presented as authorship of the executed study.
+*Contributions and execution provenance.* Accountable workstream ownership follows [ADR 0015](adr/0015-restore-original-workstream-ownership.md): Harshita owns data generation and Sections 2, 3a, 6 and Appendix A; Kausthuba owns data preparation, training, Sections 3b and 4, and project leadership; Hementh owns evaluation, analysis, Sections 1 and 5, and report assembly. During the compressed execution window, Kausthuba implemented and integrated some generation and evaluation tasks on their behalf. This records the actual implementing account without transferring their workstream authorship or ownership.
 
 *Evidence base.* Every number in this report comes from committed, accepted artifacts: the freeze manifest `docs/freeze/scope30-v1-seed13.freeze.json` (#12), the accepted twelve-key grid as bound by `docs/analysis/scope30-v1-seed13/analysis.json` (#13, #14), the issue #11 review evidence and the accepted report modules in `docs/report/` (#15, #16). `python -m ws3_evaluation.report_scope30 --check` re-checks those values.
 

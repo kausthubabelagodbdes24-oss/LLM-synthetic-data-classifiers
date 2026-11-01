@@ -7,20 +7,20 @@ Historical schemas/canonical hashes below remain valid. Target100 and three-seed
 
 The specification defines experimental meaning. Record exact accepted interfaces here or link to their authoritative definitions. Proposed formats are not accepted contracts.
 
-**30 October fallback-pilot decision:** the sole operator/lead Kausthuba approved an isolated `qwen3:4b` pilot using unchanged final prompts and data interfaces; see [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md). This approves testing the shared model setting, not dataset acceptance or full generation. Preserve all earlier Llama artifacts and reviews; model digests/fingerprints remain incompatible across resume. Runtime option changes need a separate decision if compatibility problems arise.
+**30 October fallback-pilot decision:** project lead Kausthuba approved and operated an isolated `qwen3:4b` pilot on accountable generation owner Harshita's behalf, using unchanged final prompts and data interfaces; see [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md). This approves testing the shared model setting, not dataset acceptance or full generation. Preserve all earlier Llama artifacts and reviews; model digests/fingerprints remain incompatible across resume. Runtime option changes need a separate decision if compatibility problems arise.
 
 **Historical ADR0011 acceptance; target superseded by ADR0012:** Kausthuba accepted Qwen with the documented quality limitations and chose uniform 100 per label. See [ADR 0011](../adr/0011-accept-qwen-pilot-and-uniform-100-target.md). Lead scientific acceptance and final implementation review are recorded; consult PR #22 for current CI/merge state. Exact full-data completeness, content audit and freeze acceptance are still future gates.
 
 | Interface | Current state / agreement required | Owners |
 | --- | --- | --- |
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
-| Repetition-specific generation | Accepted Qwen pilot for Issue #6; current scope30/seed13 under ADR0012; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
+| Repetition-specific generation | Accepted Qwen pilot for Issue #6; current scope30/seed13 under ADR0012; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Generation owner: @harshitadjainbdes24-byte; implementation/integration operator: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
 | Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion) in results/scope30-seed13 (#7, preserved). Twelve-key freeze-bound grid: `ws2_training/train_scope30.py` (#13; see the #13 section below). The real grid ran once at `1354118` and was accepted by the lead on #13 (1 November 2026); `grid_complete.json` sha256 `3b12bbb8…`. Single-seed paired analysis: `ws3_evaluation/analyze_scope30.py` (#14; see the #14 section below). | Training (@kausthubabelagodbdes24-oss) + evaluation |
-| Generation report sections and appendix | Generation deliverables for Issue #15 (Sections 2, 3a, 6, Appendix A) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Sole operator and author: @kausthubabelagodbdes24-oss (historical: WS1 @harshitadjainbdes24-byte) |
-| Data and classifier methods sections | Training deliverables for Issue #16 (Sections 3b, 4) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Training (@kausthubabelagodbdes24-oss; sole operator) |
-| Assembled report and PDF | Issue #17: `docs/REPORT.md` and `docs/REPORT.pdf` (+ sidecar), checked by `ws3_evaluation/report_scope30.py --check` against the accepted #12/#13/#14 evidence. Awaiting lead review; see the #17 section below. | Sole operator and lead: @kausthubabelagodbdes24-oss |
-| Reproducibility walkthrough | `notebooks/SynthText_scope30_walkthrough.ipynb` separates a fake-fixture pipeline demonstration from read-only accepted real analysis. It never reruns the accepted experiment. Final presentation slides are outside repository and issue scope under ADR0014. | Sole operator and lead: @kausthubabelagodbdes24-oss |
+| Generation report sections and appendix | Generation deliverables for Issue #15 (Sections 2, 3a, 6, Appendix A) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Generation owner/author: @harshitadjainbdes24-byte; implementation operator on her behalf: @kausthubabelagodbdes24-oss |
+| Data and classifier methods sections | Training deliverables for Issue #16 (Sections 3b, 4) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Training owner and project lead: @kausthubabelagodbdes24-oss |
+| Assembled report and PDF | Issue #17: `docs/REPORT.md` and `docs/REPORT.pdf` (+ sidecar), checked by `ws3_evaluation/report_scope30.py --check` against the accepted #12/#13/#14 evidence. Awaiting lead review; see the #17 section below. | Evaluation/report owner: @hem4456; implementation/integration operator: @kausthubabelagodbdes24-oss |
+| Reproducibility walkthrough | `notebooks/SynthText_scope30_walkthrough.ipynb` separates a fake-fixture pipeline demonstration from read-only accepted real analysis. It never reruns the accepted experiment. Final presentation slides are outside repository and issue scope under ADR0014. | Evaluation/reproducibility owner: @hem4456; project lead: @kausthubabelagodbdes24-oss |
 | Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
@@ -388,7 +388,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 ## Generation report sections and Appendix A (Issue #15, scope30-v1)
 
 - **Authority & Status**: [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), [ADR 0013](../adr/0013-trec-auggpt-answer-type.md), [ADR 0014](../adr/0014-presentation-separation-colab.md), and [PROJECT_SPEC.md](../PROJECT_SPEC.md). Delivered in PR for Issue #15.
-- **Producer**: Sole operator and author: @kausthubabelagodbdes24-oss (historical: WS1 @harshitadjainbdes24-byte).
+- **Producer**: Accountable generation owner and author: @harshitadjainbdes24-byte; implementation/integration operator on her behalf: @kausthubabelagodbdes24-oss.
 - **Consumer**: Issue #16 (data/classifier methods), Issue #17 ([Evaluation] Assemble the revised exploratory report and reviewed PDF).
 - **Deliverable Paths**:
   - `docs/report/section_2_related_work.md`: Related work on synthetic data utility across task subjectivity (Li et al., 2023), text augmentation via AugGPT (Dai et al., 2023), few-shot in-context learning (Brown et al., 2020), and Sentence-BERT dense representations (Reimers and Gurevych, 2019) from verified primary sources.
@@ -403,7 +403,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 ## Data, classifier and training-method specifications (Issue #16, ADR 0012, ADR 0014)
 
 - **Authority**: [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), [ADR 0014](../adr/0014-presentation-separation-colab.md), [PROJECT_SPEC.md](../PROJECT_SPEC.md), lead decisions on #13 and #16.
-- **Producer**: Workstream 2 (Training and project lead: Kausthuba Belagod @kausthubabelagodbdes24-oss; sole operator).
+- **Producer**: Workstream 2 (Training owner and project lead: Kausthuba Belagod @kausthubabelagodbdes24-oss).
 - **Consumers**: Report assembly (#17), documentation, walkthrough (#18), external research presentation.
 - **Artifacts**:
   - Modular report section: `docs/report/methods_data_classifiers.md` (covering Sections 3b and 4 of the report scaffold).
@@ -477,7 +477,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - Every 64-hex value in the report must appear in the accepted evidence or the pinned code. All eight canonical split hashes must be present.
   - Both charts must be embedded exactly once, unchanged, and referenced from the text. Tables must be referenced as well.
   - Sentence-level rejection of unnegated significance, confidence-interval, stability, replication, causal, equivalence/meaningfulness, human-agreement, independent-human and superiority wording.
-  - The author line (Kausthuba Belagod), the not-yet-reviewed status and the required disclosures.
+  - The workstream-author line (Harshita for generation, Kausthuba for training/lead, Hementh for evaluation/report assembly), the not-yet-reviewed status and the required disclosures.
   - Citation completeness both ways.
   - Rejection of stale scaffold text and of unverified surnames.
   - For the PDF: sidecar hash and size, staleness against `REPORT.md`, page count, values and sections in the extracted text, blank pages and missing glyphs.
@@ -489,9 +489,9 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 
 ## Optional evaluation and annotation response tooling (historical)
 
-- **Authority & Status**: Historical optional response tooling preserved under ADR 0012. Independent human annotation, external distribution, and human-agreement completion gates are removed under sole-operator execution.
+- **Authority & Status**: Historical optional response tooling preserved under ADR 0012. Independent human annotation, external distribution, and human-agreement completion gates are removed from the current exploratory scope.
 - **Scope Distinction**: These optional 60-item held-out test annotation utilities (`make`, `combine`, `score`) are strictly distinct from the required 60 generated-text quality reviews conducted in Workstream 1/3 (#11/#12).
-- **Producer**: `ws3_evaluation/annotate.py` (Owner: @hem4456; operator: @kausthubabelagodbdes24-oss).
+- **Producer**: `ws3_evaluation/annotate.py` (Accountable evaluation owner: @hem4456; implementation operator on his behalf: @kausthubabelagodbdes24-oss).
 - **Consumers**: Optional in-repository evaluation workflows.
 - **File format and schema**:
   - `results/annotation_key.csv`:

@@ -24,7 +24,7 @@ Check existing active claims and PRs before starting. Post a context receipt on 
 
 Do not implement blocked work or silently take another owner's prerequisite. Read-only investigation and provisional drafts may proceed; record what is missing. The issue assignee remains the accountable human even when another authorized account runs a model.
 
-Kausthuba is sole accountable operator for generation, training and evaluation. Keep workspaces separate and one implementer per issue. Historical teammate ownership does not block execution.
+Accountable owners are Harshita (@harshitadjainbdes24-byte) for generation, Kausthuba (@kausthubabelagodbdes24-oss) for training and project lead, and Hementh (@hem4456) for evaluation. Keep workspaces separate and one implementer per issue. An authorized account may implement on an owner's behalf, but handoffs must distinguish accountable ownership from the actual implementing account.
 
 Shared configuration/helpers need explicit lead approval and the required group heads-up. Shared output/schema, CLI, repetition-layout or provenance changes need an agreed producer/consumer contract before dependent implementations land. Record approval, migration and verification in the contract register. Do not invent incompatible private formats.
 

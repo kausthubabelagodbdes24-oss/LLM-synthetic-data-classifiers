@@ -2,7 +2,7 @@
 
 **Current lead-approved scope (31 October 2026):** 30 examples/label, seed 13 only, both tasks and all six conditions; twelve result keys. Independent-human annotation, distribution and external report-sharing gates are removed. Read [ADR 0012](adr/0012-eod-exploratory-30-seed13.md) and scope migration before resuming old work. Conflicting earlier requirements are historical. Pilot timings/judgments below remain historical evidence, not current full-run estimates or acceptance.
 
-- **Operator and lead:** Kausthuba (@kausthubabelagodbdes24-oss), now executing all workstreams personally in separate workspaces.
+- **Accountable generation owner:** Harshita (@harshitadjainbdes24-byte). **Implementation operator and project lead:** Kausthuba (@kausthubabelagodbdes24-oss), acting on the generation owner's behalf in a separate workspace.
 - **Status:** Kausthuba accepted the Qwen pilot with disclosed limitations and uniform 100 examples per label on 31 October 2026. Final standards/specification review is clear and 50 local tests pass. PR #22 records the required current-head CI and integration state. Downstream full-data implementation, exact completeness, audit and freeze requirements still apply.
 - **Last updated:** 31 October 2026.
 
@@ -220,7 +220,7 @@ Recommendation: accept the Qwen pilot with the above limitations and retain the 
 
 The Qwen-based linear estimate is about 12 hours of remaining zero/few-shot generation at 100 per label, or 7 hours at the approved uniform 60 fallback. AugGPT's additional 2,160 paraphrases have not yet been timed; measure them and monitor the schedule rather than assuming those 12 hours cover every setting. The agreed freeze remains 1 November 2026 at 18:00 IST. The default is plausible from current throughput, but completion time is not guaranteed. If measured AugGPT timing changes the deadline assessment, record an explicit coordinated target decision before affected full generation and preserve matched training counts.
 
-No additional model/prompt change is proposed. Human independence requirements for later annotation remain a separate unresolved scientific decision under the sole-operator arrangement. All 45 local software checks passed with Qwen and CI at pre-review head `fa741797b87dc9f74ed6ea760d89d24856c03225` passed. Current-head CI and final integration review must be verified separately. Do not close issue #6, merge PR #22, launch dependent full experiments or fabricate acceptance until the lead's decision and required checks are recorded.
+No additional model/prompt change is proposed. Human independence requirements for later annotation remain a separate unresolved scientific decision. All 45 local software checks passed with Qwen and CI at pre-review head `fa741797b87dc9f74ed6ea760d89d24856c03225` passed. Current-head CI and final integration review must be verified separately. Do not close issue #6, merge PR #22, launch dependent full experiments or fabricate acceptance until the lead's decision and required checks are recorded.
 ## Final lead decision — accepted, 31 October 2026
 
 Kausthuba explicitly selected **"Accept Qwen; use 100 per label (recommended)"** after the Qwen human-review assessment. See ADR 0011. This supersedes the historical pending decisions above. Qwen is the accepted generator across both tasks, all three synthetic settings and all three repetitions; retain temperature 0.9, the final focused prompts and the observed default thinking behavior.

@@ -2,7 +2,7 @@
 
 **Current lead-approved scope (31 October 2026):** 30 examples/label, seed 13 only, both tasks and all six conditions; twelve result keys. Independent-human annotation, distribution and external report-sharing gates are removed. Read [ADR 0012](docs/adr/0012-eod-exploratory-30-seed13.md) and scope migration before resuming old work. Conflicting earlier requirements are historical.
 
-Kausthuba (@kausthubabelagodbdes24-oss) is sole operator across all workstreams. Keep workspaces separate. See [migration](docs/SCOPE_MIGRATION.md).
+Accountable workstream ownership follows the original project plan: generation is owned by Harshita (@harshitadjainbdes24-byte), training and project lead by Kausthuba (@kausthubabelagodbdes24-oss), and evaluation by Hementh (@hem4456). Keep workspaces separate. Kausthuba may implement or integrate work on another owner's behalf, but that does not transfer accountable ownership. See [ADR 0015](docs/adr/0015-restore-original-workstream-ownership.md) and the [migration](docs/SCOPE_MIGRATION.md).
 
 This repository is the central project record for every provider. Explicitly read [the shared protocol](docs/agents/IMPLEMENTATION_PROTOCOL.md) before editing, then use [the issue prompt](docs/agents/ISSUE_PROMPT.md) to launch tasks. Claude and Gemini entry files point to these same rules, without separate policies.
 
@@ -16,4 +16,4 @@ Professor-facing presentation slides and submission logistics are intentionally 
 
 Run relevant behavior checks and pipeline tests, open a scoped PR into main, and verify CI at its current head. Leave merging to the lead or an explicitly authorized integrator; use merge commits. Leave issues open while any acceptance criterion remains unmet. Persist handoffs and consequential decisions in GitHub.
 
-Owner for generation, training, evaluation and lead: @kausthubabelagodbdes24-oss. Historical teammate ownership does not block execution.
+Owners: generation @harshitadjainbdes24-byte; training and project lead @kausthubabelagodbdes24-oss; evaluation @hem4456. Authorized implementation on an owner's behalf must retain both the accountable owner and the actual implementing account in the handoff.

@@ -163,8 +163,8 @@ def test_negated_or_limited_claim_wording_is_allowed():
 
 
 @pytest.mark.parametrize("old,new,needle", [
-    (rp.AUTHOR_LINE, "**Author:** K. Belagod", "author line"),
-    (rp.REVIEW_STATUS, "The author reviewed and accepted this report.", "not yet reviewed"),
+    (rp.AUTHOR_LINE, "**Author:** K. Belagod", "workstream author line"),
+    (rp.REVIEW_STATUS, "The project lead reviewed and accepted this report.", "not yet reviewed"),
     ("Harshita (@harshitadjainbdes24-byte", "Harshita Jain (@harshitadjainbdes24-byte", "Harshita Jain"),
     ("## 1. Introduction", "*Planning length: ~0.5 pages*\n\n## 1. Introduction", "Planning length"),
     ("## 1. Introduction", "Comparison 1: Blocked pending C2/C3 runs.\n\n## 1. Introduction", "Blocked pending"),

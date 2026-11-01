@@ -1,8 +1,8 @@
 # Optional Evaluation & Annotation Tooling Guide (Historical)
 
-*Owner: Hementh (@hem4456); Operator: Kausthuba (@kausthubabelagodbdes24-oss)*
+*Accountable evaluation owner: Hementh (@hem4456); implementation operator: Kausthuba (@kausthubabelagodbdes24-oss), acting on Hementh's behalf*
 
-**Status:** Preserved as optional historical response tooling under canonical [ADR 0012](adr/0012-eod-exploratory-30-seed13.md). Independent human annotation, physical response distribution (email/drive), external document sharing, and human-agreement completion gates are removed under the sole-operator execution model.
+**Status:** Preserved as optional historical response tooling under canonical [ADR 0012](adr/0012-eod-exploratory-30-seed13.md). Independent human annotation, physical response distribution (email/drive), external document sharing, and human-agreement completion gates are removed from the current exploratory scope.
 
 > [!IMPORTANT]
 > **Scope Distinction:** These optional 60-item held-out test annotation utilities (`make`, `combine`, `score`) are strictly distinct from the required 60 generated-text quality reviews (10 examples per task per setting for seed 13) conducted in Workstream 1/3 (#11/#12).

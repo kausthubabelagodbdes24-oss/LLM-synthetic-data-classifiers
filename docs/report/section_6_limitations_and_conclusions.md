@@ -1,6 +1,6 @@
 ## 6. Limitations and Conclusions
 
-*Author / Sole Operator: Kausthuba Belagod (@kausthubabelagodbdes24-oss); Historical Workstream 1: Harshita (@harshitadjainbdes24-byte)*
+*Generation workstream owner / section author: Harshita (@harshitadjainbdes24-byte); implementation and integration performed by Kausthuba Belagod (@kausthubabelagodbdes24-oss) on her behalf.*
 
 ### Core Findings Grounded in the Four Accepted Comparisons
 

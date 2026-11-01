@@ -361,9 +361,11 @@ def test_report_readme_reconciled_with_pr38_and_sole_operator():
     # No "planned" status
     assert "planned" not in readme_text.lower()
 
-    # Current sole-operator ownership under AGENTS.md
-    assert "sole operator" in readme_text.lower()
+    # ADR 0015 restores the original accountable workstream ownership.
+    assert "@harshitadjainbdes24-byte" in readme_text
     assert "@kausthubabelagodbdes24-oss" in readme_text
+    assert "@hem4456" in readme_text
+    assert "sole operator" not in readme_text.lower()
 
     # Shared assembly scaffold REPORT.md belongs to Issue #17
     assert "REPORT.md" in readme_text

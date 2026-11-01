@@ -66,8 +66,8 @@ REQUIRED_HEADINGS = (
     "## Appendix A.",
 )
 APPENDIX_BREAK = '<div class="appendix-break"></div>'
-AUTHOR_LINE = "**Author:** Kausthuba Belagod (@kausthubabelagodbdes24-oss)"
-REVIEW_STATUS = "The author has not yet reviewed or accepted this report or its PDF."
+AUTHOR_LINE = "**Workstream authors:** Harshita (@harshitadjainbdes24-byte), data generation; Kausthuba Belagod (@kausthubabelagodbdes24-oss), training and project lead; Hementh (@hem4456), evaluation and report assembly"
+REVIEW_STATUS = "The project lead has not yet reviewed or accepted this report or its PDF."
 # Surnames that appear only in the superseded scaffold and are not backed by an authoritative record.
 UNVERIFIED_NAMES = ("Harshita Jain", "Hementh M ", "Hementh M.", "Hementh M (")
 STALE_SCAFFOLD = (
@@ -318,9 +318,9 @@ def validate_report(text, analysis, freeze, report_dir=DOCS):
         return problems + [str(exc)]
     # Author and review status.
     if AUTHOR_LINE not in text:
-        problems.append("author line must name Kausthuba Belagod (@kausthubabelagodbdes24-oss)")
+        problems.append("workstream author line must name Harshita, Kausthuba and Hementh with their assigned roles")
     if REVIEW_STATUS not in text:
-        problems.append("report must state that the author has not yet reviewed or accepted it")
+        problems.append("report must state that the project lead has not yet reviewed or accepted it")
     for name in UNVERIFIED_NAMES:
         if name in text:
             problems.append(f"unverified author name {name.strip()!r} (not in an authoritative record)")
