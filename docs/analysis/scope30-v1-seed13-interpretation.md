@@ -56,8 +56,9 @@ independent human analysis.
 - **TREC:** +0.0155 macro-F1 and +0.0200 accuracy (+10 questions).
 - **Emotion:** +0.0037 macro-F1 but −0.0020 accuracy (−4 texts). The two metrics disagree in sign, and the
   differences are a handful of test texts.
-- **Reading.** Few-shot was ahead on TREC in this run. On Emotion the two settings are effectively
-  indistinguishable here.
+- **Reading.** On TREC, C3 was higher than C2 on both metrics. On Emotion, C3 was higher on macro-F1 and lower on
+  accuracy. With one seed, the reliability of these directions is unknown, and no equivalence threshold was
+  defined, so no claim of equivalence is made.
 - **Cost.** Few-shot used real labelled demonstrations that zero-shot did not: 59 distinct real demonstrations
   for TREC and 54 for Emotion. These are disclosed separately from the 180 training rows.
 
@@ -66,10 +67,10 @@ independent human analysis.
 - **TREC:** +0.0629 macro-F1 and +0.0580 accuracy (+29 questions). This is the largest within-task difference
   in the grid. C4 has the same 180 training rows as C1, but only 90 of them are real, plus up to 59 real
   demonstrations behind the 90 synthetic rows.
-- **Emotion:** −0.0049 macro-F1 and +0.0005 accuracy (+1 text). That is no meaningful difference in this run.
-- **Reading.** Replacing half of the real rows with few-shot synthetic rows did not reduce performance on either
-  task here, and coincided with a sizeable gain on TREC. One seed cannot separate a real benefit from sampling
-  variation.
+- **Emotion:** −0.0049 macro-F1 and +0.0005 accuracy (+1 text). The two metrics disagree in sign.
+- **Reading.** Replacing half of the real rows with few-shot synthetic rows went with higher macro-F1 and accuracy
+  on TREC. On Emotion it went with lower macro-F1 and higher accuracy. With one seed, the reliability of these
+  directions is unknown, and they cannot be separated from sampling variation.
 
 ### 4. AugGPT-augmented versus real sources only (C5b − C5a)
 
@@ -83,13 +84,21 @@ independent human analysis.
   - all 12 Emotion paraphrases of two sources change their meaning.
 
   Both are listed in the freeze manifest and in issue #11.
-- **Reading.** Augmentation coincided with a gain on TREC and no clear change on Emotion in this run.
+- **Reading.** C5b was higher than C5a on both metrics on TREC. On Emotion it was higher on macro-F1 and lower on
+  accuracy. With one seed, the reliability of these directions is unknown, and the size difference means they are
+  not attributable to AugGPT content alone.
 
 ## Overall
 
-On this single seed, generated training data matched or beat 180 real examples on TREC and fell somewhat short of
-them on Emotion. Few-shot prompting and mixing real with few-shot data helped most on TREC. On Emotion, every
-synthetic or augmented variant stayed within about 0.03 macro-F1 of its real-data reference.
+Observed directions on this single seed:
+- **TREC:** C2, C3 and C4 each scored higher than C1, and C5b higher than C5a, on both macro-F1 and accuracy.
+- **Emotion:** C2 and C3 scored lower than C1 on both metrics. C4 versus C1 and C5b versus C5a went in opposite
+  directions on the two metrics.
+- **Size of the Emotion differences:** every Emotion difference from its reference was at most 0.0278 macro-F1 in
+  absolute value.
+
+With one seed, the reliability of every one of these directions is unknown. No equivalence or meaningfulness
+threshold was defined, so none of them is described as a gain, a loss or no change.
 
 These are exploratory, single-run observations for scope30-v1 (ADR 0012). They do not establish:
 - statistical significance, stability or generalisation;
