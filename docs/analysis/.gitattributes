@@ -1,0 +1,3 @@
+# Analysis outputs are committed byte-for-byte; their SHA-256s are recorded in analysis.json.
+# Never convert line endings here (core.autocrlf would otherwise rewrite them on Windows checkouts).
+* -text
