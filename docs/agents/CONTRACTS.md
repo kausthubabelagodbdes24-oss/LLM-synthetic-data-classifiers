@@ -16,7 +16,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
 | Repetition-specific generation | Accepted Qwen pilot for Issue #6; current scope30/seed13 under ADR0012; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
-| Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion) in results/scope30-seed13 (#7, preserved). Twelve-key freeze-bound grid: `ws2_training/train_scope30.py` (#13; see the #13 section below). No real twelve-key result exists until the lead authorizes and validates the run. | Training (@kausthubabelagodbdes24-oss) + evaluation |
+| Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion) in results/scope30-seed13 (#7, preserved). Twelve-key freeze-bound grid: `ws2_training/train_scope30.py` (#13; see the #13 section below). The real grid ran once at `1354118` and was accepted by the lead on #13 (1 November 2026); `grid_complete.json` sha256 `3b12bbb8…`. Single-seed paired analysis: `ws3_evaluation/analyze_scope30.py` (#14; see the #14 section below). | Training (@kausthubabelagodbdes24-oss) + evaluation |
 | Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
@@ -317,6 +317,40 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - fake end-to-end with full provenance, and refusal of fake results as real;
   - exact-match resume, partial records, stale provenance (six fields), tampered or misplaced records, targeted replacement, unrequested stale rows left untouched, missing keys, duplicate `runs.csv` rows, wrong-seed files, incomplete grids, and protected or unrelated directories;
   - key parsing, the approved model-snapshot pin, and the loader using only the recorded snapshot even if `refs/main` moves; fail-closed loading when weights or files change after recording or during loading, or when the identity is missing, unapproved or forged (19 metadata forgeries: altered, type-swapped, missing or extra fields); the loader encoding with exactly the verified settings; records with type or key-set drift not being reused; `run_grid` passing the recorded identity to the loader; and the CLI.
+
+## Single-seed gap analysis of the accepted grid (Issue #14, ADR 0012)
+
+- **Approving issue and decision**: issue #14. The lead accepted the real #13 grid on 1 November 2026 and directed analysis of those exact frozen records without retraining ([evidence](https://github.com/kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers/issues/13#issuecomment-6553500190)).
+- **Producer**: `ws3_evaluation/analyze_scope30.py`. It only reads the #13 grid and the accepted freeze manifest.
+- **Input**: the grid directory written by `ws2_training/train_scope30.py`, containing `grid.json`, `grid_complete.json`, `runs.csv` and the twelve `records/`.
+  - Records bind the producing commit (`1354118`) and its environment, so `train_scope30 --validate` is run from that pinned checkout.
+  - This module validates the frozen records on their own:
+    - each record's canonical bytes and `record_sha256`, and its file hash against `grid_complete.json`;
+    - the exact key and counts; the exact per-condition training composition (C1 180 real; C2 180 zero-shot; C3 180 few-shot; C4 90 real + 90 few-shot; C5a 60 sources; C5b 60 sources + 360 AugGPT), compared structurally so that wrong, extra, missing, negative, fractional, boolean or non-numeric counts are rejected cleanly; metrics in [0, 1]; and the generation-mode flag;
+    - the freeze, classifier and repository bindings against `grid_complete.json`;
+    - `runs.csv` re-derived byte for byte;
+    - the `grid.json` identity; and exactly twelve keys, with no foreign files.
+  - In real mode, `grid_complete.json` must have SHA-256 `3b12bbb878d8191e387e3abc0f77fc02d9f081b98f0216f9b64dbb144bf40032`, which transitively pins every record and `runs.csv`. It also requires revision `1354118b4b05bec31973c268057d8a713907f3a6` (clean), the accepted freeze and the approved MiniLM. Fake grids are never accepted as real.
+- **Calculations**: values are kept at full precision until display.
+  - C2/C3 relative gap = (synthetic macro-F1 − same-task seed-13 C1 macro-F1) / C1 macro-F1, with the absolute gap reported as well.
+  - If C1 is 0, the relative gap is `null`, labelled "undefined", and the task is retained with its absolute difference.
+  - A missing C1 blocks the analysis.
+  - The four planned comparisons are within-task differences in macro-F1 and accuracy: the cross-task C2/C3 gap (Emotion − TREC), C3 − C2, C4 − C1, and C5b − C5a (the training-size difference is stated).
+  - No SD, confidence interval, significance or stability figure is computed.
+- **Costs**: for each condition, real training rows and synthetic training rows come from the record composition. The distinct real generation demonstrations (`selected_distinct_demonstrations`) come from the grid's own freeze manifest, whose LF SHA-256 must equal the grid's freeze hash. For C4 the demonstration count is an upper bound.
+- **Outputs**: written once to a fresh directory (default `docs/analysis/scope30-v1-seed13/`):
+  - `summary.md`;
+  - `f1_by_condition.png`, six-condition grouped bars with no error bars;
+  - `gap.png`, the relative C2/C3 gap, where an undefined case is a labelled slot and never a zero bar;
+  - `analysis.json`, canonical, containing the grid/freeze/classifier identities and per-record hashes, the analysis checkout revision and clean flag (real mode requires clean), the full-precision results, gaps, comparisons, costs, limitations and the SHA-256 of the other three files.
+  - Fake outputs are tagged `FAKE FIXTURE`. Outputs are not committed until the lead has reviewed them.
+- **Legacy consumer**: `ws3_evaluation/analyze.py` (mean ± SD over seeds) stays for the historical fake pipeline only.
+- **Tests**: `tests/test_analyze_scope30.py` covers:
+  - known-value gaps and comparisons, C1 = 0 (undefined but retained, labelled in the summary and chart), and a missing C1 blocking the analysis;
+  - cost separation;
+  - acceptance of the fake grid built end to end by the real #13 fixture, refusal of fake grids as real, and the real pin (a resealed metric change is rejected), revision, freeze and model;
+  - tampered, resealed-inconsistent and invalid records (nine cases), 25 wrong or malformed compositions plus a non-object training section, foreign record files, `runs.csv` mismatch, `grid.json` identity and the freeze used for costs;
+  - no error bars on single-seed charts, charted values equal to the computed values, write-once outputs whose hashes match `analysis.json`, the clean-checkout requirement, and the CLI guards.
 
 ## Optional evaluation and annotation response tooling (historical)
 
