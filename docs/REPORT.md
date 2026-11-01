@@ -2,7 +2,7 @@
 
 **Author:** Kausthuba Belagod (@kausthubabelagodbdes24-oss), training and project lead<br>
 **Project:** SynthText, AI & ML minor project. Repository: `kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers`<br>
-**Report date:** 1 November 2026. **Status:** assembled for lead review (issue #17). The project lead has not yet reviewed or accepted this report or its PDF.
+**Report date:** 1 November 2026. **Status:** reviewed and accepted (issue #17). The project lead reviewed and accepted this report and its PDF on 1 November 2026.
 
 **Workstream ownership:** Data generation: Harshita (@harshitadjainbdes24-byte). Training and project lead: Kausthuba Belagod (@kausthubabelagodbdes24-oss). Evaluation: Hementh (@hem4456).
 

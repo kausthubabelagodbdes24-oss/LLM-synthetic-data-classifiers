@@ -44,7 +44,7 @@ def test_committed_pdf_matches_sidecar_source_and_values(evidence):
     sidecar = json.loads(rp.PDF_SIDECAR_PATH.read_text(encoding="utf-8"))
     assert sidecar["report_sha256_lf"] == rp.sha256_lf(rp.REPORT_PATH)
     assert sidecar["pdf_sha256"] == rp.sha256_bytes(rp.PDF_PATH.read_bytes())
-    assert sidecar["review_status"] == "not reviewed or accepted by the author"
+    assert sidecar["review_status"] == "reviewed and accepted by the project lead on 2026-11-01"
     assert b"file://" not in rp.PDF_PATH.read_bytes()
 
 
@@ -164,7 +164,7 @@ def test_negated_or_limited_claim_wording_is_allowed():
 
 @pytest.mark.parametrize("old,new,needle", [
     (rp.AUTHOR_LINE, "**Author:** K. Belagod", "author line"),
-    (rp.REVIEW_STATUS, "The project lead reviewed and accepted this report.", "not yet reviewed"),
+    (rp.REVIEW_STATUS, "The project lead has not yet reviewed or accepted this report.", "review and acceptance status"),
     ("Harshita (@harshitadjainbdes24-byte", "Harshita Jain (@harshitadjainbdes24-byte", "Harshita Jain"),
     ("## 1. Introduction", "*Planning length: ~0.5 pages*\n\n## 1. Introduction", "Planning length"),
     ("## 1. Introduction", "Comparison 1: Blocked pending C2/C3 runs.\n\n## 1. Introduction", "Blocked pending"),

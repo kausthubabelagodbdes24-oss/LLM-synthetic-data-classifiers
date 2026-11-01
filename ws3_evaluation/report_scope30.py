@@ -70,7 +70,7 @@ AUTHOR_LINE = "**Author:** Kausthuba Belagod (@kausthubabelagodbdes24-oss)"
 # Workstream ownership as set by the lead (PR #39 follow-up, 1 November 2026).
 OWNERSHIP_LINE = ("**Workstream ownership:** Data generation: Harshita (@harshitadjainbdes24-byte). Training and project "
                   "lead: Kausthuba Belagod (@kausthubabelagodbdes24-oss). Evaluation: Hementh (@hem4456).")
-REVIEW_STATUS = "The project lead has not yet reviewed or accepted this report or its PDF."
+REVIEW_STATUS = "The project lead reviewed and accepted this report and its PDF on 1 November 2026."
 # Surnames that appear only in the superseded scaffold and are not backed by an authoritative record.
 UNVERIFIED_NAMES = ("Harshita Jain", "Hementh M ", "Hementh M.", "Hementh M (")
 STALE_SCAFFOLD = (
@@ -325,7 +325,7 @@ def validate_report(text, analysis, freeze, report_dir=DOCS):
     if OWNERSHIP_LINE not in text:
         problems.append("workstream ownership line is missing or altered (generation, training and lead, evaluation)")
     if REVIEW_STATUS not in text:
-        problems.append("report must state that the project lead has not yet reviewed or accepted it")
+        problems.append("report must retain the project lead's review and acceptance status")
     for name in UNVERIFIED_NAMES:
         if name in text:
             problems.append(f"unverified author name {name.strip()!r} (not in an authoritative record)")
@@ -612,7 +612,7 @@ def sidecar_for(pdf_bytes, report_path, pages):
         "environment": {"python": platform.python_version(), "os": platform.system(),
                         "markdown": version("markdown"), "playwright": version("playwright"),
                         "pypdf": version("pypdf")},
-        "review_status": "not reviewed or accepted by the author",
+        "review_status": "reviewed and accepted by the project lead on 2026-11-01",
     }
 
 

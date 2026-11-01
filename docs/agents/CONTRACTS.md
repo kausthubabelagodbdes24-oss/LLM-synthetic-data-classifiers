@@ -19,7 +19,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion) in results/scope30-seed13 (#7, preserved). Twelve-key freeze-bound grid: `ws2_training/train_scope30.py` (#13; see the #13 section below). The real grid ran once at `1354118` and was accepted by the lead on #13 (1 November 2026); `grid_complete.json` sha256 `3b12bbb8…`. Single-seed paired analysis: `ws3_evaluation/analyze_scope30.py` (#14; see the #14 section below). | Training (@kausthubabelagodbdes24-oss) + evaluation |
 | Generation report sections and appendix | Generation deliverables for Issue #15 (Sections 2, 3a, 6, Appendix A) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Generation owner/author: @harshitadjainbdes24-byte; implementation operator on her behalf: @kausthubabelagodbdes24-oss |
 | Data and classifier methods sections | Training deliverables for Issue #16 (Sections 3b, 4) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Training owner and project lead: @kausthubabelagodbdes24-oss |
-| Assembled report and PDF | Issue #17: `docs/REPORT.md` and `docs/REPORT.pdf` (+ sidecar), checked by `ws3_evaluation/report_scope30.py --check` against the accepted #12/#13/#14 evidence. Awaiting lead review; see the #17 section below. | Evaluation/report owner: @hem4456; implementation/integration operator: @kausthubabelagodbdes24-oss |
+| Assembled report and PDF | Issue #17: `docs/REPORT.md` and `docs/REPORT.pdf` (+ sidecar), checked by `ws3_evaluation/report_scope30.py --check` against the accepted #12/#13/#14 evidence. Reviewed and accepted by the project lead on 1 November 2026; see the #17 section below. | Evaluation/report owner: @hem4456; implementation/integration operator: @kausthubabelagodbdes24-oss |
 | Reproducibility walkthrough | `notebooks/SynthText_scope30_walkthrough.ipynb` separates a fake-fixture pipeline demonstration from read-only accepted real analysis. It never reruns the accepted experiment. Final presentation slides are outside repository and issue scope under ADR0014. | Evaluation/reproducibility owner: @hem4456; project lead: @kausthubabelagodbdes24-oss |
 | Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
@@ -453,7 +453,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 
 ## Assembled exploratory report and PDF (Issue #17, ADR 0012, ADR 0014)
 
-- **Status**: assembled for lead review. The PR does not claim that the lead has reviewed or accepted the report or PDF. Presentation slides, speaker notes and submission logistics stay outside the repository (ADR 0014).
+- **Status**: reviewed and accepted by the project lead on 1 November 2026. Presentation slides, speaker notes and submission logistics stay outside the repository (ADR 0014).
 - **Artifacts**:
   - `docs/REPORT.md` is the canonical report: Sections 1–6, References and a separated Appendix A (prompt templates, examples and provenance). It replaces the #8 scaffold.
   - `docs/REPORT.pdf` is its PDF. `docs/REPORT.pdf.json` records the PDF SHA-256, size and page count, the LF SHA-256 of the source `REPORT.md`, the builder and its environment, and `review_status`.
