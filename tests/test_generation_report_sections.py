@@ -30,7 +30,6 @@ EXPECTED_FILES = [
     "section_3a_generation_methods.md",
     "section_6_limitations_and_conclusions.md",
     "appendix_a_prompts_and_examples.md",
-    "generation_report_sections.md",
 ]
 
 
@@ -112,6 +111,15 @@ def test_quality_review_findings_and_freeze_disclosures():
     assert "Claude Opus 5.5" in sec3a
     assert "model-assisted" in sec3a.lower()
     assert "not independent human" in sec3a.lower() or "not described as independent human" in sec6.lower()
+    assert "not a population" in sec3a.lower() or "not a population" in sec6.lower()
+    assert "not model-review all 1,440" in sec3a.lower() or "did not model-review all 1,440" in sec3a.lower()
+    assert "10" in sec3a  # 10 rows per batch
+
+    # Multi-stage quality evidence
+    assert "round 2" in sec3a.lower()
+    assert "targeted recheck" in sec3a.lower() or "targeted re-check" in sec3a.lower()
+    assert "supplementary emotion" in sec3a.lower()
+    assert "scope scan" in sec3a.lower()
 
     # Freeze SHA-256
     freeze_json = json.loads(FREEZE_MANIFEST_PATH.read_text(encoding="utf-8"))
@@ -226,8 +234,29 @@ def test_conclusions_grounded_in_four_comparisons():
     assert "0.3432" in sec6  # Emotion C5b
     assert "+0.0051" in sec6  # Emotion C5b - C5a
 
-    # Contrary outcome on TREC highlighted
-    assert "contrary" in sec6.lower() or "outperformed" in sec6.lower()
+    # Contrary numerical directions highlighted without inferential wording
+    assert "contrary" in sec6.lower()
+    assert "reliability is unknown with one seed" in sec6.lower()
+    assert "no equivalence" in sec6.lower() or "meaningfulness threshold" in sec6.lower()
+    assert "observed numerical directions" in sec6.lower() or "observed directions" in sec6.lower()
+
+    # Enforce absence of inferential language across section 6
+    forbidden_terms = [
+        "outperformed",
+        "outperform",
+        "underperformed",
+        "underperform",
+        "matched or exceeded",
+        "negligible",
+        "sampling noise",
+        "align well",
+    ]
+    for term in forbidden_terms:
+        assert term not in sec6.lower(), f"Forbidden inferential term '{term}' found in section 6"
+
+    # Enforce absence of inferential gain/loss claims
+    import re
+    assert not re.search(r"\bperformance gain\b|\bperformance loss\b|\bgains?\b|\bloss(es)?\b", sec6, re.IGNORECASE), "Inferential gain/loss claim found in section 6"
 
     # Boundaries: single seed, no significance, no causal subjectivity
     assert "single-seed" in sec6.lower() or "single seed" in sec6.lower()

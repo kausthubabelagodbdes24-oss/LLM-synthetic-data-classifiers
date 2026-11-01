@@ -1,6 +1,6 @@
 ## 3a. Model and Generation Method
 
-*Owner: Harshita (@harshitadjainbdes24-byte); Operator: Kausthuba (@kausthubabelagodbdes24-oss)*
+*Author / Sole Operator: Kausthuba Belagod (@kausthubabelagodbdes24-oss); Historical Workstream 1: Harshita (@harshitadjainbdes24-byte)*
 
 ### Generator Identity, Environment, and Provenance
 
@@ -80,8 +80,8 @@ Under canonical [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), the experi
 
 Synthetic data quality was audited under a reproducible screening protocol ([ADR 0008](../adr/0008-audit-generated-content-before-freezing.md), [ADR 0009](../adr/0009-define-audit-investigation-trigger.md), [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md)):
 
-- **Audit Method**: Model-assisted review conducted using Claude Opus 5.5 (`claude-opus-5-5`), operated by Kausthuba Belagod in Claude Code CLI. For each of the six batches (2 tasks $\times$ 3 settings), 10 examples were sampled reproducibly using ascending SHA-256 hash ordering of row IDs (`issue11-quality-v1`).
-- **Explicit Limitation**: This was a model-assisted review; it is not independent human review, not human consensus, and not a population accuracy estimate. Ten-item batches serve as a quality gate, not a measurement of true dataset accuracy.
+- **Audit Method**: Model-assisted review conducted using Claude Opus 5.5 (`claude-opus-5-5`), operated by Kausthuba Belagod in Claude Code CLI. The initial quality gate sampled 10 examples in each of the six batches (2 tasks $\times$ 3 settings; 60 examples total) using reproducible ascending SHA-256 hash ordering of row IDs (`issue11-quality-v1`). It did not model-review all 1,440 rows. Subsequent evaluation stages expanded this evidence with TREC round 2 (10 fresh rows), targeted rechecks of round-1 IDs, a supplementary Emotion targeted check (12 rows across two sources), and heuristic scope scans across all 360 TREC AugGPT paraphrases.
+- **Explicit Limitation**: This was a model-assisted and heuristic screening protocol; it is not independent human review, not human consensus, and not a population error-rate estimate. Ten-item sampling batches served as an operational quality gate to detect systemic prompt failure, not as a measurement of population dataset accuracy.
 - **Trigger Rule**: Any batch with $\ge 2$ clear errors (defined as wrong intended label or, for AugGPT, changed source meaning) in its 10-item sample triggers a `FLAGGED` status, blocking freeze until the underlying cause is corrected and a fresh random round passes.
 - **Round 1 Findings (31 October 2026)**:
   - 5 batches passed: `trec/zero_shot` (0/10), `trec/few_shot` (0/10), `emotion/zero_shot` (0/10), `emotion/few_shot` (0/10, 1 ambiguous), `emotion/auggpt` (0/10, 6 ambiguous).
