@@ -1,0 +1,5 @@
+# Optional: only needed to build docs/REPORT.pdf (issue #17). Checking needs pypdf and pypdfium2 (in requirements-test.txt).
+markdown>=3.5
+playwright>=1.40
+pypdf>=4.0
+pypdfium2>=4.0

@@ -9,7 +9,7 @@ Validates:
 6. Verbatim prompt templates matching ws1_generation/generate.py.
 7. Two good and two problematic examples per task with verified provenance, distinguishing final artifacts from historical pilot evidence.
 8. Grounding of conclusions in the four accepted single-seed comparisons, including contrary outcomes and boundary disclosures.
-9. Preservation of shared assembly file (docs/REPORT.md).
+9. Hand-off of the shared assembly file (docs/REPORT.md) to issue #17's assembled report.
 """
 
 from pathlib import Path
@@ -67,6 +67,12 @@ def test_primary_citations_verified():
 
     # 4. Reimers and Gurevych (2019) - Sentence-BERT
     assert "1908.10084" in sec2
+    # Issue #17: only claims supported by the cited papers' abstracts.
+    for retired in ("fundamentally moderated", "significantly smaller performance gaps",
+                    "substantially larger synthetic volumes", "few-shot intent recognition",
+                    "mitigating the semantic drift", "generation budgets"):
+        assert retired not in sec2
+    assert "negatively associated with the performance of models trained on the synthetic data" in sec2
     assert "Reimers" in sec2
     assert "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks" in sec2
     assert "EMNLP" in sec2
@@ -80,7 +86,13 @@ def test_accepted_qwen_model_settings_and_provenance():
     assert "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7" in sec3a
     assert "0.9" in sec3a  # temperature
     assert "Ollama" in sec3a
-    assert "RTX 4060" in sec3a
+    assert "RTX 4060" in sec3a                       # attributed to the pilot record only
+    assert "PILOT_REPORT.md" in sec3a
+    assert "under Windows 11" not in sec3a           # not in any committed record
+    # common.norm lower-cases and collapses whitespace only (Issue #17 correction).
+    assert "punctuation-stripped" not in sec3a
+    assert "punctuation is kept" in sec3a
+    assert "exhibited significant label drift" not in sec3a
 
     # Thinking behavior & token cap
     assert '"think": false' in sec3a
@@ -268,9 +280,12 @@ def test_conclusions_grounded_in_four_comparisons():
     assert "cannot be causally attributed" in sec6.lower()
 
 
-def test_shared_report_scaffold_unmodified():
-    # Verify REPORT.md is preserved untouched
-    scaffold = REPORT_SCAFFOLD_PATH.read_text(encoding="utf-8")
-    assert "## Contributors & Workstream Responsibilities" in scaffold
-    assert "*Owner: Harshita (@harshitadjainbdes24-byte)*" in scaffold
-    assert "## Appendix A. Prompt Templates and Generation Examples" in scaffold
+def test_shared_report_assembled_by_issue_17():
+    # Issue #15 left the REPORT.md scaffold for #17, which replaced it with the assembled report.
+    # The full reconciliation of REPORT.md is tests/test_report_scope30.py; here only the hand-off is checked.
+    report = REPORT_SCAFFOLD_PATH.read_text(encoding="utf-8")
+    assert "## Contributors & Workstream Responsibilities" not in report
+    assert "*Owner: Harshita (@harshitadjainbdes24-byte)*" not in report
+    assert "## Appendix A. Prompt Templates, Generation Examples and Provenance" in report
+    for section in ("Prompt templates", "Good and problematic examples", "Historical pilot examples"):
+        assert section in report

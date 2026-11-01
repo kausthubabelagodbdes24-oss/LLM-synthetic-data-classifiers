@@ -1,7 +1,7 @@
 # Methods: Data Preparation, Classification Heads, and Experimental Training (scope30-v1)
 
 **Workstream 2: Data and Classifier Methods**<br>
-**Accountable Lead:** Kausthuba Belagod (@kausthubabelagodbdes24-oss)<br>
+**Training Owner and Project Lead:** Kausthuba Belagod (@kausthubabelagodbdes24-oss)<br>
 **Execution Authority:** [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), [ADR 0014](../adr/0014-presentation-separation-colab.md), [PROJECT_SPEC.md](../PROJECT_SPEC.md), [CONTRACTS.md](../agents/CONTRACTS.md)<br>
 **Target Scope:** Sections 3b ("Tasks and Real Data Preparation") and 4 ("Classifier and Experimental Conditions") of the repository report scaffold.
 
@@ -45,16 +45,16 @@ To support both supervised training and few-shot in-context demonstration sampli
 - **Partition Counts:**
   - **TREC:**
     - `data/real/trec/train.jsonl`: 4,907 rows (90% of 5,452).
-    - `data/real/trec/pool.jsonl`: 545 rows (10% of 5,452). Pool label distribution: `ABBR`: 10, `DESC`: 118, `ENTY`: 125, `HUM`: 123, `LOC`: 92, `NUM`: 77.
+    - `data/real/trec/pool.jsonl`: 545 rows (10% of 5,452). Pool label distribution, as recorded in the Issue #5 data contract: `ABBR`: 10, `DESC`: 126, `ENTY`: 128, `HUM`: 124, `LOC`: 78, `NUM`: 79. (Per-label pool counts are not stored in the freeze manifest or other committed artifacts; the contract is the producer's record.)
     - `data/real/trec/test.jsonl`: 500 rows (untouched official test set).
   - **Emotion:**
     - `data/real/emotion/train.jsonl`: 14,400 rows (90% of 16,000).
-    - `data/real/emotion/pool.jsonl`: 1,600 rows (10% of 16,000). Pool label distribution: `anger`: 252, `fear`: 178, `joy`: 539, `love`: 144, `sadness`: 430, `surprise`: 57.
+    - `data/real/emotion/pool.jsonl`: 1,600 rows (10% of 16,000). Pool label distribution, as recorded in the Issue #5 data contract: `anger`: 252, `fear`: 178, `joy`: 539, `love`: 144, `sadness`: 430, `surprise`: 57.
     - `data/real/emotion/test.jsonl`: 2,000 rows (untouched official test set).
-- **Serialization and Cryptographic Verification:** All datasets are stored using line-delimited JSON (JSONL) with canonical UTF-8 encoding and LF (`\n`) line endings. Canonical SHA-256 digests are enforced:
-  - `trec/train.jsonl`: `00bfe51d6dc988aaae09e5318db50b2849dff78363630f9a7aa97d19da050e88`
-  - `trec/pool.jsonl`: `08b68832a764d25725f0580a6b728ae5c76dbb945110eb96bc75c88ea3074ba3`
-  - `trec/test.jsonl`: `cbf804ec675c9603f90b656793f6c1ff5b26719ab29f1b402cf8d0be4c0c45aa`
+- **Serialization and Cryptographic Verification:** All datasets are stored using line-delimited JSON (JSONL) with canonical UTF-8 encoding and LF (`\n`) line endings. The canonical SHA-256 digests below are the values enforced by `ws2_training/prepare_data.py` (`CHECKSUMS`); the freeze manifest records the same `pool`, `test` and `lowres_seed13` hashes:
+  - `trec/train.jsonl`: `b587c84d26b361bbe6f4126aff136e9d737c6c349059e89d2a3ce79e226f4331`
+  - `trec/pool.jsonl`: `0a78fbe6e38b8b9eb4f7d9e24e619d63f855e073bffb1e00edb23508490d3a6e`
+  - `trec/test.jsonl`: `415f526277d0f23f9bfe903a2a6d994529ec183820b6d9d0d55d47c3195aa0c0`
   - `emotion/train.jsonl`: `4c6e92df9649661ab1c6fefe06f83206382322e6997fcb70ca53d22d302fac57`
   - `emotion/pool.jsonl`: `dde4702b5f5168f5fad977ba6b659f9304ae02a3cb37c18281e208271f847d40`
   - `emotion/test.jsonl`: `d3b7176e8ab6be052151511a3e9843fa633c5747d0dae73980a2e52a4fb6cd88`
@@ -73,7 +73,7 @@ The official benchmark test sets (500 items for TREC, 2,000 items for Emotion) a
 
 ### 1.4 Disclosure of the Pinned TREC Train/Test Duplicate
 
-In the official TREC benchmark release, 10 question texts appear in both the official training split and the official test split. During our canonical seed-13 sampling:
+The official TREC release contains question texts that appear in both its training and test splits (the exact number of such duplicates is not recorded in committed evidence). During our canonical seed-13 sampling:
 - The sampled real subset for condition C1 (and the real half of C4) drew question `trec.train.05262` (*"What is the abbreviation for Texas ?"*).
 - This text is identical under whitespace/case normalization to official test item `trec.test.00378` (label `ABBR`, normalized SHA-256 `ba6af17c366034f8dca2abff920ba01cc773fc77eda6188a1127b8190b324d2e`).
 - **Lead Governance Decision ("Pin + Disclose", 1 November 2026):** To avoid post-hoc data tampering or non-canonical split filtering, the lead approved retaining this sampled row while strictly disclosing it in the training record (`training.disclosed_test_text_overlap`).
@@ -83,10 +83,10 @@ In the official TREC benchmark release, 10 question texts appear in both the off
 
 ### 1.5 Canonical Low-Resource Real Sampling (C5a)
 
-To evaluate low-resource classification and augmentation baselines, a deterministic low-resource sample of exactly 10 examples per label across all 6 classes (60 examples total per task) was extracted from `train.jsonl` using seed 13:
+To evaluate low-resource classification and augmentation baselines, a deterministic low-resource sample of exactly 10 examples per label across all 6 classes (60 examples total per task) was drawn from `pool.jsonl` using seed 13 (`ws2_training/prepare_data.py`), so it is disjoint from `train.jsonl`:
 - File paths: `data/real/trec/lowres_seed13.jsonl` and `data/real/emotion/lowres_seed13.jsonl`.
 - Canonical hashes:
-  - `trec/lowres_seed13.jsonl` (60 lines): `50f24e933ef74465df9d4fc0298a44b82d9a3b680c6553fc27df8d4a9cf41d8e`
+  - `trec/lowres_seed13.jsonl` (60 lines): `901c0596a42b6fd0fa128cb1dd05b26bb1dbdcbd0c1a0a3dca9011beb7a03a29`
   - `emotion/lowres_seed13.jsonl` (60 lines): `7bec4826ca96fa056ec5defc13a051f1c2ac25ef0270164219af13e1471af27f`
 - These exact 60 instances serve as both the standalone low-resource real baseline (Condition C5a) and the exact seed sources for AugGPT paraphrasing (Condition C5b).
 
@@ -111,12 +111,9 @@ To ensure that downstream classification differences reflect synthetic training 
 ### 2.2 Classification Head Configuration
 
 On top of the frozen 384-dimensional normalized embeddings, a multi-class linear classifier is trained using scikit-learn's `LogisticRegression`:
-- **Regularization Strength:** Inverse regularization parameter $C = 1.0$ ($L_2$ regularization penalty).
-- **Optimization Algorithm:** Limited-memory BFGS (`solver='lbfgs'`).
-- **Iteration Budget:** `max_iter = 2000` (ensuring full numerical convergence across all training conditions without truncation).
-- **Convergence Tolerance:** `tol = 1e-4`.
-- **Multi-Class Loss:** Multinomial cross-entropy loss.
-- **Reproducibility Seed:** `random_state = 13`.
+- **Recorded settings:** `LogisticRegression(C=1.0, max_iter=2000, random_state=13)`, exactly as constructed in `ws2_training/train_scope30.py` and recorded in every result binding (`analysis.json` → `grid.classifier.classifier`).
+- **Unrecorded settings:** every other argument (for example the solver, tolerance and multi-class handling) is the scikit-learn default of the installed version. These defaults are not recorded in the grid binding, so this report does not state them. Whether each fit converged is recorded per key in the uncommitted training records (`n_iter`/`converged`) and is not reported here.
+- **Fit order:** rows are shuffled with `random.Random(13)` before fitting, as in Issue #7.
 
 ---
 
@@ -135,7 +132,7 @@ Under project lead decision [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md)
 
 #### Condition Composition Notes:
 - **C1–C4 Balance:** Conditions C1, C2, C3, and C4 maintain an identical classifier training size of exactly 180 examples per task (30 per label across all 6 classes).
-- **C4 Composition:** Condition C4 combines the first 15 real examples per label from the C1 sample with the top 15 few-shot synthetic examples per label selected from the C3 corpus.
+- **C4 Composition:** Condition C4 combines an independent seed-13 `per_label_sample(train, 15, seed 13, exact)` draw of 15 real rows per label (a separate draw; it is not constructed as a subset of the C1 sample) with the first 15 few-shot rows per label of the C3 corpus in the ADR 0012 rank order (ascending SHA-256 of `scope30-v1|13|<task>|few_shot|<row-id>`).
 - **C5a/C5b Unequal Size Disclosure:** Condition C5a contains 60 examples (10 per label), while C5b contains 420 examples (60 real sources + 360 paraphrases). The size difference between C5a ($n=60$) and C5b ($n=420$) is an intentional, fundamental property of data augmentation via paraphrasing. As disclosed in Section 2.6, any performance change between C5b and C5a combines the semantic quality of the paraphrases with the effect of a $7\times$ increase in training set size.
 - **Generated Corpus Totals:** Across both tasks, the experiment selects 720 zero/few-shot texts (360 TREC, 360 Emotion) and 720 AugGPT paraphrases (360 TREC, 360 Emotion), totaling 1,440 selected synthetic texts.
 
@@ -174,13 +171,13 @@ A central methodological requirement of this investigation is distinguishing the
 | **TREC** | **C1** | 180 | 180 | 0 | 0 | 180 real annotations required |
 | **TREC** | **C2** | 180 | 0 | 180 | 0 | 0 real annotations (zero-shot prompt uses label definitions only) |
 | **TREC** | **C3** | 180 | 0 | 180 | 59 | 59 real pool annotations required as 3-shot prompt demonstrations |
-| **TREC** | **C4** | 180 | 90 | 90 | 59 | 90 real annotations + up to 59 demonstration annotations ($\le 149$ total) |
+| **TREC** | **C4** | 180 | 90 | 90 | ≤ 59 | 90 real annotations + up to 59 demonstration annotations ($\le 149$ total) |
 | **TREC** | **C5a** | 60 | 60 | 0 | 0 | 60 real annotations required |
 | **TREC** | **C5b** | 420 | 60 | 360 | 0 | Exactly the same 60 real source annotations as C5a ($7\times$ training size) |
 | **Emotion** | **C1** | 180 | 180 | 0 | 0 | 180 real annotations required |
 | **Emotion** | **C2** | 180 | 0 | 180 | 0 | 0 real annotations (zero-shot prompt uses label definitions only) |
 | **Emotion** | **C3** | 180 | 0 | 180 | 54 | 54 real pool annotations required as 3-shot prompt demonstrations |
-| **Emotion** | **C4** | 180 | 90 | 90 | 54 | 90 real annotations + up to 54 demonstration annotations ($\le 144$ total) |
+| **Emotion** | **C4** | 180 | 90 | 90 | ≤ 54 | 90 real annotations + up to 54 demonstration annotations ($\le 144$ total) |
 | **Emotion** | **C5a** | 60 | 60 | 0 | 0 | 60 real annotations required |
 | **Emotion** | **C5b** | 420 | 60 | 360 | 0 | Exactly the same 60 real source annotations as C5a ($7\times$ training size) |
 

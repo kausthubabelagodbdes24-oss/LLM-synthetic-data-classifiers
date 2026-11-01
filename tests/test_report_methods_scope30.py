@@ -12,6 +12,7 @@ from pathlib import Path
 from common import ROOT
 from ws2_training import train_scope30 as ts
 from ws3_evaluation import analyze_scope30 as an
+from ws2_training import prepare_data
 
 METHODS_PATH = ROOT / "docs" / "report" / "methods_data_classifiers.md"
 README_PATH = ROOT / "docs" / "report" / "README.md"
@@ -53,11 +54,25 @@ def test_methods_documents_trec_dataset_and_splits():
     assert "545" in text                     # 10% pool
     assert "500" in text                     # official test
     assert "76" in text                      # abbreviation training frequency (>30)
-    # Canonical split hashes
-    assert "00bfe51d6dc988aaae09e5318db50b2849dff78363630f9a7aa97d19da050e88" in text
-    assert "08b68832a764d25725f0580a6b728ae5c76dbb945110eb96bc75c88ea3074ba3" in text
-    assert "cbf804ec675c9603f90b656793f6c1ff5b26719ab29f1b402cf8d0be4c0c45aa" in text
-    assert "50f24e933ef74465df9d4fc0298a44b82d9a3b680c6553fc27df8d4a9cf41d8e" in text
+    # Canonical split hashes: the values enforced by prepare_data.CHECKSUMS (and recorded in the freeze).
+    for name in ("train", "pool", "test", "lowres_seed13"):
+        assert prepare_data.CHECKSUMS[f"trec/{name}.jsonl"]["sha256"] in text
+    freeze = _read_freeze()["real_references"]
+    for name in ("pool", "test", "lowres_seed13"):
+        assert freeze[f"trec/{name}"]["sha256"] in text
+    # Issue #17: hashes from an earlier revision that match no committed record must stay out.
+    for unbacked in ("00bfe51d6dc988aaae09e5318db50b2849dff78363630f9a7aa97d19da050e88",
+                     "08b68832a764d25725f0580a6b728ae5c76dbb945110eb96bc75c88ea3074ba3",
+                     "cbf804ec675c9603f90b656793f6c1ff5b26719ab29f1b402cf8d0be4c0c45aa",
+                     "50f24e933ef74465df9d4fc0298a44b82d9a3b680c6553fc27df8d4a9cf41d8e"):
+        assert unbacked not in text
+        assert unbacked not in _read_contracts()
+    # Pool label counts come from the Issue #5 contract (not stored in committed artifacts).
+    assert "`ABBR`: 10, `DESC`: 126, `ENTY`: 128, `HUM`: 124, `LOC`: 78, `NUM`: 79" in text
+    assert "`DESC`: 118" not in text
+    # lowres_seed13 is sampled from the pool (prepare_data.py), not from train.jsonl.
+    assert "was drawn from `pool.jsonl` using seed 13" in text
+    assert "extracted from `train.jsonl`" not in text
 
 
 def test_methods_documents_emotion_dataset_and_splits():
@@ -182,7 +197,17 @@ def test_methods_documents_embedder_and_classifier_settings():
     assert "C = 1.0" in text or "C=1.0" in text
     assert "max_iter = 2000" in text or "max_iter=2000" in text
     assert "random_state = 13" in text or "random_state=13" in text
-    assert "lbfgs" in text.lower()
+    # Issue #17: only recorded classifier settings are stated; defaults and convergence are not recorded.
+    assert "lbfgs" not in text.lower()
+    assert "tol = 1e-4" not in text
+    assert "multinomial" not in text.lower()
+    assert "ensuring full numerical convergence" not in text
+    assert "not recorded in the grid binding" in text
+    # C4's real half is an independent seed-13 draw, not a prefix of the C1 sample.
+    assert "first 15 real examples per label from the C1 sample" not in text
+    assert "it is not constructed as a subset of the C1 sample" in text
+    assert "| **TREC** | **C4** | 180 | 90 | 90 | ≤ 59 |" in text
+    assert "| **Emotion** | **C4** | 180 | 90 | 90 | ≤ 54 |" in text
 
 
 # --- Requirement 7: Training Harness Behavior ---
@@ -336,9 +361,11 @@ def test_report_readme_reconciled_with_pr38_and_sole_operator():
     # No "planned" status
     assert "planned" not in readme_text.lower()
 
-    # Current sole-operator ownership under AGENTS.md
-    assert "sole operator" in readme_text.lower()
+    # ADR 0015 restores the original accountable workstream ownership.
+    assert "@harshitadjainbdes24-byte" in readme_text
     assert "@kausthubabelagodbdes24-oss" in readme_text
+    assert "@hem4456" in readme_text
+    assert "sole operator" not in readme_text.lower()
 
     # Shared assembly scaffold REPORT.md belongs to Issue #17
     assert "REPORT.md" in readme_text

@@ -1,6 +1,6 @@
 # ADR 0013: Correct the TREC AugGPT prompt to preserve the expected answer type
 
-Status: **approved for the code change only.** Kausthuba, sole operator/project lead, gave this approval directly in the Claude Code session that requested the PR #29 review fix on 31 October 2026 (IST). The approval answers the PR #29 lead review (`pullrequestreview-5722864116`), which found that the earlier version of this record cited approval without trusted evidence. The approval text, verbatim:
+Status: **approved for the code change only.** Project lead Kausthuba gave this approval directly in the Claude Code session that requested the PR #29 review fix on 31 October 2026 (IST), while implementing on accountable generation owner Harshita's behalf. The approval answers the PR #29 lead review (`pullrequestreview-5722864116`), which found that the earlier version of this record cited approval without trusted evidence. The approval text, verbatim:
 
 > I explicitly approve the TREC seed-13 AugGPT prompt correction described in ADR 0013 (`auggpt-trec-answer-type-v1`): regenerate all 360 paraphrases from the unchanged 60 sources, preserve answer type and source meaning, carry forward no old rows, and leave Emotion, zero/few-shot artifacts and results unchanged. This approval authorizes the code change only; it does not authorize generation, promotion, freeze, training, or merging.
 
@@ -27,7 +27,7 @@ The round-1 `trec/auggpt` judgments remain bound to the preserved original (`471
 
 ## Amendment 1 (31 October 2026): `auggpt-trec-answer-type-v2`, bounded corrected calls
 
-Status: **approved for the code change only.** Kausthuba, sole operator/project lead, chose this remedy directly in the Claude Code session on 31 October 2026 (IST), verbatim:
+Status: **approved for the code change only.** Project lead Kausthuba chose this remedy directly in the Claude Code session on 31 October 2026 (IST), while implementing on accountable generation owner Harshita's behalf, verbatim:
 
 > okay go ahead and Fix the cause in code (recommended) with a scoped PR: either cap the output length or turn off thinking for AugGPT calls; and/or clarify in the prompt that "Who is X?" questions keep the human label.
 

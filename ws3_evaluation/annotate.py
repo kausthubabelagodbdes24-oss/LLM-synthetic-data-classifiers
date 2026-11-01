@@ -26,7 +26,7 @@ Commands:
       validating each submission against the canonical annotation_key.csv.
 
    NOTE — Under ADR 0012, independent human annotation and external file distribution are
-   superseded by in-repository evaluation under sole-operator execution. If human response files
+   superseded by in-repository evaluation in the current exploratory scope. If human response files
    are combined historically, submission order remains a human process constraint per ADR 0005
    that is not code-enforced.
 
@@ -186,7 +186,7 @@ def combine_responses(response_files=None, out_dir=None, annotators=None, key_pa
         Invalid non-blank labels raise ValueError with an actionable message.
 
     NOTE — Under ADR 0012, independent human annotation and external file distribution are
-    superseded by in-repository evaluation under sole-operator execution. If human response files
+    superseded by in-repository evaluation in the current exploratory scope. If human response files
     are combined, submission order remains a human process constraint (ADR-0005) not enforced by code.
     """
     out_path = Path(out_dir) if out_dir else results_dir()

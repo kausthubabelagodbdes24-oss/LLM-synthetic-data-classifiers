@@ -1,6 +1,6 @@
 ## Appendix A. Prompt Templates and Generation Examples
 
-*Author / Sole Operator: Kausthuba Belagod (@kausthubabelagodbdes24-oss); Historical Workstream 1: Harshita (@harshitadjainbdes24-byte)*
+*Generation workstream owner / section author: Harshita (@harshitadjainbdes24-byte); implementation and integration performed by Kausthuba Belagod (@kausthubabelagodbdes24-oss) on her behalf.*
 
 ### Part 1: Actual Prompt Templates
 

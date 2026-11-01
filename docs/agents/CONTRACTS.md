@@ -7,19 +7,20 @@ Historical schemas/canonical hashes below remain valid. Target100 and three-seed
 
 The specification defines experimental meaning. Record exact accepted interfaces here or link to their authoritative definitions. Proposed formats are not accepted contracts.
 
-**30 October fallback-pilot decision:** the sole operator/lead Kausthuba approved an isolated `qwen3:4b` pilot using unchanged final prompts and data interfaces; see [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md). This approves testing the shared model setting, not dataset acceptance or full generation. Preserve all earlier Llama artifacts and reviews; model digests/fingerprints remain incompatible across resume. Runtime option changes need a separate decision if compatibility problems arise.
+**30 October fallback-pilot decision:** project lead Kausthuba approved and operated an isolated `qwen3:4b` pilot on accountable generation owner Harshita's behalf, using unchanged final prompts and data interfaces; see [ADR 0010](../adr/0010-test-qwen-fallback-after-pilot-failure.md). This approves testing the shared model setting, not dataset acceptance or full generation. Preserve all earlier Llama artifacts and reviews; model digests/fingerprints remain incompatible across resume. Runtime option changes need a separate decision if compatibility problems arise.
 
 **Historical ADR0011 acceptance; target superseded by ADR0012:** Kausthuba accepted Qwen with the documented quality limitations and chose uniform 100 per label. See [ADR 0011](../adr/0011-accept-qwen-pilot-and-uniform-100-target.md). Lead scientific acceptance and final implementation review are recorded; consult PR #22 for current CI/merge state. Exact full-data completeness, content audit and freeze acceptance are still future gates.
 
 | Interface | Current state / agreement required | Owners |
 | --- | --- | --- |
 | Real data splits and low-resource samples | Accepted in Issue #5. Real splits and 10-per-label lowres source samples (seeds 13, 42, 7) prepared reproducibly with strict class coverage validation, canonical UTF-8 JSONL with LF newlines, and verified SHA-256 checksums. | Training and lead (@kausthubabelagodbdes24-oss) |
-| Repetition-specific generation | Accepted Qwen pilot for Issue #6; current scope30/seed13 under ADR0012; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
+| Repetition-specific generation | Accepted Qwen pilot for Issue #6; current scope30/seed13 under ADR0012; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Generation owner: @harshitadjainbdes24-byte; implementation/integration operator: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
 | Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion) in results/scope30-seed13 (#7, preserved). Twelve-key freeze-bound grid: `ws2_training/train_scope30.py` (#13; see the #13 section below). The real grid ran once at `1354118` and was accepted by the lead on #13 (1 November 2026); `grid_complete.json` sha256 `3b12bbb8…`. Single-seed paired analysis: `ws3_evaluation/analyze_scope30.py` (#14; see the #14 section below). | Training (@kausthubabelagodbdes24-oss) + evaluation |
-| Generation report sections and appendix | Generation deliverables for Issue #15 (Sections 2, 3a, 6, Appendix A) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Sole operator and author: @kausthubabelagodbdes24-oss (historical: WS1 @harshitadjainbdes24-byte) |
-| Data and classifier methods sections | Training deliverables for Issue #16 (Sections 3b, 4) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Training (@kausthubabelagodbdes24-oss; sole operator) |
-| Reproducibility walkthrough | `notebooks/SynthText_scope30_walkthrough.ipynb` separates a fake-fixture pipeline demonstration from read-only accepted real analysis. It never reruns the accepted experiment. Final presentation slides are outside repository and issue scope under ADR0014. | Sole operator and lead: @kausthubabelagodbdes24-oss |
+| Generation report sections and appendix | Generation deliverables for Issue #15 (Sections 2, 3a, 6, Appendix A) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Generation owner/author: @harshitadjainbdes24-byte; implementation operator on her behalf: @kausthubabelagodbdes24-oss |
+| Data and classifier methods sections | Training deliverables for Issue #16 (Sections 3b, 4) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Training owner and project lead: @kausthubabelagodbdes24-oss |
+| Assembled report and PDF | Issue #17: `docs/REPORT.md` and `docs/REPORT.pdf` (+ sidecar), checked by `ws3_evaluation/report_scope30.py --check` against the accepted #12/#13/#14 evidence. Reviewed and accepted by the project lead on 1 November 2026; see the #17 section below. | Evaluation/report owner: @hem4456; implementation/integration operator: @kausthubabelagodbdes24-oss |
+| Reproducibility walkthrough | `notebooks/SynthText_scope30_walkthrough.ipynb` separates a fake-fixture pipeline demonstration from read-only accepted real analysis. It never reruns the accepted experiment. Final presentation slides are outside repository and issue scope under ADR0014. | Evaluation/reproducibility owner: @hem4456; project lead: @kausthubabelagodbdes24-oss |
 | Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
@@ -387,7 +388,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 ## Generation report sections and Appendix A (Issue #15, scope30-v1)
 
 - **Authority & Status**: [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), [ADR 0013](../adr/0013-trec-auggpt-answer-type.md), [ADR 0014](../adr/0014-presentation-separation-colab.md), and [PROJECT_SPEC.md](../PROJECT_SPEC.md). Delivered in PR for Issue #15.
-- **Producer**: Sole operator and author: @kausthubabelagodbdes24-oss (historical: WS1 @harshitadjainbdes24-byte).
+- **Producer**: Accountable generation owner and author: @harshitadjainbdes24-byte; implementation/integration operator on her behalf: @kausthubabelagodbdes24-oss.
 - **Consumer**: Issue #16 (data/classifier methods), Issue #17 ([Evaluation] Assemble the revised exploratory report and reviewed PDF).
 - **Deliverable Paths**:
   - `docs/report/section_2_related_work.md`: Related work on synthetic data utility across task subjectivity (Li et al., 2023), text augmentation via AugGPT (Dai et al., 2023), few-shot in-context learning (Brown et al., 2020), and Sentence-BERT dense representations (Reimers and Gurevych, 2019) from verified primary sources.
@@ -402,21 +403,21 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
 ## Data, classifier and training-method specifications (Issue #16, ADR 0012, ADR 0014)
 
 - **Authority**: [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), [ADR 0014](../adr/0014-presentation-separation-colab.md), [PROJECT_SPEC.md](../PROJECT_SPEC.md), lead decisions on #13 and #16.
-- **Producer**: Workstream 2 (Training and project lead: Kausthuba Belagod @kausthubabelagodbdes24-oss; sole operator).
+- **Producer**: Workstream 2 (Training owner and project lead: Kausthuba Belagod @kausthubabelagodbdes24-oss).
 - **Consumers**: Report assembly (#17), documentation, walkthrough (#18), external research presentation.
 - **Artifacts**:
   - Modular report section: `docs/report/methods_data_classifiers.md` (covering Sections 3b and 4 of the report scaffold).
   - Directory index: `docs/report/README.md`.
 - **Invariants and Specifications**:
   - **Datasets and Split Sizes**:
-    - TREC (`SetFit/TREC-QC`): 6 labels (`ABBR`, `DESC`, `ENTY`, `HUM`, `LOC`, `NUM`); official train 5,452, test 500. Deterministic 90/10 seed-0 split: `train.jsonl` (4,907 rows, SHA-256 `00bfe51d6dc988aaae09e5318db50b2849dff78363630f9a7aa97d19da050e88`), `pool.jsonl` (545 rows, SHA-256 `08b68832a764d25725f0580a6b728ae5c76dbb945110eb96bc75c88ea3074ba3`), `test.jsonl` (500 rows, SHA-256 `cbf804ec675c9603f90b656793f6c1ff5b26719ab29f1b402cf8d0be4c0c45aa`). `lowres_seed13.jsonl` (60 rows, SHA-256 `50f24e933ef74465df9d4fc0298a44b82d9a3b680c6553fc27df8d4a9cf41d8e`). Abbreviation count in train is 76 (> 30).
+    - TREC (`SetFit/TREC-QC`): 6 labels (`ABBR`, `DESC`, `ENTY`, `HUM`, `LOC`, `NUM`); official train 5,452, test 500. Deterministic 90/10 seed-0 split: `train.jsonl` (4,907 rows, SHA-256 `b587c84d26b361bbe6f4126aff136e9d737c6c349059e89d2a3ce79e226f4331`), `pool.jsonl` (545 rows, SHA-256 `0a78fbe6e38b8b9eb4f7d9e24e619d63f855e073bffb1e00edb23508490d3a6e`), `test.jsonl` (500 rows, SHA-256 `415f526277d0f23f9bfe903a2a6d994529ec183820b6d9d0d55d47c3195aa0c0`). `lowres_seed13.jsonl` (60 rows, SHA-256 `901c0596a42b6fd0fa128cb1dd05b26bb1dbdcbd0c1a0a3dca9011beb7a03a29`). These are the `prepare_data.CHECKSUMS` values (corrected in Issue #17; an earlier revision of this entry listed unbacked TREC hashes). Abbreviation count in train is 76 (> 30).
     - Emotion (`dair-ai/emotion`): 6 labels (`sadness`, `joy`, `love`, `anger`, `fear`, `surprise`); sub-facets: annoyance -> anger, anxiety -> fear; official train 16,000, test 2,000 (validation split excluded). Deterministic 90/10 seed-0 split: `train.jsonl` (14,400 rows, SHA-256 `4c6e92df9649661ab1c6fefe06f83206382322e6997fcb70ca53d22d302fac57`), `pool.jsonl` (1,600 rows, SHA-256 `dde4702b5f5168f5fad977ba6b659f9304ae02a3cb37c18281e208271f847d40`), `test.jsonl` (2,000 rows, SHA-256 `d3b7176e8ab6be052151511a3e9843fa633c5747d0dae73980a2e52a4fb6cd88`). `lowres_seed13.jsonl` (60 rows, SHA-256 `7bec4826ca96fa056ec5defc13a051f1c2ac25ef0270164219af13e1471af27f`).
   - **Separation and Untouched Tests**:
     - Disjoint training/pool splits guarantee no overlap between supervised training rows and few-shot in-context demonstration rows.
     - No official test row was directly sampled into training sets, demonstrations, or synthetic sources; normalized test-text matching candidates were rejected during synthetic generation.
     - One normalized official TREC train/test text duplicate (`trec.train.05262 = trec.test.00378`) was retained in C1 and C4 under the approved "Pin + Disclose" decision; all other prohibited overlaps fail closed.
   - **Disclosed Pinned Duplicate**:
-    - Official TREC benchmark contains 10 train/test duplicates. Seed 13 sampling draws `trec.train.05262` ("What is the abbreviation for Texas ?"), matching test item `trec.test.00378` (label `ABBR`, normalized SHA-256 `ba6af17c366034f8dca2abff920ba01cc773fc77eda6188a1127b8190b324d2e`).
+    - The official TREC release contains train/test text duplicates (their number is not recorded in committed evidence). Seed 13 sampling draws `trec.train.05262` ("What is the abbreviation for Texas ?"), matching test item `trec.test.00378` (label `ABBR`, normalized SHA-256 `ba6af17c366034f8dca2abff920ba01cc773fc77eda6188a1127b8190b324d2e`).
     - Lead decision: "Pin + Disclose" in `training.disclosed_test_text_overlap`. Appears only in TREC C1 and C4; fails closed on any other condition or synthetic overlap.
   - **Scope30-v1 Design and Counts**:
     - 2 tasks x 6 conditions x seed 13 only = 12 unique result keys.
@@ -450,11 +451,47 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - **Presentation Boundary (ADR 0014)**:
     - Final presentation slides and submission logistics are private owner deliverables outside GitHub and are not repository artifacts.
 
+## Assembled exploratory report and PDF (Issue #17, ADR 0012, ADR 0014)
+
+- **Status**: reviewed and accepted by the project lead on 1 November 2026. Presentation slides, speaker notes and submission logistics stay outside the repository (ADR 0014).
+- **Artifacts**:
+  - `docs/REPORT.md` is the canonical report: Sections 1–6, References and a separated Appendix A (prompt templates, examples and provenance). It replaces the #8 scaffold.
+  - `docs/REPORT.pdf` is its PDF. `docs/REPORT.pdf.json` records the PDF SHA-256, size and page count, the LF SHA-256 of the source `REPORT.md`, the builder and its environment, and `review_status`.
+  - `docs/.gitattributes` keeps the PDF binary.
+- **Producer**: `ws3_evaluation/report_scope30.py`.
+  - `--check` is read-only.
+  - `--build-pdf OUT` and `--write-pdf` render Markdown to HTML, then to an A4 PDF through Playwright Chromium. The two #14 PNGs are embedded byte for byte, and the build timestamps are normalized.
+  - Build dependencies are in `requirements-report.txt`. `pypdf` and `pypdfium2` are in the test requirements, so CI checks the PDF text and renders every page.
+  - Page size, margins (20 mm sides) and the page-number footer come from a CSS `@page` rule, so the footer uses the body's embedded TrueType font rather than a Chromium Type 3 overlay.
+- **Consumes, read-only**:
+  - `docs/analysis/scope30-v1-seed13/analysis.json`, pinned to `d0486efd…`;
+  - the two charts, pinned to `fc6e2f6a…` and `5ed188eb…`;
+  - the freeze manifest, pinned to LF `dd2e52ee…`;
+  - `prepare_data.CHECKSUMS` and the `train_scope30` constants.
+
+  It never modifies analysis outputs, frozen corpora, records or charts.
+- **Checks** (`validate_report`, `check_pdf`):
+  - Section order and an explicit page break before Appendix A.
+  - The exact twelve Table 1 rows and ten Table 2 rows, rebuilt from `analysis.json`.
+  - The cross-task gap sentences and the cost, count, review-outcome and classifier phrases rebuilt from the evidence.
+  - Every 64-hex value in the report must appear in the accepted evidence or the pinned code. All eight canonical split hashes must be present.
+  - Both charts must be embedded exactly once, unchanged, and referenced from the text. Tables must be referenced as well.
+  - Sentence-level rejection of unnegated significance, confidence-interval, stability, replication, causal, equivalence/meaningfulness, human-agreement, independent-human and superiority wording.
+  - The workstream-author line (Harshita for generation, Kausthuba for training/lead, Hementh for evaluation/report assembly), the not-yet-reviewed status and the required disclosures.
+  - Citation completeness both ways.
+  - Rejection of stale scaffold text and of unverified surnames.
+  - For the PDF: sidecar hash and size, staleness against `REPORT.md`, page count, values and sections in the extracted text, blank pages and missing glyphs.
+  - Rendering: every page is rendered with pdfium and must be non-blank. Ink must stay at least 12 mm from the side edges, and each page's leftmost content must sit at the 20 mm margin (±1 mm), so a shifted or clipped page fails.
+  - Wording rejected even when negated: "not significant" and its variants (no test was run), the over-broad "largest within-task difference in the grid", and "C3/C4 consumed". The C4 cost must stay bounded ("C4 on at most"), and the "largest" claim is recomputed from `analysis.json`.
+- **Reconciliation** (PR #39 review): the #15/#16 modules and their tests were corrected to the committed evidence; the canonical TREC hashes replaced unbacked ones, and other unsupported method claims were removed or attributed. See `docs/report/README.md` for the list. The accepted #14 interpretation is not modified.
+- **Tests**: `tests/test_report_scope30.py` covers the committed report and PDF and about 50 targeted mutations: values, identifiers, sections, charts, claims, citations, stale PDF and pins.
+- **Operator**: `run-issue17-report.bat CHECK|BUILD` (Windows). It runs on a clean checkout, stops at the first failure and writes a log. It never runs generation, Ollama, promotion, retraining, freezing, tagging or presentation work.
+
 ## Optional evaluation and annotation response tooling (historical)
 
-- **Authority & Status**: Historical optional response tooling preserved under ADR 0012. Independent human annotation, external distribution, and human-agreement completion gates are removed under sole-operator execution.
+- **Authority & Status**: Historical optional response tooling preserved under ADR 0012. Independent human annotation, external distribution, and human-agreement completion gates are removed from the current exploratory scope.
 - **Scope Distinction**: These optional 60-item held-out test annotation utilities (`make`, `combine`, `score`) are strictly distinct from the required 60 generated-text quality reviews conducted in Workstream 1/3 (#11/#12).
-- **Producer**: `ws3_evaluation/annotate.py` (Owner: @hem4456; operator: @kausthubabelagodbdes24-oss).
+- **Producer**: `ws3_evaluation/annotate.py` (Accountable evaluation owner: @hem4456; implementation operator on his behalf: @kausthubabelagodbdes24-oss).
 - **Consumers**: Optional in-repository evaluation workflows.
 - **File format and schema**:
   - `results/annotation_key.csv`:

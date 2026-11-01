@@ -1,6 +1,6 @@
 # ADR 0012: EOD exploratory comparison, 30 per label, seed 13 only
 
-Status: explicitly approved by Kausthuba, sole operator/project lead, 31 October 2026 (IST).
+Status: explicitly approved by Kausthuba, training owner and project lead, 31 October 2026 (IST). Workstream ownership remains Harshita for generation and Hementh for evaluation.
 
 The lead approved “30 per label, seed 13 only, both tasks and all six conditions” and requested repository documentation and closed issues be aligned. The lead also removed independent-human annotation and distribution/report-sharing requirements and requested agent-performed evaluation. This record persists both decisions.
 
