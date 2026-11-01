@@ -34,7 +34,7 @@ The same model also wrote the tooling and drew the sample. The judgments can sha
 | emotion/few_shot | `synthetic/emotion/few_shot_seed13.scope30-v1.selected.jsonl` | 180 | `78948f67bef46675ec01ea68ec02c52527875814b7aca3b94dc381b7cf3e08ad` | `c84fabc727213db5364b8f61605a8210eb8b659f7da6e723e4c0d8b81baa95ca` | `78948f67bef46675ec01ea68ec02c52527875814b7aca3b94dc381b7cf3e08ad` (180 rows) | `cec310b818092931f94e1fad8c19745e4ced1d59e21392cc6abc6a73901a73d4` |
 | emotion/auggpt | `synthetic/emotion/auggpt_seed13.jsonl` | 360 | `59b2a6fb414c51c43ffb922b85735a81d45eafd513e95feec962eb5a8f46f67d` | `315ba9ef47be14d5d88afbc73207e67345beefdea8410e19b278d85db52f7899` (sidecar) | — | `629fb0fd6933303afa986594b883d5c39aa358d02d505461b58a871bd46f5982` ×19, `9a13d809fb04918be6754c6c80db6c3eaf12a5f15ccea8c6d226116cf5731b2f` ×341 |
 
-The real `pool` and `lowres_seed13` reference hashes are recorded in `round1_sample.json` (`inputs.reference_inputs`) and match `CONTRACTS.md`. The emotion AugGPT fingerprints are `629fb0fd…` for the 19 length-guard rows and `9a13d809…` for the 341 carried-forward rows.
+The real `pool` and `lowres_seed13` reference hashes are recorded in `round1_sample.json` (`inputs.reference_inputs`) and match the [technical provenance archive](../../archive/TECHNICAL_PROVENANCE.md). The emotion AugGPT fingerprints are `629fb0fd…` for the 19 length-guard rows and `9a13d809…` for the 341 carried-forward rows.
 
 ## Sampling (reproducible; no convenience selection)
 

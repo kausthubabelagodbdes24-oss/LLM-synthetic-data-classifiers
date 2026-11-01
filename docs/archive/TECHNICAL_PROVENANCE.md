@@ -485,7 +485,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - Wording rejected even when negated: "not significant" and its variants (no test was run), the over-broad "largest within-task difference in the grid", and "C3/C4 consumed". The C4 cost must stay bounded ("C4 on at most"), and the "largest" claim is recomputed from `analysis.json`.
 - **Reconciliation** (PR #39 review): the #15/#16 modules and their tests were corrected to the committed evidence; the canonical TREC hashes replaced unbacked ones, and other unsupported method claims were removed or attributed. See `docs/report/README.md` for the list. The accepted #14 interpretation is not modified.
 - **Tests**: `tests/test_report_scope30.py` covers the committed report and PDF and about 50 targeted mutations: values, identifiers, sections, charts, claims, citations, stale PDF and pins.
-- **Operator**: `run-issue17-report.bat CHECK|BUILD` (Windows). It runs on a clean checkout, stops at the first failure and writes a log. It never runs generation, Ollama, promotion, retraining, freezing, tagging or presentation work.
+- **Archived operator script**: `docs/archive/operator-scripts/run-issue17-report.bat CHECK|BUILD` (Windows). It runs on a clean checkout, stops at the first failure and writes a log. It never runs generation, Ollama, promotion, retraining, freezing, tagging or presentation work.
 
 ## Optional evaluation and annotation response tooling (historical)
 

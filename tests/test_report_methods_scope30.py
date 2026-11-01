@@ -1,6 +1,6 @@
 """Tests for Issue #16: Data, classifier, and training methods specification and report sections.
 
-Verifies that docs/report/methods_data_classifiers.md, docs/report/README.md, and CONTRACTS.md
+Verifies that docs/report/methods_data_classifiers.md, docs/report/README.md, and the technical provenance archive
 strictly adhere to scope30-v1 specifications, match all accepted repository evidence (freeze manifest,
 analysis outputs, and training harness constants), observe all scientific boundaries, and maintain
 accurate model-identity hash terminology without contradictory leakage claims.
@@ -16,7 +16,7 @@ from ws2_training import prepare_data
 
 METHODS_PATH = ROOT / "docs" / "report" / "methods_data_classifiers.md"
 README_PATH = ROOT / "docs" / "report" / "README.md"
-CONTRACTS_PATH = ROOT / "docs" / "agents" / "CONTRACTS.md"
+CONTRACTS_PATH = ROOT / "docs" / "archive" / "TECHNICAL_PROVENANCE.md"
 FREEZE_PATH = ROOT / "docs" / "freeze" / "scope30-v1-seed13.freeze.json"
 ANALYSIS_PATH = ROOT / "docs" / "analysis" / "scope30-v1-seed13" / "analysis.json"
 MINILM_IDENTITY_SHA256 = "36bb95116de1358079c1fab49ac634493101e484c99edbd882691fbf96859cad"
@@ -321,7 +321,7 @@ def test_contracts_register_contains_issue16_specification():
     assert "section_6_limitations_and_conclusions.md" in contracts_text
     assert "appendix_a_prompts_and_examples.md" in contracts_text
 
-    # Review 5727002343: generation_report_sections.md must NOT appear in CONTRACTS.md
+    # Review 5727002343: generation_report_sections.md must NOT appear in the technical provenance archive
     assert "generation_report_sections.md" not in contracts_text
 
     # Review 5727002343: Forbidden inferential wording must NOT appear in Issue #15 contract

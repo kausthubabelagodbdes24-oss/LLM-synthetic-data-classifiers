@@ -81,6 +81,6 @@ The repository instead commits the accepted manifests, hashes, selected IDs, mod
 - [Final specification](PROJECT_SPEC.md)
 - [Freeze overview](freeze/README.md)
 - [Analysis summary](analysis/scope30-v1-seed13/summary.md)
-- [Contract register](agents/CONTRACTS.md)
+- [Technical provenance archive](archive/TECHNICAL_PROVENANCE.md)
 
 The real pipeline must not be reconstructed by substituting a different generator or silently changing frozen inputs. Such a run would be a new experiment, not a reproduction of the accepted study.

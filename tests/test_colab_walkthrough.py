@@ -51,7 +51,7 @@ def test_colab_notebook_has_generation_training_analysis_and_claim_limits():
 
 def test_presentation_is_explicitly_outside_github_scope():
     files = [
-        ROOT / "AGENTS.md",
+        ROOT / "README.md",
         ROOT / "docs" / "PROJECT_SPEC.md",
         ROOT / "docs" / "SCOPE_MIGRATION.md",
         ROOT / "docs" / "adr" / "0014-presentation-separation-colab.md",
