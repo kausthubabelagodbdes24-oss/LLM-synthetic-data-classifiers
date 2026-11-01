@@ -304,3 +304,11 @@ def test_pdf_footer_is_part_of_the_page_not_a_type3_overlay():
         fonts = page.get("/Resources", {}).get("/Font", {})
         for ref in fonts.values():
             assert ref.get_object().get("/Subtype") != "/Type3"
+
+
+def test_workstream_ownership_is_stated_as_set_by_the_lead(report, evidence):
+    assert rp.OWNERSHIP_LINE in report
+    for old, new in (("Data generation: Harshita", "Data generation: Kausthuba"),
+                     ("Evaluation: Hementh (@hem4456)", "Evaluation: Kausthuba"),
+                     ("Training and project lead: Kausthuba Belagod", "Training and project lead: Hementh")):
+        assert_flagged(report.replace(old, new, 1), evidence, "workstream ownership")

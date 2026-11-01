@@ -1,10 +1,12 @@
 # Synthetic Training Data from a Compact Local LLM on an Objective and a Subjective Text-Classification Task: An Exploratory Single-Seed Comparison (scope30-v1)
 
-**Author:** Kausthuba Belagod (@kausthubabelagodbdes24-oss), project lead and sole operator<br>
+**Author:** Kausthuba Belagod (@kausthubabelagodbdes24-oss), training and project lead<br>
 **Project:** SynthText, AI & ML minor project. Repository: `kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers`<br>
 **Report date:** 1 November 2026. **Status:** assembled for lead review (issue #17). The author has not yet reviewed or accepted this report or its PDF.
 
-*Contributions.* Under [ADR 0012](adr/0012-eod-exploratory-30-seed13.md), Kausthuba Belagod ran generation, training, evaluation and report assembly. The workstreams were originally assigned to Harshita (@harshitadjainbdes24-byte; generation) and Hementh (@hem4456; evaluation). Those historical roles are acknowledged here, but they are not presented as authorship of the executed study.
+**Workstream ownership:** Data generation: Harshita (@harshitadjainbdes24-byte). Training and project lead: Kausthuba Belagod (@kausthubabelagodbdes24-oss). Evaluation: Hementh (@hem4456).
+
+*Operating note.* Under [ADR 0012](adr/0012-eod-exploratory-30-seed13.md), the generation, training and evaluation runs recorded in this repository were executed by Kausthuba Belagod as sole operator.
 
 *Evidence base.* Every number in this report comes from committed, accepted artifacts: the freeze manifest `docs/freeze/scope30-v1-seed13.freeze.json` (#12), the accepted twelve-key grid as bound by `docs/analysis/scope30-v1-seed13/analysis.json` (#13, #14), the issue #11 review evidence and the accepted report modules in `docs/report/` (#15, #16). `python -m ws3_evaluation.report_scope30 --check` re-checks those values.
 

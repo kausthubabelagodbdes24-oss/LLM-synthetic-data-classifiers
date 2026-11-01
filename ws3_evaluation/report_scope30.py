@@ -68,6 +68,9 @@ REQUIRED_HEADINGS = (
 APPENDIX_BREAK = '<div class="appendix-break"></div>'
 AUTHOR_LINE = "**Author:** Kausthuba Belagod (@kausthubabelagodbdes24-oss)"
 REVIEW_STATUS = "The author has not yet reviewed or accepted this report or its PDF."
+# Workstream ownership as set by the lead (PR #39 follow-up, 1 November 2026).
+OWNERSHIP_LINE = ("**Workstream ownership:** Data generation: Harshita (@harshitadjainbdes24-byte). Training and project "
+                  "lead: Kausthuba Belagod (@kausthubabelagodbdes24-oss). Evaluation: Hementh (@hem4456).")
 # Surnames that appear only in the superseded scaffold and are not backed by an authoritative record.
 UNVERIFIED_NAMES = ("Harshita Jain", "Hementh M ", "Hementh M.", "Hementh M (")
 STALE_SCAFFOLD = (
@@ -319,6 +322,8 @@ def validate_report(text, analysis, freeze, report_dir=DOCS):
     # Author and review status.
     if AUTHOR_LINE not in text:
         problems.append("author line must name Kausthuba Belagod (@kausthubabelagodbdes24-oss)")
+    if OWNERSHIP_LINE not in text:
+        problems.append("workstream ownership line is missing or altered (generation, training and lead, evaluation)")
     if REVIEW_STATUS not in text:
         problems.append("report must state that the author has not yet reviewed or accepted it")
     for name in UNVERIFIED_NAMES:
