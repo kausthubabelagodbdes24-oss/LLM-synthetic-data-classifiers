@@ -48,7 +48,7 @@ Observed metric directions on this single seed:
 - **Emotion:** C2 and C3 scored lower than C1 on both metrics. C4 versus C1 and C5b versus C5a went in opposite directions on the two metrics.
 - **Magnitude on Emotion:** Every Emotion difference from its corresponding reference condition was at most 0.0278 macro-F1 in absolute value.
 
-With one seed, their reliability is unknown with one seed. No equivalence or meaningfulness threshold was defined in the experiment, so none of these differences is described as an improvement, an equivalence, or an absence of change.
+With one seed, the reliability of these observed directions is unknown. No equivalence or meaningfulness threshold was defined in the experiment, so none of these differences is described as an improvement, an equivalence, or an absence of change.
 
 ---
 

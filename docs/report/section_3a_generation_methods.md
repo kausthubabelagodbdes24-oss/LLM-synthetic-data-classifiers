@@ -87,8 +87,9 @@ Synthetic data quality was audited under a reproducible screening protocol ([ADR
   - 5 batches passed: `trec/zero_shot` (0/10), `trec/few_shot` (0/10), `emotion/zero_shot` (0/10), `emotion/few_shot` (0/10, 1 ambiguous), `emotion/auggpt` (0/10, 6 ambiguous).
   - `trec/auggpt` was **FLAGGED** with 2 clear errors: `trec.train.04257.seed13.aug5` (abbreviation source reworded as a definition request) and `trec.train.00845.seed13.aug3` (description source reworded as an event question).
 - **Correction and Promotion (ADR 0013 and Amendment 1)**:
-  - The root cause was that `prompt_auggpt` did not constrain the expected answer type.
-  - The corrected prompt (`auggpt-trec-answer-type-v2`) added explicit answer-type rules, a human-label rule, disabled thinking (`"think": false`), and capped output at 1024 tokens.
+  - The root cause of the reviewed answer-type drift was that `prompt_auggpt` did not constrain the expected answer type.
+  - The v2 correction (`auggpt-trec-answer-type-v2`) added explicit answer-type rules and the "Who is X?" human-label rule.
+  - Request controls `"think": false` and `num_predict: 1024` were additional operational controls to prevent thinking and runaway-output behavior; they were not established as the cause of the answer-type drift.
   - All 360 paraphrases were regenerated in an isolated candidate directory and promoted via `promote_auggpt` (promotion record `89487383…`), preserving the original artifact (`4711ebe6…`) under `superseded/auggpt-trec-answer-type-v2/`.
 - **Round 2 Findings (1 November 2026)**:
   - Fresh random sample of 10 rows from the promoted TREC AugGPT corpus (excluding round 1 IDs): **1 clear error** (`trec.train.04163.seed13.aug4`, where "Hot Wheels" became "Hot and Wheels", changing named entity meaning) and 3 ambiguous. Outcome: **PASS** (1 < 2, below trigger).

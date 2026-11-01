@@ -236,7 +236,8 @@ def test_conclusions_grounded_in_four_comparisons():
 
     # Contrary numerical directions highlighted without inferential wording
     assert "contrary" in sec6.lower()
-    assert "reliability is unknown with one seed" in sec6.lower()
+    assert "the reliability of these observed directions is unknown" in sec6.lower()
+    assert "with one seed" in sec6.lower()
     assert "no equivalence" in sec6.lower() or "meaningfulness threshold" in sec6.lower()
     assert "observed numerical directions" in sec6.lower() or "observed directions" in sec6.lower()
 
