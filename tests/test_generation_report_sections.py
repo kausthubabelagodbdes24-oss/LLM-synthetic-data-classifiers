@@ -35,6 +35,9 @@ EXPECTED_FILES = [
 
 def test_report_files_exist_and_non_empty():
     assert DOCS_REPORT_DIR.is_dir(), f"Missing directory {DOCS_REPORT_DIR}"
+    assert not (DOCS_REPORT_DIR / "generation_report_sections.md").exists(), (
+        "Duplicate consolidated generation_report_sections.md must not exist; four modular files are canonical."
+    )
     for filename in EXPECTED_FILES:
         filepath = DOCS_REPORT_DIR / filename
         assert filepath.is_file(), f"Missing expected report file {filepath}"
