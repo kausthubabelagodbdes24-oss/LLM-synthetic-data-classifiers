@@ -1,0 +1,505 @@
+{
+  "analysis_code": {
+    "clean": true,
+    "revision": "c7761ec944d86e866ce1103ed2b90ecf57b3ac8c"
+  },
+  "analysis_kind": "scope30-v1-seed13-single-seed-gap-analysis",
+  "comparisons": [
+    {
+      "a": "C2",
+      "b": "C1",
+      "emotion_minus_trec_absolute": -0.052514921760893674,
+      "emotion_minus_trec_relative": -0.10921094087586204,
+      "id": "cross_task_gap_C2",
+      "per_task": {
+        "emotion": {
+          "absolute": -0.027778614062847207,
+          "relative": -0.06804767883790556
+        },
+        "trec": {
+          "absolute": 0.024736307698046467,
+          "relative": 0.04116326203795648
+        }
+      },
+      "status": "defined",
+      "title": "Zero-shot (C2) gap versus real-only, Emotion compared with TREC"
+    },
+    {
+      "a": "C3",
+      "b": "C1",
+      "emotion_minus_trec_absolute": -0.06428275676144074,
+      "emotion_minus_trec_relative": -0.12589333609616127,
+      "id": "cross_task_gap_C3",
+      "per_task": {
+        "emotion": {
+          "absolute": -0.024086654603891533,
+          "relative": -0.05900369734274549
+        },
+        "trec": {
+          "absolute": 0.04019610215754921,
+          "relative": 0.06688963875341576
+        }
+      },
+      "status": "defined",
+      "title": "Few-shot (C3) gap versus real-only, Emotion compared with TREC"
+    },
+    {
+      "a": "C3",
+      "b": "C2",
+      "id": "few_vs_zero",
+      "per_task": {
+        "emotion": {
+          "accuracy_diff": -0.0020000000000000018,
+          "macro_f1_diff": 0.0036919594589556737,
+          "n_train": [
+            180,
+            180
+          ]
+        },
+        "trec": {
+          "accuracy_diff": 0.019999999999999907,
+          "macro_f1_diff": 0.01545979445950274,
+          "n_train": [
+            180,
+            180
+          ]
+        }
+      },
+      "title": "Few-shot versus zero-shot synthetic data"
+    },
+    {
+      "a": "C4",
+      "b": "C1",
+      "id": "mix_vs_real",
+      "per_task": {
+        "emotion": {
+          "accuracy_diff": 0.0005000000000000004,
+          "macro_f1_diff": -0.004927847355590709,
+          "n_train": [
+            180,
+            180
+          ]
+        },
+        "trec": {
+          "accuracy_diff": 0.05799999999999994,
+          "macro_f1_diff": 0.062877003797977,
+          "n_train": [
+            180,
+            180
+          ]
+        }
+      },
+      "title": "Real + few-shot mix versus real-only"
+    },
+    {
+      "a": "C5b",
+      "b": "C5a",
+      "id": "auggpt_vs_sources",
+      "per_task": {
+        "emotion": {
+          "accuracy_diff": -0.0025000000000000022,
+          "macro_f1_diff": 0.005070777754606237,
+          "n_train": [
+            420,
+            60
+          ]
+        },
+        "trec": {
+          "accuracy_diff": 0.030000000000000027,
+          "macro_f1_diff": 0.027707735955204593,
+          "n_train": [
+            420,
+            60
+          ]
+        }
+      },
+      "title": "AugGPT-augmented versus real sources only"
+    }
+  ],
+  "costs": [
+    {
+      "condition": "C1",
+      "n_train": 180,
+      "note": "real data only",
+      "real_generation_demonstrations": 0,
+      "real_training_rows": 180,
+      "synthetic_training_rows": 0,
+      "task": "trec"
+    },
+    {
+      "condition": "C2",
+      "n_train": 180,
+      "note": "zero-shot prompts use no real examples",
+      "real_generation_demonstrations": 0,
+      "real_training_rows": 0,
+      "synthetic_training_rows": 180,
+      "task": "trec"
+    },
+    {
+      "condition": "C3",
+      "n_train": 180,
+      "note": "distinct real demonstrations behind the selected few-shot corpus",
+      "real_generation_demonstrations": 59,
+      "real_training_rows": 0,
+      "synthetic_training_rows": 180,
+      "task": "trec"
+    },
+    {
+      "condition": "C4",
+      "n_train": 180,
+      "note": "at most this many: the 90 few-shot rows are a subset of the C3 corpus",
+      "real_generation_demonstrations": 59,
+      "real_training_rows": 90,
+      "synthetic_training_rows": 90,
+      "task": "trec"
+    },
+    {
+      "condition": "C5a",
+      "n_train": 60,
+      "note": "real data only",
+      "real_generation_demonstrations": 0,
+      "real_training_rows": 60,
+      "synthetic_training_rows": 0,
+      "task": "trec"
+    },
+    {
+      "condition": "C5b",
+      "n_train": 420,
+      "note": "paraphrases of the same real sources counted in real training rows",
+      "real_generation_demonstrations": 0,
+      "real_training_rows": 60,
+      "synthetic_training_rows": 360,
+      "task": "trec"
+    },
+    {
+      "condition": "C1",
+      "n_train": 180,
+      "note": "real data only",
+      "real_generation_demonstrations": 0,
+      "real_training_rows": 180,
+      "synthetic_training_rows": 0,
+      "task": "emotion"
+    },
+    {
+      "condition": "C2",
+      "n_train": 180,
+      "note": "zero-shot prompts use no real examples",
+      "real_generation_demonstrations": 0,
+      "real_training_rows": 0,
+      "synthetic_training_rows": 180,
+      "task": "emotion"
+    },
+    {
+      "condition": "C3",
+      "n_train": 180,
+      "note": "distinct real demonstrations behind the selected few-shot corpus",
+      "real_generation_demonstrations": 54,
+      "real_training_rows": 0,
+      "synthetic_training_rows": 180,
+      "task": "emotion"
+    },
+    {
+      "condition": "C4",
+      "n_train": 180,
+      "note": "at most this many: the 90 few-shot rows are a subset of the C3 corpus",
+      "real_generation_demonstrations": 54,
+      "real_training_rows": 90,
+      "synthetic_training_rows": 90,
+      "task": "emotion"
+    },
+    {
+      "condition": "C5a",
+      "n_train": 60,
+      "note": "real data only",
+      "real_generation_demonstrations": 0,
+      "real_training_rows": 60,
+      "synthetic_training_rows": 0,
+      "task": "emotion"
+    },
+    {
+      "condition": "C5b",
+      "n_train": 420,
+      "note": "paraphrases of the same real sources counted in real training rows",
+      "real_generation_demonstrations": 0,
+      "real_training_rows": 60,
+      "synthetic_training_rows": 360,
+      "task": "emotion"
+    }
+  ],
+  "gaps": [
+    {
+      "absolute_gap": 0.024736307698046467,
+      "c1_macro_f1": 0.6009316675446474,
+      "condition": "C2",
+      "macro_f1": 0.6256679752426939,
+      "relative_gap": 0.04116326203795648,
+      "status": "defined",
+      "task": "trec"
+    },
+    {
+      "absolute_gap": 0.04019610215754921,
+      "c1_macro_f1": 0.6009316675446474,
+      "condition": "C3",
+      "macro_f1": 0.6411277697021966,
+      "relative_gap": 0.06688963875341576,
+      "status": "defined",
+      "task": "trec"
+    },
+    {
+      "absolute_gap": -0.027778614062847207,
+      "c1_macro_f1": 0.408222801089481,
+      "condition": "C2",
+      "macro_f1": 0.3804441870266338,
+      "relative_gap": -0.06804767883790556,
+      "status": "defined",
+      "task": "emotion"
+    },
+    {
+      "absolute_gap": -0.024086654603891533,
+      "c1_macro_f1": 0.408222801089481,
+      "condition": "C3",
+      "macro_f1": 0.38413614648558947,
+      "relative_gap": -0.05900369734274549,
+      "status": "defined",
+      "task": "emotion"
+    }
+  ],
+  "generation_mode": "real",
+  "grid": {
+    "classifier": {
+      "classifier": {
+        "C": 1.0,
+        "max_iter": 2000,
+        "random_state": 13,
+        "type": "sklearn.linear_model.LogisticRegression"
+      },
+      "embedding": {
+        "batch_size": 64,
+        "device": "cpu",
+        "files_sha256": {
+          "1_Pooling/config.json": "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23",
+          "README.md": "dcd602d2fd35c203a247304a06fec6654a12f7941b739f9221a064fe8dc3b7f0",
+          "config.json": "953f9c0d463486b10a6871cc2fd59f223b2c70184f49815e7efbcab5d8908b41",
+          "config_sentence_transformers.json": "061ca9d39661d6c6d6de5ba27f79a1cd5770ea247f8d46412a68a498dc5ac9f3",
+          "model.safetensors": "53aa51172d142c89d9012cce15ae4d6cc0ca6895895114379cacb4fab128d9db",
+          "modules.json": "84e40c8e006c9b1d6c122e02cba9b02458120b5fb0c87b746c41e0207cf642cf",
+          "sentence_bert_config.json": "fc1993fde0a95c24ec6c022539d41cf6e2f7c9721e5415d6fb6897472a9cd4b7",
+          "special_tokens_map.json": "303df45a03609e4ead04bc3dc1536d0ab19b5358db685b6f3da123d05ec200e3",
+          "tokenizer.json": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+          "tokenizer_config.json": "acb92769e8195aabd29b7b2137a9e6d6e25c476a4f15aa4355c233426c61576b",
+          "vocab.txt": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+        },
+        "fine_tuned": false,
+        "identity_sha256": "36bb95116de1358079c1fab49ac634493101e484c99edbd882691fbf96859cad",
+        "kind": "sentence-transformers",
+        "name": "sentence-transformers/all-MiniLM-L6-v2",
+        "normalize_embeddings": true,
+        "real_model": true,
+        "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+      }
+    },
+    "decision": "lead review on issue #13 (1 November 2026): real run accepted; evidence https://github.com/kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers/issues/13#issuecomment-6553500190",
+    "directory": "scope30-v1-seed13-freeze-v1",
+    "freeze": {
+      "freeze_id": "scope30-v1-seed13-freeze-v1",
+      "sha256": "dd2e52ee704835525df41071ff5214c56593969d248ca8812c23b617bfd74de1"
+    },
+    "grid_complete_sha256": "3b12bbb878d8191e387e3abc0f77fc02d9f081b98f0216f9b64dbb144bf40032",
+    "records": {
+      "emotion/C1/13": {
+        "record_file_sha256": "745f46fd32f976ee67a94bd2d05b212db3c43add3c7ff2147afb46388b47d407",
+        "record_sha256": "5f70909c4b114f256ec4f19228d4e09641cf55781660c060d720007f4d0ea8b5"
+      },
+      "emotion/C2/13": {
+        "record_file_sha256": "e11e00f4227920711648093604f28c30cfef96513d9da2fc46f4b9dbf0af1dd5",
+        "record_sha256": "e4529497fc485e9d4e0cd09b125ae97e3d8749d9005cbb2217d93cd92c3145e1"
+      },
+      "emotion/C3/13": {
+        "record_file_sha256": "9b88a3b3b765ff40f655fc8b32b78f08cb36f9fba4a52ec6d8a67bb73c1cad54",
+        "record_sha256": "e3595320095747fedc5dc16630402a6efa1aff66c92185017068cfb915634a6e"
+      },
+      "emotion/C4/13": {
+        "record_file_sha256": "95f57bf9102aea1180cb2edc1d484868bbf1e9e3a78b6e0186f78d4001aef6d8",
+        "record_sha256": "3ca2a613f3e246fba0d86530776ff37ae7c74b803171f43dc4973fc74486f58b"
+      },
+      "emotion/C5a/13": {
+        "record_file_sha256": "539fb840b50943ea6f1ca1d1c483b42f472d552fe4e02e0545aac6aadafcabdc",
+        "record_sha256": "1f8854e3168375fe39448aebd69684f162580fb194bf0fe16100ba5d77c74a4e"
+      },
+      "emotion/C5b/13": {
+        "record_file_sha256": "aed45723dd790b5ef0afc9564292764cd84dc69ca1b9a745f3ba7526839a0eda",
+        "record_sha256": "d71324cfd0a6b08d8fef2d26dd3505d22083668baad1e877f71e58204a8fa575"
+      },
+      "trec/C1/13": {
+        "record_file_sha256": "501f4ec023a5c4b97306853a67875a71a958aa30ffa03d5b434cabaa42eb58a8",
+        "record_sha256": "7092158627b489b152a4e6304f33725246fbb8989f87c7d34f0308445b0b4fd9"
+      },
+      "trec/C2/13": {
+        "record_file_sha256": "9641755192f60fb735197ec8c59151b7e639c03edda11cd9645d8e5de355a899",
+        "record_sha256": "337d1a8b71b45f3bb286827d87094ec55c8c4ffc8674b6e0c073d945b8d71d8c"
+      },
+      "trec/C3/13": {
+        "record_file_sha256": "874c099bebf6d75d724df3de2792287b9ced7730df2ebc737a7978f715cccc8a",
+        "record_sha256": "150f9c56aa6ff2f5170582d622ea8da51dd6c2227b133d9be20a460827491718"
+      },
+      "trec/C4/13": {
+        "record_file_sha256": "0cedb302e5463165cd524d3c1756caa7ca44c2b366de75b79b7c660ccf723f39",
+        "record_sha256": "593a571a09e628ae626be9008c6430cf0b42c5c7e0a25eacc2d9e368b643100e"
+      },
+      "trec/C5a/13": {
+        "record_file_sha256": "652db5ae8e6f708a45e4413fe37260430b6c1f2ec888159968d3c3a158db909d",
+        "record_sha256": "bb0832c51039e9b40f4a5c7b045a687f6235b63351b95ff948d8e06b690d5dcd"
+      },
+      "trec/C5b/13": {
+        "record_file_sha256": "2d52ea4cd63a6f0205629d5b134e14b931519cad11205bf571d770109fc60a62",
+        "record_sha256": "ffde60de269e86c879204cd37bf43cbdfd5da0597fe652a87c8f678969d21f4a"
+      }
+    },
+    "revision": "1354118b4b05bec31973c268057d8a713907f3a6",
+    "runs_csv_sha256": "b738d780faafd66eaaa1b8ce7d87f6af7d7ac5b3f1573c3d88748c27ca5d5734"
+  },
+  "limitations": [
+    "One seed (13) and one run per key: no standard deviation, confidence interval, significance test or stability claim is possible, and none is made. Differences of a few hundredths of macro-F1 can come from sampling alone.",
+    "Small data: 30 training examples per label (180 per task) in C1-C4, 10 real sources per label in C5a.",
+    "C5a (60 rows) and C5b (420 rows) intentionally differ in training size; C5b - C5a mixes the effect of AugGPT content with the effect of more rows.",
+    "Task confounding: TREC and Emotion differ in more than subjectivity (label semantics, text length and style, test-set size 500 vs 2,000 and label balance). A cross-task difference in gaps is not attributable to subjectivity alone.",
+    "Labelling costs differ: C3/C4 synthetic rows were generated from real few-shot demonstrations and C5b from real sources; these real examples are disclosed separately from classifier training counts.",
+    "Synthetic-data quality was screened by model-assisted and heuristic review (issue #11), not by independent human annotators; known flagged AugGPT rows are retained as disclosed in the freeze manifest.",
+    "TREC C1 and C4 contain one disclosed official train/test duplicate (trec.train.05262 = trec.test.00378), kept by lead decision on issue #13."
+  ],
+  "outputs_sha256": {
+    "f1_by_condition.png": "fc6e2f6acd9d9786d7ebb867cd232b0c757b2745e4eebf264e7a80745ba941e8",
+    "gap.png": "5ed188eb1a1a853a6b812fcac218ee024d7986fcdd41266ab162f50a8d4971e3",
+    "summary.md": "a95abe66758878a5b5e2bbb29eca8a203f4bb00d93443915a93236869d09b989"
+  },
+  "real_run_evidence": true,
+  "results": [
+    {
+      "accuracy": 0.652,
+      "composition": {
+        "real_train": 180
+      },
+      "condition": "C1",
+      "macro_f1": 0.6009316675446474,
+      "n_train": 180,
+      "task": "trec"
+    },
+    {
+      "accuracy": 0.668,
+      "composition": {
+        "zero_shot": 180
+      },
+      "condition": "C2",
+      "macro_f1": 0.6256679752426939,
+      "n_train": 180,
+      "task": "trec"
+    },
+    {
+      "accuracy": 0.688,
+      "composition": {
+        "few_shot": 180
+      },
+      "condition": "C3",
+      "macro_f1": 0.6411277697021966,
+      "n_train": 180,
+      "task": "trec"
+    },
+    {
+      "accuracy": 0.71,
+      "composition": {
+        "few_shot": 90,
+        "real_train": 90
+      },
+      "condition": "C4",
+      "macro_f1": 0.6638086713426244,
+      "n_train": 180,
+      "task": "trec"
+    },
+    {
+      "accuracy": 0.64,
+      "composition": {
+        "lowres_source": 60
+      },
+      "condition": "C5a",
+      "macro_f1": 0.5973656765111932,
+      "n_train": 60,
+      "task": "trec"
+    },
+    {
+      "accuracy": 0.67,
+      "composition": {
+        "auggpt": 360,
+        "lowres_source": 60
+      },
+      "condition": "C5b",
+      "macro_f1": 0.6250734124663978,
+      "n_train": 420,
+      "task": "trec"
+    },
+    {
+      "accuracy": 0.442,
+      "composition": {
+        "real_train": 180
+      },
+      "condition": "C1",
+      "macro_f1": 0.408222801089481,
+      "n_train": 180,
+      "task": "emotion"
+    },
+    {
+      "accuracy": 0.4305,
+      "composition": {
+        "zero_shot": 180
+      },
+      "condition": "C2",
+      "macro_f1": 0.3804441870266338,
+      "n_train": 180,
+      "task": "emotion"
+    },
+    {
+      "accuracy": 0.4285,
+      "composition": {
+        "few_shot": 180
+      },
+      "condition": "C3",
+      "macro_f1": 0.38413614648558947,
+      "n_train": 180,
+      "task": "emotion"
+    },
+    {
+      "accuracy": 0.4425,
+      "composition": {
+        "few_shot": 90,
+        "real_train": 90
+      },
+      "condition": "C4",
+      "macro_f1": 0.4032949537338903,
+      "n_train": 180,
+      "task": "emotion"
+    },
+    {
+      "accuracy": 0.373,
+      "composition": {
+        "lowres_source": 60
+      },
+      "condition": "C5a",
+      "macro_f1": 0.33814817472490266,
+      "n_train": 60,
+      "task": "emotion"
+    },
+    {
+      "accuracy": 0.3705,
+      "composition": {
+        "auggpt": 360,
+        "lowres_source": 60
+      },
+      "condition": "C5b",
+      "macro_f1": 0.3432189524795089,
+      "n_train": 420,
+      "task": "emotion"
+    }
+  ],
+  "schema_version": 1,
+  "single_seed": true,
+  "uncertainty": "none computed (one seed, one run per key)"
+}

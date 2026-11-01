@@ -344,6 +344,19 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - `gap.png`, the relative C2/C3 gap, where an undefined case is a labelled slot and never a zero bar;
   - `analysis.json`, canonical, containing the grid/freeze/classifier identities and per-record hashes, the analysis checkout revision and clean flag (real mode requires clean), the full-precision results, gaps, comparisons, costs, limitations and the SHA-256 of the other three files.
   - Fake outputs are tagged `FAKE FIXTURE`. Outputs are not committed until the lead has reviewed them.
+- **Committed real outputs**: `docs/analysis/scope30-v1-seed13/` holds the four files written once by
+  `run-issue14-analysis.bat WRITE` at the PR #34 merge `c7761ec944d86e866ce1103ed2b90ecf57b3ac8c` (clean). They are
+  committed byte for byte:
+  - `analysis.json` `d0486efd…`;
+  - `summary.md` `a95abe66…`;
+  - `f1_by_condition.png` `fc6e2f6a…`;
+  - `gap.png` `5ed188eb…`.
+
+  `docs/analysis/.gitattributes` (`* -text`) prevents line-ending conversion so the recorded hashes hold on every
+  platform. `tests/test_analysis_outputs_scope30.py` pins the four SHA-256s, checks the binding to the accepted grid,
+  freeze, model and clean merge checkout, and regenerates `summary.md` and every gap, comparison and cost from
+  `analysis.json`. The written reading is `docs/analysis/scope30-v1-seed13-interpretation.md`. It was
+  model-assisted and reviewed by the lead in the PR.
 - **Legacy consumer**: `ws3_evaluation/analyze.py` (mean ± SD over seeds) stays for the historical fake pipeline only.
 - **Tests**: `tests/test_analyze_scope30.py` covers:
   - known-value gaps and comparisons, C1 = 0 (undefined but retained, labelled in the summary and chart), and a missing C1 blocking the analysis;
