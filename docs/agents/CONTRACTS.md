@@ -17,6 +17,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Repetition-specific generation | Accepted Qwen pilot for Issue #6; current scope30/seed13 under ADR0012; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
 | Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion) in results/scope30-seed13 (#7, preserved). Twelve-key freeze-bound grid: `ws2_training/train_scope30.py` (#13; see the #13 section below). The real grid ran once at `1354118` and was accepted by the lead on #13 (1 November 2026); `grid_complete.json` sha256 `3b12bbb8…`. Single-seed paired analysis: `ws3_evaluation/analyze_scope30.py` (#14; see the #14 section below). | Training (@kausthubabelagodbdes24-oss) + evaluation |
+| Reproducibility walkthrough | `notebooks/SynthText_scope30_walkthrough.ipynb` separates a fake-fixture pipeline demonstration from read-only accepted real analysis. It never reruns the accepted experiment. Final presentation slides are outside repository and issue scope under ADR0014. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
 For each accepted change record: exact contract, approving issue/PR and lead decision, affected producers/consumers, migration/compatibility behavior and verification evidence. Do not mark a format agreed without recording details. Keep consumers working during migration or coordinate a bounded integration change explicitly. Update this register as implementation lands; do not freeze an invented schema just to make another model's task easier.
@@ -364,6 +365,22 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - acceptance of the fake grid built end to end by the real #13 fixture, refusal of fake grids as real, and the real pin (a resealed metric change is rejected), revision, freeze and model;
   - tampered, resealed-inconsistent and invalid records (nine cases), 25 wrong or malformed compositions plus a non-object training section, foreign record files, `runs.csv` mismatch, `grid.json` identity and the freeze used for costs;
   - no error bars on single-seed charts, charted values equal to the computed values, write-once outputs whose hashes match `analysis.json`, the clean-checkout requirement, and the CLI guards.
+
+## Colab reproducibility walkthrough and presentation boundary
+
+- **Authority**: [ADR0014](../adr/0014-presentation-separation-colab.md), direct lead decision on 1 November 2026.
+- **Artifact**: `notebooks/SynthText_scope30_walkthrough.ipynb`, notebook format 4 and Google Colab-compatible.
+- **Fake demonstration lane**:
+  - uses only committed `data/sample/real/` fixtures;
+  - explicitly sets `SYNTHTEXT_GENERATION_MODE=fake`, `SYNTHTEXT_EMBEDDER=hashing`, fixture data/results paths and seed-13 configuration;
+  - may run the three fake generation settings, legacy fixture trainer and fixture analysis;
+  - labels every resulting row, score and chart as fake demonstration output, never experimental evidence.
+- **Accepted-real lane**:
+  - reads only committed `docs/analysis/scope30-v1-seed13/analysis.json`, `summary.md` and the two reviewed PNGs;
+  - displays the twelve real result rows, C2/C3 gaps, comparison tables, costs, provenance and limitations without training or rewriting them.
+- **Hard boundary**: the notebook does not run Ollama, download/substitute another generator, access uncommitted real data, generate/promote/freeze real corpora, train the accepted twelve-key grid or overwrite the accepted analysis directory.
+- **Presentation separation**: final professor-facing slides, speaker notes and submission logistics are not repository artifacts or GitHub issue acceptance criteria. Reports, tables, charts and the notebook may be used as source material outside GitHub.
+- **Verification**: `tests/test_colab_walkthrough.py` parses the notebook, checks the two evidence lanes, required pins/disclosures, safe fake environment and absence of commands that run real generation/training or write accepted analysis.
 
 ## Optional evaluation and annotation response tooling (historical)
 

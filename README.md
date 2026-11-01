@@ -153,9 +153,19 @@ python -m ws3_evaluation.analyze_scope30 --results-dir <grid dir> [--out <fresh 
 
 It writes `summary.md`, `analysis.json`, `f1_by_condition.png` and `gap.png` once, to a fresh directory (default `docs/analysis/scope30-v1-seed13/`). Real analysis needs a clean checkout. Inspect both charts before reporting. See the #14 section of [contracts](docs/agents/CONTRACTS.md).
 
+## Google Colab walkthrough
+
+Open [`notebooks/SynthText_scope30_walkthrough.ipynb`](notebooks/SynthText_scope30_walkthrough.ipynb) in Google Colab for a presentation-friendly, reproducible tour of the pipeline. It has two deliberately separate evidence lanes:
+
+- a safe fake-fixture demonstration of zero-shot, few-shot and AugGPT generation followed by hashing-embedder training; these outputs are labelled **FAKE DEMONSTRATION — NOT EXPERIMENTAL EVIDENCE**;
+- a read-only view of the committed, accepted real results, comparison tables and charts under `docs/analysis/scope30-v1-seed13/`.
+
+The notebook does not run Ollama, regenerate frozen data, train the accepted real grid or overwrite accepted analysis. Exact real generation requires the approved local Qwen/Ollama identity and private data that are intentionally absent from Colab. The final professor-facing slide deck remains outside this repository and GitHub issue scope; repository reports, tables, charts and this notebook may be used as source material.
+
 ## Files and remaining setup confirmations
 
 - `config.yaml`, `common.py`: shared settings/helpers; config records ADR0012 scope.
+- `notebooks/SynthText_scope30_walkthrough.ipynb`: Colab-compatible safe walkthrough; fake execution is never real evidence.
 - `ws1_generation/`, `ws2_training/`, `ws3_evaluation/`: generation, preparation/training and annotation/analysis scripts. Their module help describes legacy commands; use the current specification and follow-up issues before real experiments.
 - `tests/`, `data/sample/real/`: existing tests and fake fixtures.
 - `data/real/`, local environments, credentials, generated sample files and results are ignored. Later result handoffs require explicit review and addition of the accepted owned files. Synthetic experiment artifacts are subject to the later acceptance/freeze process; do not add unreviewed artifacts.
