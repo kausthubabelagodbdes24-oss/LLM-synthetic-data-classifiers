@@ -1,13 +1,16 @@
-# SynthText current vocabulary
+# SynthText glossary
 
-Authority: [ADR0012](docs/adr/0012-eod-exploratory-30-seed13.md) and [specification](docs/PROJECT_SPEC.md).
+This glossary defines the terms used in the final report, code, and accepted artifacts.
 
-- **Two-task comparison:** exploratory comparison on TREC and Emotion. Task differences do not establish subjectivity as cause.
-- **scope30-v1:** seed13 only; C1–C4=30/label(180/task), C4=15+15/label, C5a=60,C5b=420; twelve task/condition/seed keys.
-- **Repetition:** one seed-identified six-condition comparison. Current scope has one; seeds42/7 are historical/future work, not completed replications.
-- **Selected corpus:** exact30/label view derived by ADR0012's stable ID-hash rule from compatible original output; records selected IDs/source hashes. Originals/sidecars remain untouched.
-- **Equal classifier training size:** C1–C4 only, excludes labeled generation demonstrations, does not mean equal labeling budgets. C5 sizes differ intentionally.
-- **Model-assisted quality screen:** sixty disclosed reviews, ten/task/setting, source comparison for AugGPT. Not human annotation, independent-human agreement or population accuracy.
-- **Paired relative gap:** (synthetic F1−same-task seed13 C1 F1)/C1 F1. No cross-seed mean/SD. Zero C1:undefined relative gap plus absolute difference; missing C1 blocks analysis.
-- **Frozen handoff:** selected IDs/hashes/provenance accepted after structural and quality checks. Counts, CI or historical closure alone do not establish acceptance.
-- **Independent annotation:** historical optional tooling concept, not a current requirement. Never recast model judgments as independent-human responses.
+- **Two-task comparison:** Exploratory comparison of TREC question classification and Emotion classification. A difference between tasks does not establish subjectivity as its cause.
+- **`scope30-v1`:** Final study identifier: seed 13, six conditions per task, and twelve task/condition result keys.
+- **Selected corpus:** The exact accepted synthetic rows identified by stable IDs and hashes. Source artifacts and provenance remain preserved.
+- **Equal classifier training size:** C1–C4 each contain 180 rows per task. This does not imply equal real-labelling cost because few-shot generation uses labelled demonstrations.
+- **Low-resource sources:** Ten real examples per label, or 60 per task, used by C5a and as the sources for C5b.
+- **AugGPT augmentation:** Six accepted paraphrases for each low-resource source, producing 360 synthetic rows plus the 60 sources in C5b.
+- **Model-assisted quality screen:** A disclosed content review performed by a model. It is not independent-human annotation, human agreement, or a population accuracy estimate.
+- **Frozen handoff:** The accepted set of row IDs, paths, hashes, model identities, provenance, and review evidence consumed by training.
+- **Paired relative gap:** `(synthetic macro-F1 - same-task real-only macro-F1) / same-task real-only macro-F1`.
+- **Single-seed result:** One observed run for seed 13. It does not provide a standard deviation, significance test, or stability estimate.
+- **Fake demonstration:** Fixture-only execution used to show that the pipeline works. Fake rows and scores are never experimental evidence.
+- **Accepted real results:** The frozen twelve-condition grid and its reviewed, read-only analysis artifacts.

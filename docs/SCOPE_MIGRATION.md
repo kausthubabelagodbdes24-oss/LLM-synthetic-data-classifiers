@@ -1,5 +1,11 @@
 # Migration to scope30-v1
 
+> [!NOTE]
+> **Development archive.** This file records how in-progress work was reconciled with the final study design. It is retained for provenance and is not part of the recommended professor-facing reading path. See the [final experiment specification](PROJECT_SPEC.md) for the clean description of the executed project.
+
+<details>
+<summary>Show the internal migration record</summary>
+
 Authority: [ADR0012](adr/0012-eod-exploratory-30-seed13.md), explicitly approved31 October2026. Both tasks, six conditions, seed13, C1–C4=30/label(180/task), C5a/C5b=60/420, twelve result keys. Docs/config changes do not establish executed experiments.
 
 |Issue|Revised delivery/compatibility|
@@ -33,3 +39,5 @@ Per [ADR0014](adr/0014-presentation-separation-colab.md), the professor-facing f
 5. Use fresh results,e.g.`results/scope30-seed13`. Preserve old runs; rerun affected C1–C4. Validate identical inputs/settings/quality before C5 reuse. Existing keys alone cannot establish compatibility.
 6. #7 retains exact-count/unrelated-result preservation fixes. #13/#14 implement seed-specific exact selection,current-grid validation and single-seed analysis; config alone does not fix legacy consumers.
 7. Publish selected IDs/hashes,commands,environment,quality and result evidence without committing raw real/generated corpora. Historical plans/ADRs/closed acceptance evidence remain intact.
+
+</details>

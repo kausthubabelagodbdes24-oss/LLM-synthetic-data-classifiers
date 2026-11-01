@@ -1,4 +1,7 @@
-# Issue #11: model-assisted quality review of seed-13 generated text
+# Technical archive: model-assisted quality review of seed-13 generated text
+
+> [!NOTE]
+> This directory is the detailed audit trail behind the quality summary in the final report and freeze. It is retained for verification and is not required for a first reading of the project.
 
 Authority: [ADR 0012](../../adr/0012-eod-exploratory-30-seed13.md), [specification § Quality review](../../PROJECT_SPEC.md), [migration](../../SCOPE_MIGRATION.md). The historical ADR 0008/0009 two-clear-errors trigger is retained.
 

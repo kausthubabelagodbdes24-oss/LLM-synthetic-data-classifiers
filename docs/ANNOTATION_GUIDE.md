@@ -1,5 +1,8 @@
 # Optional Evaluation & Annotation Tooling Guide (Historical)
 
+> [!NOTE]
+> This is archived optional tooling, not part of the completed study's evaluation. The final project used disclosed model-assisted generated-text screening and official held-out test metrics; it did not report independent-human agreement.
+
 *Accountable evaluation owner: Hementh (@hem4456); implementation operator: Kausthuba (@kausthubabelagodbdes24-oss), acting on Hementh's behalf*
 
 **Status:** Preserved as optional historical response tooling under canonical [ADR 0012](adr/0012-eod-exploratory-30-seed13.md). Independent human annotation, physical response distribution (email/drive), external document sharing, and human-agreement completion gates are removed from the current exploratory scope.

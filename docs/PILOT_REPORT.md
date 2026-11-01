@@ -1,4 +1,7 @@
-# Generation pilot report and target decision
+# Development archive: generation pilot and model selection
+
+> [!NOTE]
+> This document preserves generator-selection and prompt-refinement evidence. It includes intermediate decisions that are not needed to understand the final experiment. For the accepted method, use the [final report](REPORT.pdf) and [final specification](PROJECT_SPEC.md).
 
 **Current lead-approved scope (31 October 2026):** 30 examples/label, seed 13 only, both tasks and all six conditions; twelve result keys. Independent-human annotation, distribution and external report-sharing gates are removed. Read [ADR 0012](adr/0012-eod-exploratory-30-seed13.md) and scope migration before resuming old work. Conflicting earlier requirements are historical. Pilot timings/judgments below remain historical evidence, not current full-run estimates or acceptance.
 
