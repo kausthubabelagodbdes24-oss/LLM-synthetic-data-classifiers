@@ -9,7 +9,7 @@ Validates:
 6. Verbatim prompt templates matching ws1_generation/generate.py.
 7. Two good and two problematic examples per task with verified provenance, distinguishing final artifacts from historical pilot evidence.
 8. Grounding of conclusions in the four accepted single-seed comparisons, including contrary outcomes and boundary disclosures.
-9. Preservation of shared assembly file (docs/REPORT.md).
+9. Hand-off of the shared assembly file (docs/REPORT.md) to issue #17's assembled report.
 """
 
 from pathlib import Path
@@ -268,9 +268,12 @@ def test_conclusions_grounded_in_four_comparisons():
     assert "cannot be causally attributed" in sec6.lower()
 
 
-def test_shared_report_scaffold_unmodified():
-    # Verify REPORT.md is preserved untouched
-    scaffold = REPORT_SCAFFOLD_PATH.read_text(encoding="utf-8")
-    assert "## Contributors & Workstream Responsibilities" in scaffold
-    assert "*Owner: Harshita (@harshitadjainbdes24-byte)*" in scaffold
-    assert "## Appendix A. Prompt Templates and Generation Examples" in scaffold
+def test_shared_report_assembled_by_issue_17():
+    # Issue #15 left the REPORT.md scaffold for #17, which replaced it with the assembled report.
+    # The full reconciliation of REPORT.md is tests/test_report_scope30.py; here only the hand-off is checked.
+    report = REPORT_SCAFFOLD_PATH.read_text(encoding="utf-8")
+    assert "## Contributors & Workstream Responsibilities" not in report
+    assert "*Owner: Harshita (@harshitadjainbdes24-byte)*" not in report
+    assert "## Appendix A. Prompt Templates, Generation Examples and Provenance" in report
+    for section in ("Prompt templates", "Good and problematic examples", "Historical pilot examples"):
+        assert section in report

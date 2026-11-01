@@ -19,6 +19,7 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion) in results/scope30-seed13 (#7, preserved). Twelve-key freeze-bound grid: `ws2_training/train_scope30.py` (#13; see the #13 section below). The real grid ran once at `1354118` and was accepted by the lead on #13 (1 November 2026); `grid_complete.json` sha256 `3b12bbb8…`. Single-seed paired analysis: `ws3_evaluation/analyze_scope30.py` (#14; see the #14 section below). | Training (@kausthubabelagodbdes24-oss) + evaluation |
 | Generation report sections and appendix | Generation deliverables for Issue #15 (Sections 2, 3a, 6, Appendix A) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Sole operator and author: @kausthubabelagodbdes24-oss (historical: WS1 @harshitadjainbdes24-byte) |
 | Data and classifier methods sections | Training deliverables for Issue #16 (Sections 3b, 4) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Training (@kausthubabelagodbdes24-oss; sole operator) |
+| Assembled report and PDF | Issue #17: `docs/REPORT.md` and `docs/REPORT.pdf` (+ sidecar), checked by `ws3_evaluation/report_scope30.py --check` against the accepted #12/#13/#14 evidence. Awaiting lead review; see the #17 section below. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Reproducibility walkthrough | `notebooks/SynthText_scope30_walkthrough.ipynb` separates a fake-fixture pipeline demonstration from read-only accepted real analysis. It never reruns the accepted experiment. Final presentation slides are outside repository and issue scope under ADR0014. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
@@ -449,6 +450,39 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
     - Cross-task comparison is non-causal: differences between TREC and Emotion encompass text length, syntactic complexity, class balance, and test size, and cannot be attributed to subjectivity alone.
   - **Presentation Boundary (ADR 0014)**:
     - Final presentation slides and submission logistics are private owner deliverables outside GitHub and are not repository artifacts.
+
+## Assembled exploratory report and PDF (Issue #17, ADR 0012, ADR 0014)
+
+- **Status**: assembled for lead review. The PR does not claim that the lead has reviewed or accepted the report or PDF. Presentation slides, speaker notes and submission logistics stay outside the repository (ADR 0014).
+- **Artifacts**:
+  - `docs/REPORT.md` is the canonical report: Sections 1–6, References and a separated Appendix A (prompt templates, examples and provenance). It replaces the #8 scaffold.
+  - `docs/REPORT.pdf` is its PDF. `docs/REPORT.pdf.json` records the PDF SHA-256, size and page count, the LF SHA-256 of the source `REPORT.md`, the builder and its environment, and `review_status`.
+  - `docs/.gitattributes` keeps the PDF binary.
+- **Producer**: `ws3_evaluation/report_scope30.py`.
+  - `--check` is read-only.
+  - `--build-pdf OUT` and `--write-pdf` render Markdown to HTML, then to an A4 PDF through Playwright Chromium. The two #14 PNGs are embedded byte for byte, and the build timestamps are normalized.
+  - Build dependencies are in `requirements-report.txt`. `pypdf` is in the test requirements so CI can check the PDF text.
+- **Consumes, read-only**:
+  - `docs/analysis/scope30-v1-seed13/analysis.json`, pinned to `d0486efd…`;
+  - the two charts, pinned to `fc6e2f6a…` and `5ed188eb…`;
+  - the freeze manifest, pinned to LF `dd2e52ee…`;
+  - `prepare_data.CHECKSUMS` and the `train_scope30` constants.
+
+  It never modifies analysis outputs, frozen corpora, records or charts.
+- **Checks** (`validate_report`, `check_pdf`):
+  - Section order and an explicit page break before Appendix A.
+  - The exact twelve Table 1 rows and ten Table 2 rows, rebuilt from `analysis.json`.
+  - The cross-task gap sentences and the cost, count, review-outcome and classifier phrases rebuilt from the evidence.
+  - Every 64-hex value in the report must appear in the accepted evidence or the pinned code. All eight canonical split hashes must be present.
+  - Both charts must be embedded exactly once, unchanged, and referenced from the text. Tables must be referenced as well.
+  - Sentence-level rejection of unnegated significance, confidence-interval, stability, replication, causal, equivalence/meaningfulness, human-agreement, independent-human and superiority wording.
+  - The author line (Kausthuba Belagod), the not-yet-reviewed status and the required disclosures.
+  - Citation completeness both ways.
+  - Rejection of stale scaffold text and of unverified surnames.
+  - For the PDF: sidecar hash and size, staleness against `REPORT.md`, page count, values and sections in the extracted text, blank pages and missing glyphs.
+- **Reconciliation findings** (modules left unchanged; see `docs/report/README.md`): the #16 methods module gives TREC split hashes that match no committed record (`00bfe51d…` and others versus canonical `b587c84d…` and others). The report uses the canonical values. `tests/test_report_methods_scope30.py` still asserts the module's values, so that is a lead decision.
+- **Tests**: `tests/test_report_scope30.py` covers the committed report and PDF and about 50 targeted mutations: values, identifiers, sections, charts, claims, citations, stale PDF and pins.
+- **Operator**: `run-issue17-report.bat CHECK|BUILD` (Windows). It runs on a clean checkout, stops at the first failure and writes a log. It never runs generation, Ollama, promotion, retraining, freezing, tagging or presentation work.
 
 ## Optional evaluation and annotation response tooling (historical)
 

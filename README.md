@@ -153,6 +153,19 @@ python -m ws3_evaluation.analyze_scope30 --results-dir <grid dir> [--out <fresh 
 
 It writes `summary.md`, `analysis.json`, `f1_by_condition.png` and `gap.png` once, to a fresh directory (default `docs/analysis/scope30-v1-seed13/`). Real analysis needs a clean checkout. Inspect both charts before reporting. See the #14 section of [contracts](docs/agents/CONTRACTS.md).
 
+### Exploratory report and PDF (issue #17)
+
+[`docs/REPORT.md`](docs/REPORT.md) is the assembled scope30-v1 report and [`docs/REPORT.pdf`](docs/REPORT.pdf) is its PDF. Both await the lead's review. `ws3_evaluation.report_scope30` reconciles every reported value with the accepted analysis, freeze and split hashes. It also rejects unqualified significance, stability, replication, causal, equivalence or human-agreement wording, and checks that the committed PDF was built from the current Markdown.
+
+```bash
+python -m ws3_evaluation.report_scope30 --check                 # read-only
+pip install -r requirements-report.txt && python -m playwright install chromium
+python -m ws3_evaluation.report_scope30 --build-pdf <out.pdf>   # rebuild elsewhere, for comparison
+python -m ws3_evaluation.report_scope30 --write-pdf             # rewrite docs/REPORT.pdf and its sidecar after an approved edit
+```
+
+On Windows, `run-issue17-report.bat CHECK` (read-only) or `run-issue17-report.bat BUILD` runs the same steps on a clean checkout and writes a log.
+
 ## Google Colab walkthrough
 
 Open [`notebooks/SynthText_scope30_walkthrough.ipynb`](notebooks/SynthText_scope30_walkthrough.ipynb) in Google Colab for a presentation-friendly, reproducible tour of the pipeline. It has two deliberately separate evidence lanes:
