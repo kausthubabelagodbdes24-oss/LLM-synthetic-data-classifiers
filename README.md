@@ -1,6 +1,6 @@
 # SynthText: synthetic training data for text classification
 
-[![CI](https://github.com/kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers/actions/workflows/ci.yml/badge.svg)](https://github.com/kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers/actions/workflows/ci.yml)
+[![CI](https://github.com/kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/kausthubabelagodbdes24-oss/LLM-synthetic-data-classifiers/actions/workflows/ci.yml?query=branch%3Amain+event%3Apush)
 ![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB)
 
 This project studies whether a compact local language model can generate useful training data for text classification. It compares real, synthetic, mixed, and paraphrase-augmented training sets on two six-class tasks:

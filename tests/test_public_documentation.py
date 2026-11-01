@@ -48,6 +48,13 @@ def test_public_entry_points_describe_the_finished_study_not_internal_rescoping(
     assert "completed and accepted" in text
 
 
+def test_readme_ci_badge_tracks_main_pushes_explicitly():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert (
+        "actions/workflows/ci.yml/badge.svg?branch=main&event=push" in readme
+    )
+
+
 def test_readme_results_match_the_accepted_analysis():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     analysis = json.loads(
