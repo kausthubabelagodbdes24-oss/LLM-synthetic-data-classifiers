@@ -61,12 +61,13 @@ To support both supervised training and few-shot in-context demonstration sampli
 
 ---
 
-### 1.3 Preservation of Untouched Official Test Sets
+### 1.3 Test Set Isolation and Leakage Boundaries
 
-The official benchmark test sets (500 items for TREC, 2,000 items for Emotion) remain strictly untouched throughout all stages of the research pipeline:
-- **Zero Leakage Policy:** No test item was ever included in training sets, low-resource source samples, or few-shot demonstration pools.
+The official benchmark test sets (500 items for TREC, 2,000 items for Emotion) are held strictly separate to evaluate generalization:
+- **No Direct Sampling of Test Rows:** No official test row was directly sampled into training sets, low-resource source samples, or few-shot demonstration pools.
 - **Generation-Time Exclusion:** During LLM synthetic generation, every candidate synthetic sentence was checked against the normalized text of the official test set. Any exact normalized test match was immediately rejected and excluded from candidate corpora.
-- **Evaluation Integrity:** Classifiers are evaluated solely against these untouched test sets, preserving direct comparability to published external literature and avoiding optimistic evaluation artifacts.
+- **Pinned Official Duplicate Boundary:** As detailed in Section 1.4, one normalized official TREC train/test text duplicate (`trec.train.05262` = `trec.test.00378`) was retained in conditions C1 and C4 under the approved "Pin + Disclose" decision. All other prohibited overlaps—including any test overlap in synthetic corpora, low-resource samples, or Emotion conditions—fail closed and abort execution.
+- **Evaluation Integrity:** Classifiers are evaluated solely against these fixed official test sets, preserving direct comparability to published external benchmarks and avoiding optimistic evaluation artifacts.
 
 ---
 
@@ -98,7 +99,7 @@ To evaluate low-resource classification and augmentation baselines, a determinis
 To ensure that downstream classification differences reflect synthetic training data quality rather than variation in language-model fine-tuning dynamics, all sentences are transformed into fixed dense representations using a frozen Sentence-BERT model:
 - **Model Identity:** `sentence-transformers/all-MiniLM-L6-v2`.
 - **Git Commit / Revision:** `1110a243fdf4706b3f48f1d95db1a4f5529b4d41`.
-- **Weight Digest:** SHA-256 `36bb95116de1358079c1fab49ac634493101e484c99edbd882691fbf96859cad`.
+- **Snapshot File-Hash Mapping Identity (`identity_sha256`):** SHA-256 `36bb95116de1358079c1fab49ac634493101e484c99edbd882691fbf96859cad` (the SHA-256 digest of the canonical snapshot file-hash mapping in `model_identity`; individual snapshot-file SHA-256 values are recorded separately).
 - **Embedding Configuration:**
   - Embedding dimensionality: 384 dimensions.
   - Frozen weights: strictly inference-only; zero parameters are updated during training.
@@ -148,7 +149,7 @@ To transition from raw generation outputs (which initially targeted up to 100 ro
    with row ID as a deterministic tie-breaker. The first 30 ranked rows are extracted into `<setting>_seed13.scope30-v1.selected.jsonl`. This rule depends solely on stable row identifiers and never references text content or test performance.
 2. **AugGPT Source Matching:** C5b AugGPT generation requires strict 1-to-1 matching to the 60 canonical C5a sources, with exactly 6 distinct valid paraphrases per source. For TREC AugGPT, semantic answer-type drifting was corrected under ADR 0013 (v2 candidate promoted via PR #31).
 3. **Cryptographic Freeze Manifest:** The complete synthetic corpus was validated and frozen under Issue #12 in `docs/freeze/scope30-v1-seed13.freeze.json` (canonical SHA-256: `dd2e52ee704835525df41071ff5214c56593969d248ca8812c23b617bfd74de1`). The freeze binds all file paths, SHA-256 digests, row counts, ordered ID lists, model identity (`qwen3:4b` digest `359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7`), prompt hashes, and model-assisted review outcomes (`docs/reviews/issue11/`).
-4. **Self-Hashed Provenance Enforcement:** The training harness (`ws2_training/train_scope30.py`) produces an immutable provenance record for every result key (`records/<task>.<condition>.seed13.json`). Each record binds the freeze hash, code commit SHA (`1354118b4b05bec31973c268057d8a713907f3a6`), exact ordered ID list, model weights digest, classifier hyperparameters, and test evaluation scores.
+4. **Self-Hashed Provenance Enforcement:** The training harness (`ws2_training/train_scope30.py`) produces an immutable provenance record for every result key (`records/<task>.<condition>.seed13.json`). Each record binds the freeze hash, code commit SHA (`1354118b4b05bec31973c268057d8a713907f3a6`), exact ordered ID list, embedder snapshot file-hash mapping identity (`model_identity.identity_sha256`), classifier hyperparameters, and test evaluation scores.
 
 ---
 

@@ -1,8 +1,9 @@
 """Tests for Issue #16: Data, classifier, and training methods specification and report sections.
 
-Verifies that docs/report/methods_data_classifiers.md and CONTRACTS.md strictly adhere to
-scope30-v1 specifications, match all accepted repository evidence (freeze manifest, analysis outputs,
-and training harness constants), and observe all scientific boundaries.
+Verifies that docs/report/methods_data_classifiers.md, docs/report/README.md, and CONTRACTS.md
+strictly adhere to scope30-v1 specifications, match all accepted repository evidence (freeze manifest,
+analysis outputs, and training harness constants), observe all scientific boundaries, and maintain
+accurate model-identity hash terminology without contradictory leakage claims.
 """
 
 import json
@@ -17,11 +18,17 @@ README_PATH = ROOT / "docs" / "report" / "README.md"
 CONTRACTS_PATH = ROOT / "docs" / "agents" / "CONTRACTS.md"
 FREEZE_PATH = ROOT / "docs" / "freeze" / "scope30-v1-seed13.freeze.json"
 ANALYSIS_PATH = ROOT / "docs" / "analysis" / "scope30-v1-seed13" / "analysis.json"
+MINILM_IDENTITY_SHA256 = "36bb95116de1358079c1fab49ac634493101e484c99edbd882691fbf96859cad"
 
 
 def _read_methods():
     assert METHODS_PATH.is_file(), f"Missing methods file at {METHODS_PATH}"
     return METHODS_PATH.read_text(encoding="utf-8")
+
+
+def _read_contracts():
+    assert CONTRACTS_PATH.is_file(), f"Missing contracts file at {CONTRACTS_PATH}"
+    return CONTRACTS_PATH.read_text(encoding="utf-8")
 
 
 def _read_analysis():
@@ -72,13 +79,20 @@ def test_methods_documents_emotion_dataset_and_splits():
     assert "7bec4826ca96fa056ec5defc13a051f1c2ac25ef0270164219af13e1471af27f" in text
 
 
-def test_methods_documents_training_pool_test_separation_and_untouched_tests():
+def test_methods_documents_test_isolation_without_contradictory_zero_leakage():
     text = _read_methods()
     assert "seed = 0" in text or "seed 0" in text
-    assert "untouched" in text.lower()
-    assert "leakage" in text.lower() or "disjoint" in text.lower()
-    # Official tests remain unpartitioned and unvisited
     assert "500" in text and ("2,000" in text or "2000" in text)
+
+    # Review Finding 1: Absolute "Zero Leakage Policy" claim must NOT appear
+    assert "Zero Leakage Policy" not in text
+    assert "zero leakage policy" not in text.lower()
+
+    # Precise boundaries must be articulated
+    assert "no official test row was directly sampled" in text.lower()
+    assert "trec.train.05262" in text and "trec.test.00378" in text
+    assert "pin + disclose" in text.lower() or "pin and disclose" in text.lower()
+    assert "fail closed" in text.lower()
 
 
 # --- Requirement 3 & 4: Exact scope30-v1 Six-Condition Design and Seed-13 Counts ---
@@ -132,14 +146,31 @@ def test_methods_documents_deterministic_selection_and_freeze():
     assert an.ACCEPTED_GRID_REVISION in text
 
 
-# --- Requirement 6: Frozen MiniLM and LogisticRegression Settings ---
+# --- Requirement 6: Frozen MiniLM Identity and Correct Hash Terminology ---
 
 def test_methods_documents_embedder_and_classifier_settings():
     text = _read_methods()
-    # Embedder
+    contracts = _read_contracts()
+
+    # Embedder name and revision
     assert ts.EMBEDDING_MODEL in text
     assert ts.APPROVED_MINILM_REVISION in text
-    assert "36bb95116de1358079c1fab49ac634493101e484c99edbd882691fbf96859cad" in text
+
+    # Review Finding 2: 36bb9511... must be identified as identity_sha256 (snapshot file-hash mapping)
+    minilm_hash = MINILM_IDENTITY_SHA256
+    assert minilm_hash in text
+    assert minilm_hash in contracts
+    assert "identity_sha256" in text
+    assert "snapshot file-hash mapping" in text.lower() or "snapshot mapping" in text.lower()
+    assert "individual snapshot" in text.lower() or "individual snapshot-file" in text.lower()
+
+    # Review Finding 2: "Weight Digest" / "Weights Digest" must NOT be used for 36bb9511...
+    assert "weight digest" not in text.lower()
+    assert "weights digest" not in text.lower()
+    assert "weight digest" not in contracts.lower()
+    assert "weights digest" not in contracts.lower()
+
+    # Embedding configuration
     assert "384" in text
     assert "normalize_embeddings=True" in text or "L2" in text
     assert "frozen" in text.lower()
@@ -248,17 +279,48 @@ def test_scientific_boundaries_and_disclosures_observed():
 
 
 def test_contracts_register_contains_issue16_specification():
-    contracts_text = CONTRACTS_PATH.read_text(encoding="utf-8")
+    contracts_text = _read_contracts()
     assert "## Data, classifier and training-method specifications (Issue #16, ADR 0012, ADR 0014)" in contracts_text
     assert "docs/report/methods_data_classifiers.md" in contracts_text
     assert ts.ACCEPTED_FREEZE_SHA256 in contracts_text
     assert ts.APPROVED_MINILM_REVISION in contracts_text
+    assert MINILM_IDENTITY_SHA256 in contracts_text
+    assert "identity_sha256" in contracts_text
+    assert "weight digest" not in contracts_text.lower()
     assert "trec.train.05262" in contracts_text
 
+    # Reconciled with Issue #15 (PR #38)
+    assert "## Generation report sections and Appendix A (Issue #15, scope30-v1)" in contracts_text
+    assert "section_2_related_work.md" in contracts_text
 
-def test_report_readme_documents_modular_structure():
+
+def test_report_readme_reconciled_with_pr38_and_sole_operator():
     assert README_PATH.is_file()
     readme_text = README_PATH.read_text(encoding="utf-8")
-    assert "methods_data_classifiers.md" in readme_text
+
+    # Review Finding 3: Actual #15 filenames from PR #38
+    pr38_files = [
+        "section_2_related_work.md",
+        "section_3a_generation_methods.md",
+        "section_6_limitations_and_conclusions.md",
+        "appendix_a_prompts_and_examples.md",
+        "generation_report_sections.md",
+        "methods_data_classifiers.md",
+    ]
+    for fn in pr38_files:
+        assert fn in readme_text, f"Missing {fn} in docs/report/README.md"
+
+    # Review Finding 3: No "planned" status
+    assert "planned" not in readme_text.lower()
+
+    # Review Finding 3: Current sole-operator ownership under AGENTS.md
+    assert "sole operator" in readme_text.lower()
+    assert "@kausthubabelagodbdes24-oss" in readme_text
+
+    # Review Finding 3: Shared assembly scaffold REPORT.md belongs to Issue #17
+    assert "REPORT.md" in readme_text
+    assert "17" in readme_text
+
+    # ADR 0014 presentation boundary
     assert "ADR 0014" in readme_text
     assert "presentation" in readme_text.lower()

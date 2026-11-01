@@ -17,6 +17,8 @@ The specification defines experimental meaning. Record exact accepted interfaces
 | Repetition-specific generation | Accepted Qwen pilot for Issue #6; current scope30/seed13 under ADR0012; implementation delivery and CI/merge evidence are in PR #22. Real/fake storage and identity-bound seeded resume are unchanged. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Completion, audit and freeze evidence | Exact targets and the audit rule are agreed. Define how accepted artifacts identify the frozen revision and how training verifies approval/completeness. | Generation + training; evaluation consumes provenance |
 | Run records and paired analysis | Four seed-13 baseline result keys (C1=180, C5a=60 for trec and emotion) in results/scope30-seed13 (#7, preserved). Twelve-key freeze-bound grid: `ws2_training/train_scope30.py` (#13; see the #13 section below). The real grid ran once at `1354118` and was accepted by the lead on #13 (1 November 2026); `grid_complete.json` sha256 `3b12bbb8…`. Single-seed paired analysis: `ws3_evaluation/analyze_scope30.py` (#14; see the #14 section below). | Training (@kausthubabelagodbdes24-oss) + evaluation |
+| Generation report sections and appendix | Generation deliverables for Issue #15 (Sections 2, 3a, 6, Appendix A) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Generation (@harshitadjainbdes24-byte; operator: @kausthubabelagodbdes24-oss) |
+| Data and classifier methods sections | Training deliverables for Issue #16 (Sections 3b, 4) delivered to `docs/report/` for consumption by #17. Presentation slides separate under ADR 0014. | Training (@kausthubabelagodbdes24-oss; sole operator) |
 | Reproducibility walkthrough | `notebooks/SynthText_scope30_walkthrough.ipynb` separates a fake-fixture pipeline demonstration from read-only accepted real analysis. It never reruns the accepted experiment. Final presentation slides are outside repository and issue scope under ADR0014. | Sole operator and lead: @kausthubabelagodbdes24-oss |
 | Annotation exchange | Historical optional response tooling only. No human collection/agreement gate. Current model-assisted quality reviews disclose method and preserve originals. | Evaluation + all human annotators |
 
@@ -366,10 +368,41 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
   - tampered, resealed-inconsistent and invalid records (nine cases), 25 wrong or malformed compositions plus a non-object training section, foreign record files, `runs.csv` mismatch, `grid.json` identity and the freeze used for costs;
   - no error bars on single-seed charts, charted values equal to the computed values, write-once outputs whose hashes match `analysis.json`, the clean-checkout requirement, and the CLI guards.
 
+## Colab reproducibility walkthrough and presentation boundary
+
+- **Authority**: [ADR0014](../adr/0014-presentation-separation-colab.md), direct lead decision on 1 November 2026.
+- **Artifact**: `notebooks/SynthText_scope30_walkthrough.ipynb`, notebook format 4 and Google Colab-compatible.
+- **Fake demonstration lane**:
+  - uses only committed `data/sample/real/` fixtures;
+  - explicitly sets `SYNTHTEXT_GENERATION_MODE=fake`, `SYNTHTEXT_EMBEDDER=hashing`, fixture data/results paths and seed-13 configuration;
+  - may run the three fake generation settings, legacy fixture trainer and fixture analysis;
+  - labels every resulting row, score and chart as fake demonstration output, never experimental evidence.
+- **Accepted-real lane**:
+  - reads only committed `docs/analysis/scope30-v1-seed13/analysis.json`, `summary.md` and the two reviewed PNGs;
+  - displays the twelve real result rows, C2/C3 gaps, comparison tables, costs, provenance and limitations without training or rewriting them.
+- **Hard boundary**: the notebook does not run Ollama, download/substitute another generator, access uncommitted real data, generate/promote/freeze real corpora, train the accepted twelve-key grid or overwrite the accepted analysis directory.
+- **Presentation separation**: final professor-facing slides, speaker notes and submission logistics are not repository artifacts or GitHub issue acceptance criteria. Reports, tables, charts and the notebook may be used as source material outside GitHub.
+- **Verification**: `tests/test_colab_walkthrough.py` parses the notebook, checks the two evidence lanes, required pins/disclosures, safe fake environment and absence of commands that run real generation/training or write accepted analysis.
+
+## Generation report sections and Appendix A (Issue #15, scope30-v1)
+
+- **Authority & Status**: [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), [ADR 0013](../adr/0013-trec-auggpt-answer-type.md), [ADR 0014](../adr/0014-presentation-separation-colab.md), and [PROJECT_SPEC.md](../PROJECT_SPEC.md). Delivered in PR for Issue #15.
+- **Producer**: Generation workstream (@harshitadjainbdes24-byte; sole operator: @kausthubabelagodbdes24-oss).
+- **Consumer**: Issue #17 ([Evaluation] Assemble the revised exploratory report and reviewed PDF).
+- **Deliverable Paths**:
+  - `docs/report/section_2_related_work.md`: Related work on synthetic data utility across task subjectivity (Li et al., 2023), text augmentation via AugGPT (Dai et al., 2023), few-shot in-context learning (Brown et al., 2020), and Sentence-BERT dense representations (Reimers and Gurevych, 2019) from verified primary sources.
+  - `docs/report/section_3a_generation_methods.md`: Accepted Qwen model identity (`qwen3:4b`, digest `359d7dd4…`), temperature T=0.9, thinking behavior, prompt strategies (zero-shot, few-shot with 3 pool demonstrations, AugGPT with length guard and ADR 0013 v2 answer-type constraints), filtering rules, write-ahead journals, seed-13 selection (720 zero/few-shot + 720 AugGPT = 1,440 synthetic examples), demonstration costs (59 TREC / 54 Emotion), quality screening (Claude Opus 5.5, 60 items, >= 2 clear errors trigger), and freeze under lead Option A.
+  - `docs/report/section_6_limitations_and_conclusions.md`: Grounded in the four accepted single-seed comparisons from `docs/analysis/scope30-v1-seed13/` (highlighting contrary outcomes where synthetic outperformed real on TREC; single-seed, small data, task confounding, demonstration cost, and model-assisted screening limitations).
+  - `docs/report/appendix_a_prompts_and_examples.md`: Verbatim generation prompt templates from `ws1_generation/generate.py`, two good and two problematic examples per task with verified row ID and artifact SHA-256 provenance from accepted final artifacts, and the eight historical pilot examples from ADR 0011 / `PILOT_REPORT.md` explicitly distinguished.
+  - `docs/report/generation_report_sections.md`: Consolidated deliverable compiling all sections sequentially.
+- **Report Scaffold Integrity**: The shared report assembly file (`docs/REPORT.md`) is preserved untouched for #17's final assembly to maintain modular file separation between workstreams.
+- **Presentation Separation**: Presentation slides and submission logistics remain outside GitHub scope per ADR 0014.
+- **Verification**: `tests/test_generation_report_sections.py` validates file presence, primary citations, model settings, exact hashes, prompt template parity with `ws1_generation/generate.py`, example provenance, and scientific boundary disclosures.
+
 ## Data, classifier and training-method specifications (Issue #16, ADR 0012, ADR 0014)
 
 - **Authority**: [ADR 0012](../adr/0012-eod-exploratory-30-seed13.md), [ADR 0014](../adr/0014-presentation-separation-colab.md), [PROJECT_SPEC.md](../PROJECT_SPEC.md), lead decisions on #13 and #16.
-- **Producer**: Workstream 2 (Training and project lead: Kausthuba Belagod @kausthubabelagodbdes24-oss).
+- **Producer**: Workstream 2 (Training and project lead: Kausthuba Belagod @kausthubabelagodbdes24-oss; sole operator).
 - **Consumers**: Report assembly (#17), documentation, walkthrough (#18), external research presentation.
 - **Artifacts**:
   - Modular report section: `docs/report/methods_data_classifiers.md` (covering Sections 3b and 4 of the report scaffold).
@@ -380,7 +413,8 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
     - Emotion (`dair-ai/emotion`): 6 labels (`sadness`, `joy`, `love`, `anger`, `fear`, `surprise`); sub-facets: annoyance -> anger, anxiety -> fear; official train 16,000, test 2,000 (validation split excluded). Deterministic 90/10 seed-0 split: `train.jsonl` (14,400 rows, SHA-256 `4c6e92df9649661ab1c6fefe06f83206382322e6997fcb70ca53d22d302fac57`), `pool.jsonl` (1,600 rows, SHA-256 `dde4702b5f5168f5fad977ba6b659f9304ae02a3cb37c18281e208271f847d40`), `test.jsonl` (2,000 rows, SHA-256 `d3b7176e8ab6be052151511a3e9843fa633c5747d0dae73980a2e52a4fb6cd88`). `lowres_seed13.jsonl` (60 rows, SHA-256 `7bec4826ca96fa056ec5defc13a051f1c2ac25ef0270164219af13e1471af27f`).
   - **Separation and Untouched Tests**:
     - Disjoint training/pool splits guarantee no overlap between supervised training rows and few-shot in-context demonstration rows.
-    - Official test splits remain untouched and unvisited during generation and training; test-text matching candidates are rejected during generation.
+    - No official test row was directly sampled into training sets, demonstrations, or synthetic sources; normalized test-text matching candidates were rejected during synthetic generation.
+    - One normalized official TREC train/test text duplicate (`trec.train.05262 = trec.test.00378`) was retained in C1 and C4 under the approved "Pin + Disclose" decision; all other prohibited overlaps fail closed.
   - **Disclosed Pinned Duplicate**:
     - Official TREC benchmark contains 10 train/test duplicates. Seed 13 sampling draws `trec.train.05262` ("What is the abbreviation for Texas ?"), matching test item `trec.test.00378` (label `ABBR`, normalized SHA-256 `ba6af17c366034f8dca2abff920ba01cc773fc77eda6188a1127b8190b324d2e`).
     - Lead decision: "Pin + Disclose" in `training.disclosed_test_text_overlap`. Appears only in TREC C1 and C4; fails closed on any other condition or synthetic overlap.
@@ -396,7 +430,7 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
     - Freeze manifest: `docs/freeze/scope30-v1-seed13.freeze.json` (SHA-256 `dd2e52ee704835525df41071ff5214c56593969d248ca8812c23b617bfd74de1`).
     - Training records bind code commit, ordered training IDs, split hashes, embedder identity, and hyperparameters into immutable self-hashed records.
   - **Embedder and Classifier Identity**:
-    - Embedder: `sentence-transformers/all-MiniLM-L6-v2`, revision `1110a243fdf4706b3f48f1d95db1a4f5529b4d41`, weight digest `36bb95116de1358079c1fab49ac634493101e484c99edbd882691fbf96859cad`, 384 dimensions, frozen, L2 normalized, CPU, batch 64, offline.
+    - Embedder: `sentence-transformers/all-MiniLM-L6-v2`, revision `1110a243fdf4706b3f48f1d95db1a4f5529b4d41`, model_identity.identity_sha256 `36bb95116de1358079c1fab49ac634493101e484c99edbd882691fbf96859cad` (hash of canonical snapshot file-hash mapping; individual snapshot-file SHA-256 values are recorded separately), 384 dimensions, frozen, L2 normalized, CPU, batch 64, offline.
     - Classifier: Scikit-learn `LogisticRegression(C=1.0, max_iter=2000, random_state=13, solver='lbfgs')`.
   - **Training Harness Behavior**:
     - `ws2_training/train_scope30.py` enforces fail-closed freeze check, dedicated results storage `results/scope30-v1-seed13-freeze-v1/`, idempotent resume, archive of replaced keys to `superseded/`, and `--validate` verification of 12 unique keys.
@@ -415,22 +449,6 @@ For each accepted change record: exact contract, approving issue/PR and lead dec
     - Cross-task comparison is non-causal: differences between TREC and Emotion encompass text length, syntactic complexity, class balance, and test size, and cannot be attributed to subjectivity alone.
   - **Presentation Boundary (ADR 0014)**:
     - Final presentation slides and submission logistics are private owner deliverables outside GitHub and are not repository artifacts.
-
-## Colab reproducibility walkthrough and presentation boundary
-
-- **Authority**: [ADR0014](../adr/0014-presentation-separation-colab.md), direct lead decision on 1 November 2026.
-- **Artifact**: `notebooks/SynthText_scope30_walkthrough.ipynb`, notebook format 4 and Google Colab-compatible.
-- **Fake demonstration lane**:
-  - uses only committed `data/sample/real/` fixtures;
-  - explicitly sets `SYNTHTEXT_GENERATION_MODE=fake`, `SYNTHTEXT_EMBEDDER=hashing`, fixture data/results paths and seed-13 configuration;
-  - may run the three fake generation settings, legacy fixture trainer and fixture analysis;
-  - labels every resulting row, score and chart as fake demonstration output, never experimental evidence.
-- **Accepted-real lane**:
-  - reads only committed `docs/analysis/scope30-v1-seed13/analysis.json`, `summary.md` and the two reviewed PNGs;
-  - displays the twelve real result rows, C2/C3 gaps, comparison tables, costs, provenance and limitations without training or rewriting them.
-- **Hard boundary**: the notebook does not run Ollama, download/substitute another generator, access uncommitted real data, generate/promote/freeze real corpora, train the accepted twelve-key grid or overwrite the accepted analysis directory.
-- **Presentation separation**: final professor-facing slides, speaker notes and submission logistics are not repository artifacts or GitHub issue acceptance criteria. Reports, tables, charts and the notebook may be used as source material outside GitHub.
-- **Verification**: `tests/test_colab_walkthrough.py` parses the notebook, checks the two evidence lanes, required pins/disclosures, safe fake environment and absence of commands that run real generation/training or write accepted analysis.
 
 ## Optional evaluation and annotation response tooling (historical)
 
