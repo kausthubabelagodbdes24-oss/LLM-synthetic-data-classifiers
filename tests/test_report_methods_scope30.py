@@ -292,32 +292,55 @@ def test_contracts_register_contains_issue16_specification():
     # Reconciled with Issue #15 (PR #38)
     assert "## Generation report sections and Appendix A (Issue #15, scope30-v1)" in contracts_text
     assert "section_2_related_work.md" in contracts_text
+    assert "section_3a_generation_methods.md" in contracts_text
+    assert "section_6_limitations_and_conclusions.md" in contracts_text
+    assert "appendix_a_prompts_and_examples.md" in contracts_text
+
+    # Review 5727002343: generation_report_sections.md must NOT appear in CONTRACTS.md
+    assert "generation_report_sections.md" not in contracts_text
+
+    # Review 5727002343: Forbidden inferential wording must NOT appear in Issue #15 contract
+    issue15_section = contracts_text.split("## Generation report sections and Appendix A")[1].split("## Data, classifier")[0]
+    for forbidden in ["outperformed", "underperformed", "gain", "loss", "matched or exceeded"]:
+        assert forbidden not in issue15_section.lower(), f"Forbidden inferential word '{forbidden}' found in Issue #15 contract"
+
+    # Review 5727002343: Accepted neutral interpretation must appear in Issue #15 contract
+    assert "higher than their references at seed 13" in issue15_section
+    assert "emotion c2/c3 values were lower than c1" in issue15_section.lower()
+    assert "mixed metric directions" in issue15_section
+    assert "reliability is unknown with one seed" in issue15_section
+    assert "no equivalence or meaningfulness threshold was defined" in issue15_section
+    assert "no causal, significance, stability or generalisation claim" in issue15_section
 
 
 def test_report_readme_reconciled_with_pr38_and_sole_operator():
     assert README_PATH.is_file()
     readme_text = README_PATH.read_text(encoding="utf-8")
 
-    # Review Finding 3: Actual #15 filenames from PR #38
-    pr38_files = [
+    # Review 5727002343: Actual canonical #15 deliverables from PR #38 (no consolidated duplicate)
+    pr38_canonical_files = [
         "section_2_related_work.md",
         "section_3a_generation_methods.md",
         "section_6_limitations_and_conclusions.md",
         "appendix_a_prompts_and_examples.md",
-        "generation_report_sections.md",
         "methods_data_classifiers.md",
     ]
-    for fn in pr38_files:
+    for fn in pr38_canonical_files:
         assert fn in readme_text, f"Missing {fn} in docs/report/README.md"
 
-    # Review Finding 3: No "planned" status
+    # Review 5727002343: generation_report_sections.md must NOT appear in README.md or methods
+    assert "generation_report_sections.md" not in readme_text
+    methods_text = _read_methods()
+    assert "generation_report_sections.md" not in methods_text
+
+    # No "planned" status
     assert "planned" not in readme_text.lower()
 
-    # Review Finding 3: Current sole-operator ownership under AGENTS.md
+    # Current sole-operator ownership under AGENTS.md
     assert "sole operator" in readme_text.lower()
     assert "@kausthubabelagodbdes24-oss" in readme_text
 
-    # Review Finding 3: Shared assembly scaffold REPORT.md belongs to Issue #17
+    # Shared assembly scaffold REPORT.md belongs to Issue #17
     assert "REPORT.md" in readme_text
     assert "17" in readme_text
 
